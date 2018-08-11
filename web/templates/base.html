@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Magic Collector</title>
+		<link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+		<link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+	</head>
+	<body>
+		<div class="wrapper">
+			<div id="content">
+				{% block content %}
+				{% endblock %}
+			</div>
+		</div>
+
+		<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+		<script>
+			$('#sidebarCollapse').on('click', function() {
+				$('#sidebar').toggleClass('active');
+			});
+
+			$(document).ajaxStart(function() {
+				$('#loader').removeClass('hidden');
+			});
+
+			$(document).ajaxStop(function() {
+				$('#loader').addClass('hidden');
+			});
+
+			function escapeHTML(str) {
+				var escapes = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#x27;'
+				};
+				return ('' + str).replace(/[&<>"']/g, function(match) {
+					return escapes[match];
+				});
+			}
+
+			function handle_internal_error() {
+				show_flash('Internal error occurred.', 'danger');
+			}
+
+			function show_flash(message, flash_class) {
+				if ($('.modal.in').length) elem = $('#modal_flash_div');
+				else elem = $('#flash_div');
+				elem.empty();
+				elem.html('<div class="alert alert-'+flash_class+' alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>'+message+'</div>');
+			}
+		</script>
+
+		{% block script %}
+		{% endblock %}
+	</body>
+</html>
