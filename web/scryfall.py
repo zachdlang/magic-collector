@@ -16,7 +16,8 @@ def search(name):
 	resp = scryfall_request('/cards/search', params=params)
 	simple_resp = []
 	for r in resp['data']:
-		simple_resp.append(simplify(r))
+		if r['multiverse_ids']:
+			simple_resp.append(simplify(r))
 	return simple_resp
 
 
@@ -29,6 +30,7 @@ def get_bulk(multiverse_ids):
 	data = { 'identifiers':multiverse_ids }
 	resp = scryfall_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
+	print(resp['not_found'])
 	for r in resp['data']:
 		simple_resp.append(simplify(r))
 	return simple_resp
@@ -36,21 +38,36 @@ def get_bulk(multiverse_ids):
 
 def simplify(resp):
 	simple = {
-		'multiverse_ids': resp['multiverse_ids'][0],
+		'name': resp['name'],
+		'multiverseid': resp['multiverse_ids'][0],
 		'rarity': resp['rarity'].upper()[0],
 		'set': resp['set'].upper(),
 		'set_name': resp['set_name'],
-		'cmc': resp['cmc']
+		'cmc': resp['cmc'],
+		'artist': resp['artist'],
+		'collectornumber': resp['collector_number'],
+		'multifaced': False
 	}
+	if 'colors' in resp:
+		simple['colors'] = ''.join(resp['colors'])
 
 	if resp.get('card_faces'):
 		resp = resp['card_faces'][0]
+		simple['multifaced'] = True
 
-	simple['name'] = resp['name']
-	simple['colors'] = ''.join(resp['colors'])
-	simple['mana_cost'] = resp['mana_cost']
+	simple['typeline'] = resp['type_line']
+	simple['manacost'] = resp['mana_cost']
 	simple['power'] = resp.get('power')
 	simple['toughness'] = resp.get('toughness')
-	simple['image'] = resp['image_uris']['normal']
+	simple['oracletext'] = resp.get('oracle_text')
+	simple['flavortext'] = resp.get('flavor_text')
+	if 'colors' not in simple:
+		simple['colors'] = ''.join(resp['colors'])
+
+	simple['image_manual'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (simple['set'].lower(), simple['collectornumber'])
+
+	for unicode_field in [ 'artist', 'typeline', 'oracletext', 'flavortext' ]:
+		if simple[unicode_field] is not None:
+			simple[unicode_field] = simple[unicode_field].replace('\u2014','-').encode('ascii', 'ignore').decode('ascii')
 
 	return simple
