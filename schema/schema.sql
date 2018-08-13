@@ -1,6 +1,6 @@
 
 CREATE TABLE IF NOT EXISTS enduser (
-	id SERIAL primary key,
+	id SERIAL PRIMARY KEY,
 	firstname TEXT NOT NULL,
 	surname TEXT NOT NULL,
 	email TEXT NOT NULL,
@@ -10,26 +10,27 @@ CREATE TABLE IF NOT EXISTS enduser (
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS card_set (
-	id SERIAL primary key,
+	id SERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
 	code TEXT NOT NULL
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS card (
-	id SERIAL primary key,
+	id SERIAL PRIMARY KEY,
 	collectornumber TEXT NOT NULL,
 	multiverseid INTEGER NOT NULL,
 	name TEXT NOT NULL,
 	card_setid INTEGER NOT NULL REFERENCES card_set(id) ON DELETE CASCADE,
 	colors TEXT,
-	cmc NUMERIC,
-	manacost TEXT,
-	power TEXT,
-	toughness TEXT,
 	rarity CHARACTER,
 	multifaced BOOLEAN NOT NULL DEFAULT FALSE,
-	typeline TEXT,
-	oracletext TEXT,
-	flavortext TEXT,
-	artist TEXT
+	price MONEY
+)WITH OIDS;
+
+CREATE TABLE IF NOT EXISTS user_card (
+	id SERIAL PRIMARY KEY,
+	cardid INTEGER NOT NULL REFERENCES card(id) ON DELETE CASCADE,
+	userid INTEGER NOT NULL REFERENCES app.enduser(id) ON DELETE CASCADE,
+	quantity INTEGER NOT NULL,
+	foil BOOLEAN NOT NULL DEFAULT false
 )WITH OIDS;

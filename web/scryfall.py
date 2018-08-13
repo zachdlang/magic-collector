@@ -30,7 +30,8 @@ def get_bulk(multiverse_ids):
 	data = { 'identifiers':multiverse_ids }
 	resp = scryfall_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
-	print(resp['not_found'])
+	if resp['not_found']:
+		raise Exception('Not found: %s' % resp['not_found'])
 	for r in resp['data']:
 		simple_resp.append(simplify(r))
 	return simple_resp
@@ -43,8 +44,6 @@ def simplify(resp):
 		'rarity': resp['rarity'].upper()[0],
 		'set': resp['set'].upper(),
 		'set_name': resp['set_name'],
-		'cmc': resp['cmc'],
-		'artist': resp['artist'],
 		'collectornumber': resp['collector_number'],
 		'multifaced': False
 	}
@@ -55,19 +54,9 @@ def simplify(resp):
 		resp = resp['card_faces'][0]
 		simple['multifaced'] = True
 
-	simple['typeline'] = resp['type_line']
-	simple['manacost'] = resp['mana_cost']
-	simple['power'] = resp.get('power')
-	simple['toughness'] = resp.get('toughness')
-	simple['oracletext'] = resp.get('oracle_text')
-	simple['flavortext'] = resp.get('flavor_text')
 	if 'colors' not in simple:
 		simple['colors'] = ''.join(resp['colors'])
 
 	simple['image_manual'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (simple['set'].lower(), simple['collectornumber'])
-
-	for unicode_field in [ 'artist', 'typeline', 'oracletext', 'flavortext' ]:
-		if simple[unicode_field] is not None:
-			simple[unicode_field] = simple[unicode_field].replace('\u2014','-').encode('ascii', 'ignore').decode('ascii')
 
 	return simple

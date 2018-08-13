@@ -50,16 +50,26 @@ def home():
 @login_required
 def csv_upload():
 	import csv
+	rows = []
 	multiverse_ids = []
 	with open('/home/zach/Downloads/Bulk.csv') as csvfile:
 		importreader = csv.DictReader(csvfile)
 		for row in importreader:
-			# print(row['MultiverseID'], row['Name'], row['Edition code'], row['Quantity'], row['Foil'])
+			rows.append(row)
 			multiverse_ids.append({ 'multiverse_id':int(row['MultiverseID'])})
 	bulk_lots = ([ multiverse_ids[i:i + 75] for i in range(0, len(multiverse_ids), 75) ])
 	for lot in bulk_lots:
 		resp = scryfall.get_bulk(lot)
 		import_cards(resp)
+
+	cursor = g.conn.cursor()
+	for row in rows:
+		qry = """INSERT INTO user_card (cardid, userid, quantity, foil) SELECT id, %s, %s, %s FROM card WHERE multiverseid = %s
+				AND NOT EXISTS (SELECT * FROM user_card WHERE cardid = card.id AND userid = %s)"""
+		qargs = (session['userid'], row['Quantity'], int(row['Foil quantity']) > 0, row['MultiverseID'], session['userid'],)
+		cursor.execute(qry, qargs)
+		g.conn.commit()
+	cursor.close()
 
 	return jsonify(resp)
 
@@ -79,18 +89,14 @@ def import_cards(cards):
 		g.conn.commit()
 		
 	for c in cards:
-		print(c)
 		qry = """INSERT INTO card (
 				collectornumber, multiverseid, name, card_setid, colors,
-				cmc, manacost, power, toughness, rarity, 
-				multifaced, typeline, oracletext, flavortext, artist) SELECT
+				rarity, multifaced) SELECT
 				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
-				%s, %s, %s, %s, %s,
-				%s, %s, %s, %s, %s
+				%s, %s
 				WHERE NOT EXISTS (SELECT * FROM card WHERE multiverseid = %s)"""
 		qargs = (c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
-				c['cmc'], c['manacost'], c['power'], c['toughness'], c['rarity'],
-				c['multifaced'], c['typeline'], c['oracletext'], c['flavortext'], c['artist'],
+				c['rarity'], c['multifaced'],
 				c['multiverseid'],)
 		cursor.execute(qry, qargs)
 		g.conn.commit()
