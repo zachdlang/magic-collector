@@ -16,18 +16,18 @@ def search(name):
 	resp = scryfall_request('/cards/search', params=params)
 	simple_resp = []
 	for r in resp['data']:
-		if r['multiverse_ids']:
+		if r['multiverseid']:
 			simple_resp.append(simplify(r))
 	return simple_resp
 
 
-def get(multiverse_id):
-	resp = scryfall_request('/cards/multiverse/%s' % multiverse_id)
+def get(multiverseid):
+	resp = scryfall_request('/cards/multiverse/%s' % multiverseid)
 	return simplify(resp)
 
 
-def get_bulk(multiverse_ids):
-	data = { 'identifiers':multiverse_ids }
+def get_bulk(multiverseids):
+	data = { 'identifiers':[ { 'multiverse_id':x } for x in multiverseids ] }
 	resp = scryfall_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
 	if resp['not_found']:

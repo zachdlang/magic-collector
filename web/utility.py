@@ -7,6 +7,9 @@ import os
 import json
 import requests
 
+class CollectorException(Exception):
+	pass
+
 def login_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):

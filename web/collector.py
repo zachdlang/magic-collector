@@ -1,6 +1,6 @@
 
 from web.utility import *
-from web import scryfall
+from web import scryfall, tcgplayer
 
 collector = Blueprint('collector', __name__)
 
@@ -56,8 +56,17 @@ def csv_upload():
 		importreader = csv.DictReader(csvfile)
 		for row in importreader:
 			rows.append(row)
-			multiverse_ids.append({ 'multiverse_id':int(row['MultiverseID'])})
-	bulk_lots = ([ multiverse_ids[i:i + 75] for i in range(0, len(multiverse_ids), 75) ])
+			multiverse_ids.append(int(row['MultiverseID']))
+
+	new = []
+	cursor = g.conn.cursor()
+	for multiverseid in multiverse_ids:
+		cursor.execute("""SELECT * FROM card WHERE multiverseid = %s""", (multiverseid,))
+		if cursor.rowcount == 0:
+			new.append(multiverseid)
+	cursor.close()
+
+	bulk_lots = ([ new[i:i + 75] for i in range(0, len(new), 75) ])
 	for lot in bulk_lots:
 		resp = scryfall.get_bulk(lot)
 		import_cards(resp)
@@ -71,7 +80,7 @@ def csv_upload():
 		g.conn.commit()
 	cursor.close()
 
-	return jsonify(resp)
+	return jsonify(new)
 
 
 def import_cards(cards):
@@ -94,10 +103,16 @@ def import_cards(cards):
 				rarity, multifaced) SELECT
 				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
 				%s, %s
-				WHERE NOT EXISTS (SELECT * FROM card WHERE multiverseid = %s)"""
+				WHERE NOT EXISTS (SELECT * FROM card WHERE multiverseid = %s)
+				RETURNING id, (SELECT name FROM card_set WHERE id = card_setid)"""
 		qargs = (c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
 				c['rarity'], c['multifaced'],
 				c['multiverseid'],)
 		cursor.execute(qry, qargs)
+		if cursor.rowcount > 0:
+			cardid, setname = cursor.fetchone()
+			prices = tcgplayer.search(c['name'], setname)
+			if prices:
+				cursor.execute("""UPDATE card SET price = %s, foilprice = %s WHERE id = %s""", (prices['normal'], prices['foil'], cardid,))
 		g.conn.commit()
 	cursor.close()

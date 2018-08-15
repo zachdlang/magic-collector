@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS card (
 	colors TEXT,
 	rarity CHARACTER,
 	multifaced BOOLEAN NOT NULL DEFAULT FALSE,
-	price MONEY
+	price MONEY,
+	foilprice MONEY
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (
