@@ -43,7 +43,11 @@ def logout():
 @collector.route('/', methods=['GET'])
 @login_required
 def home():
-	return render_template('collector.html')
+	cursor = g.conn.cursor()
+	cursor.execute("""SELECT * FROM user_card LEFT JOIN card ON (cardid = card.id) WHERE userid = %s""", (session['userid'],))
+	cards = query_to_dict_list(cursor)
+	cursor.close()
+	return render_template('collector.html', cards=cards)
 
 
 @collector.route('/csv_upload', methods=['GET'])

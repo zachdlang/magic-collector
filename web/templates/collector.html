@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+	<div class="section">
+		<div class="row">
+			{% for c in cards %}
+				<div class="col s12 m6 l3">
+					<p>{{ c.name }}</p>
+				</div>
+			{% endfor %}
+		</div>
+	</div>
+
+	<br><br>
+</div>
+{% endblock %}

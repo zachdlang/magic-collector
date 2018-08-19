@@ -1,27 +1,44 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="heading col-xs-12 col-sm-12 col-md-12 col-lg-12">
-	<h4>Login</h4>
+<div class="container">
+	<h3 class="header center orange-text">Login</h3>
+	<div class="section">
+		<div class="row">
+			<form id="login_form" method="post" class="col s12">
+				 <div class="row">
+					<div class="input-field col s12">
+						<input type="text" id="username" name="username" class="validate">
+						<label for="username">Username</label>
+					</div>
+				</div>
+
+				 <div class="row">
+					<div class="input-field col s12">
+						<input type="password" id="password" name="password" class="validate">
+						<label for="password">Password</label>
+					</div>
+				</div>
+
+				<div class="center-align"">
+					<a class="waves-effect waves-light btn" id="submit_btn">Submit</a>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<br><br>
 </div>
+{% endblock %}
 
-<form method="post" class="form-horizontal">
-	<div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
-		<label class="control-label col-xs-12 col-sm-3 col-md-3 col-lg-3" for="username">Username</label>
-		<div class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
-			<input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
-		</div>
-	</div>
+{% block script %}
+<script>
+	var form = $('#login_form');
 
-	<div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
-		<label class="control-label col-xs-12 col-sm-3 col-md-3 col-lg-3" for="password">Password</label>
-		<div class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
-			<input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
-		</div>
-	</div>
-
-	<div class="submit-button col-xs-12">
-		<button type="submit" class="btn btn-primary">Submit</button>
-	</div>
-</form>
+	$('#submit_btn').on('click', function() {
+		if (check_form_valid(form)) {
+			form.submit();
+		}
+	});
+</script>
 {% endblock %}
