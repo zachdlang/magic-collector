@@ -1,6 +1,6 @@
 
 from web.utility import *
-from web import scryfall, tcgplayer
+from web import scryfall, tcgplayer, openexchangerates
 
 collector = Blueprint('collector', __name__)
 
@@ -43,24 +43,46 @@ def logout():
 @collector.route('/', methods=['GET'])
 @login_required
 def home():
+	return render_template('collector.html')
+
+
+@collector.route('/get_collection', methods=['GET'])
+@login_required
+def get_collection():
+	currency = openexchangerates.get()
 	cursor = g.conn.cursor()
-	cursor.execute("""SELECT * FROM user_card LEFT JOIN card ON (cardid = card.id) WHERE userid = %s""", (session['userid'],))
+	qry = """SELECT 
+				c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber, 
+				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) * %s AS price
+			FROM user_card uc 
+			LEFT JOIN card c ON (uc.cardid = c.id)
+			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
+			WHERE uc.userid = %s
+			ORDER BY c.name ASC"""
+	cursor.execute(qry, (currency['rate'], session['userid'],))
 	cards = query_to_dict_list(cursor)
 	cursor.close()
-	return render_template('collector.html', cards=cards)
+	for c in cards:
+		c['card_image'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (c['code'].lower(), c['collectornumber'])
+		c['set_image'] = 'https://img.scryfall.com/sets/%s.svg' % c['code'].lower()
+	return jsonify(cards=cards, currency=currency['code'])
 
 
-@collector.route('/csv_upload', methods=['GET'])
+@collector.route('/csv_upload', methods=['POST'])
 @login_required
 def csv_upload():
 	import csv
+
+	filename = '/tmp/upload_%s.csv' % session['userid']
+	request.files['upload'].save(filename)
 	rows = []
 	multiverse_ids = []
-	with open('/home/zach/Downloads/Bulk.csv') as csvfile:
+	with open(filename) as csvfile:
 		importreader = csv.DictReader(csvfile)
 		for row in importreader:
 			rows.append(row)
 			multiverse_ids.append(int(row['MultiverseID']))
+	os.remove(filename)
 
 	new = []
 	cursor = g.conn.cursor()

@@ -4,14 +4,139 @@
 <div class="container">
 	<div class="section">
 		<div class="row">
-			{% for c in cards %}
-				<div class="col s12 m6 l3">
-					<p>{{ c.name }}</p>
+			<div class="col s3 offset-s9">
+				<a class="waves-effect waves-light btn right modal-trigger" href="#upload_modal">Upload CSV</a>
+			</div>
+			<div id="upload_modal" class="modal">
+				<div class="modal-content">
+					<h4>Upload CSV</h4>
+					<div id="upload_loading"></div>
+
+					<div class="file-field input-field">
+						<div class="btn">
+							<span>File</span>
+							<form enctype="multipart/form-data" method="post" name="upload_form">
+								<input type="file" accept="text/csv" name="upload">
+							</form>
+						</div>
+						<div class="file-path-wrapper">
+							<input class="file-path validate" type="text">
+						</div>
+					</div>
 				</div>
-			{% endfor %}
+				<div class="modal-footer">
+					<a class="waves-effect waves-green btn-flat" id=upload_btn>Submit</a>
+				</div>
+			</div>
 		</div>
+
+		<div class="row">
+			<div id="collection_list"></div>
+		</div>
+
 	</div>
 
 	<br><br>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+	$(document).ready(function() {
+		get_collection();
+	});
+
+	function get_collection() {
+		show_loading($('#collection_list'));
+		$.ajax({
+			url: "{{ url_for('collector.get_collection') }}",
+			method: "GET"
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				var html_str = '<table class="highlight">\
+									<thead>\
+										<tr>\
+											<th>Card</th>\
+											<th>Set</th>\
+											<th>Rarity</th>\
+											<th>Quantity</th>\
+											<th>Foil</th>\
+											<th>Price</th>\
+										</tr>\
+									</thead>\
+									<tbody>';
+				for (var i = 0; i < data.cards.length; i++) {
+					var c = data.cards[i];
+					c.foil_icon = (c.foil) ? 'check_box' : 'check_box_outline_blank';
+					c.price = (c.price) ? c.price + ' ' + data.currency : '';
+					html_str += '<tr data-image="'+escapeHTML(c.card_image)+'">\
+									<td class="card-name">'+escapeHTML(c.name)+'</td>\
+									<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(c.set_image)+'">'+escapeHTML(c.setname)+'</td>\
+									<td>'+escapeHTML(c.rarity)+'</td>\
+									<td>'+escapeHTML(c.quantity)+'</td>\
+									<td><i class="material-icons">'+c.foil_icon+'</i></td>\
+									<td>'+escapeHTML(c.price)+'</td>\
+								<tr>';
+				}
+				html_str += '</tbody>\
+							</table>';
+				$('#collection_list').html(html_str);
+
+				$('.card-name').hover(function() {
+					var image_url = $(this).closest('tr').data()['image'];
+					var vert_pos = $(this).position().top - $(this).height() - 75;
+					var horiz_pos = $(this).position().left + $(this).width();
+					$(this).append('<div class="card-panel card-hover" style="top: '+escapeHTML(vert_pos)+'px; left: '+escapeHTML(horiz_pos)+'px;">\
+										<img class="responsive-img" src="'+escapeHTML(image_url)+'">\
+									</div>')
+				}, function() {
+					$('.card-hover').remove();
+				});
+			}
+		}).fail(function() {
+			M.toast({html: "An internal error occurred. Please try again later."});
+		});
+	}
+
+	$('#upload_btn').on('click', function() {
+		show_loading($('#upload_loading'));
+		var form = document.forms.namedItem('upload_form');
+		var formdata = new FormData(form);
+
+		var upload_req = new XMLHttpRequest();
+		upload_req.open("POST", "{{ url_for('collector.csv_upload') }}", true);
+		upload_req.onload = function(oEvent) {
+			$('#upload_loading').empty();
+			if (upload_req.status == 200) {
+				M.Modal.getInstance($('#upload_modal')).close();
+				M.toast({html: "Successfully Uploaded"});
+				get_collection();
+			} else {
+				M.toast({html: "An internal error occurred. Please try again later."});
+			}
+		};
+
+		upload_req.send(formdata);
+	});
+
+	// basic card layout, needs work
+	// html_str += '<div class="col s12 m4 l3">\
+	// 								<div class="card">\
+	// 									<div class="card-image">\
+	// 										<img src="'+escapeHTML(c.card_image)+'">\
+	// 									</div>\
+	// 									<div class="card-content">\
+	// 										<div class="row">\
+	// 											<div class="col s1">\
+	// 												<img src="'+escapeHTML(c.set_image)+'" title="'+escapeHTML(c.setname)+'">\
+	// 											</div>\
+	// 											<div class="col s11">\
+	// 												<p>'+escapeHTML(c.name)+'</p>\
+	// 											</div>\
+	// 										</div>\
+	// 									</div>\
+	// 								</div>\
+	// 							</div>';
+</script>
 {% endblock %}

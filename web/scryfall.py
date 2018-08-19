@@ -57,6 +57,4 @@ def simplify(resp):
 	if 'colors' not in simple:
 		simple['colors'] = ''.join(resp['colors'])
 
-	simple['image_manual'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (simple['set'].lower(), simple['collectornumber'])
-
 	return simple

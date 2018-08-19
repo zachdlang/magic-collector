@@ -42,6 +42,8 @@ app.secret_key = app.config['SECRETKEY']
 
 app.register_blueprint(collector, url_prefix='')
 
+app.jinja_env.globals.update(is_logged_in=is_logged_in)
+
 if not app.debug:
 	ADMINISTRATORS=[app.config['TO_EMAIL']]
 	msg = 'Internal Error on collector'
