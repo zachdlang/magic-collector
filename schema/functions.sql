@@ -14,7 +14,8 @@ CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MON
 		foilprice
 	ELSE
 		price
-	END FROM card, user_card WHERE cardid = card.id AND user_card.id = _user_cardid;
+	END * COALESCE((SELECT exchangerate FROM currency WHERE code = (SELECT currencycode FROM app.enduser WHERE id = userid)), 1)
+	FROM card, user_card WHERE cardid = card.id AND user_card.id = _user_cardid;
 $$ LANGUAGE 'sql';
 
 
@@ -27,3 +28,16 @@ CREATE OR REPLACE FUNCTION collector.get_rarity(_initial TEXT) RETURNS TEXT AS $
 	WHEN _initial = 'M' THEN 'Mythic'
 	END;
 $$ LANGUAGE 'sql';
+
+
+DROP FUNCTION IF EXISTS collector.update_rates(TEXT, NUMERIC);
+CREATE OR REPLACE FUNCTION collector.update_rates(_code TEXT, _exchangerate NUMERIC) RETURNS VOID AS $$
+BEGIN
+	IF EXISTS (SELECT * FROM currency WHERE UPPER(code) = UPPER(_code)) THEN
+		UPDATE currency SET exchangerate = _exchangerate WHERE UPPER(code) = UPPER(_code);
+	ELSE
+		INSERT INTO currency (code, exchangerate) VALUES (UPPER(_code), _exchangerate);
+	END IF;
+	RETURN;
+END;
+$$ LANGUAGE 'plpgsql';

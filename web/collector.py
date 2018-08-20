@@ -49,23 +49,23 @@ def home():
 @collector.route('/get_collection', methods=['GET'])
 @login_required
 def get_collection():
-	currency = openexchangerates.get()
 	cursor = g.conn.cursor()
 	qry = """SELECT 
 				c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber, 
-				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) * %s AS price
+				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
+				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode
 			FROM user_card uc 
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
 			WHERE uc.userid = %s
 			ORDER BY c.name ASC"""
-	cursor.execute(qry, (currency['rate'], session['userid'],))
+	cursor.execute(qry, (session['userid'],))
 	cards = query_to_dict_list(cursor)
 	cursor.close()
 	for c in cards:
 		c['card_image'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (c['code'].lower(), c['collectornumber'])
 		c['set_image'] = 'https://img.scryfall.com/sets/%s.svg' % c['code'].lower()
-	return jsonify(cards=cards, currency=currency['code'])
+	return jsonify(cards=cards)
 
 
 @collector.route('/csv_upload', methods=['POST'])
@@ -99,9 +99,10 @@ def csv_upload():
 
 	cursor = g.conn.cursor()
 	for row in rows:
+		foil = int(row['Foil quantity']) > 0
 		qry = """INSERT INTO user_card (cardid, userid, quantity, foil) SELECT id, %s, %s, %s FROM card WHERE multiverseid = %s
-				AND NOT EXISTS (SELECT * FROM user_card WHERE cardid = card.id AND userid = %s)"""
-		qargs = (session['userid'], row['Quantity'], int(row['Foil quantity']) > 0, row['MultiverseID'], session['userid'],)
+				AND NOT EXISTS (SELECT * FROM user_card WHERE cardid = card.id AND foil = %s AND userid = %s)"""
+		qargs = (session['userid'], row['Quantity'], foil, row['MultiverseID'], foil, session['userid'],)
 		cursor.execute(qry, qargs)
 		g.conn.commit()
 	cursor.close()
@@ -142,3 +143,14 @@ def import_cards(cards):
 				cursor.execute("""UPDATE card SET price = %s, foilprice = %s WHERE id = %s""", (prices['normal'], prices['foil'], cardid,))
 		g.conn.commit()
 	cursor.close()
+
+
+@collector.route('/update_rates', methods=['POST'])
+def update_rates():
+	rates = openexchangerates.get()
+	cursor = g.conn.cursor()
+	for code, rate in rates.items():
+		cursor.execute("""SELECT update_rates(%s, %s)""", (code, rate,))
+	g.conn.commit()
+	cursor.close()
+	return jsonify()

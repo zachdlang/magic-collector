@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS enduser (
 	email TEXT NOT NULL,
 	username TEXT NOT NULL,
 	password TEXT NOT NULL,
-	ipaddr INET
+	ipaddr INET,
+	currencycode TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS card_set (
@@ -34,4 +35,10 @@ CREATE TABLE IF NOT EXISTS user_card (
 	userid INTEGER NOT NULL REFERENCES app.enduser(id) ON DELETE CASCADE,
 	quantity INTEGER NOT NULL,
 	foil BOOLEAN NOT NULL DEFAULT false
+)WITH OIDS;
+
+CREATE TABLE IF NOT EXISTS currency (
+	id SERIAL PRIMARY KEY,
+	code TEXT NOT NULL,
+	exchangerate NUMERIC NOT NULL
 )WITH OIDS;
