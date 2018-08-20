@@ -4,10 +4,17 @@
 <div class="container">
 	<div class="section">
 		<div class="row">
-			<div class="col s3 offset-s9">
-				<a class="waves-effect waves-light btn right modal-trigger" href="#upload_modal">Upload CSV</a>
-			</div>
-			<div id="upload_modal" class="modal">
+				<div class="col s9">
+					<input type="text">
+				</div>
+				<div class="col s1">
+					<a class="waves-effect waves-light btn">Add</a>
+				</div>
+				<div class="col s2">
+					<a class="waves-effect waves-light btn right modal-trigger" href="#upload_modal">Upload CSV</a>
+				</div>
+
+			<div id="upload_modal" class="modal fade">
 				<div class="modal-content">
 					<h4>Upload CSV</h4>
 					<div id="upload_loading"></div>
@@ -29,6 +36,8 @@
 				</div>
 			</div>
 		</div>
+
+		<img id="view_box" class="materialboxed hide">
 
 		<div class="row">
 			<div id="collection_list"></div>
@@ -69,7 +78,7 @@
 				for (var i = 0; i < data.cards.length; i++) {
 					var c = data.cards[i];
 					c.foil_icon = (c.foil) ? 'check_box' : 'check_box_outline_blank';
-					c.price = (c.price) ? c.price + ' ' + data.currency : '';
+					c.price = (c.price) ? c.price + ' ' + c.currencycode : '';
 					html_str += '<tr data-image="'+escapeHTML(c.card_image)+'">\
 									<td class="card-name">'+escapeHTML(c.name)+'</td>\
 									<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(c.set_image)+'">'+escapeHTML(c.setname)+'</td>\
@@ -89,15 +98,27 @@
 					var horiz_pos = $(this).position().left + $(this).width();
 					$(this).append('<div class="card-panel card-hover" style="top: '+escapeHTML(vert_pos)+'px; left: '+escapeHTML(horiz_pos)+'px;">\
 										<img class="responsive-img" src="'+escapeHTML(image_url)+'">\
-									</div>')
+									</div>');
+					$('#view_box').attr('src', image_url);
 				}, function() {
 					$('.card-hover').remove();
+				});
+
+				$('.card-name').on('click', function() {
+					M.Materialbox.getInstance($('#view_box')).open();
 				});
 			}
 		}).fail(function() {
 			M.toast({html: "An internal error occurred. Please try again later."});
 		});
 	}
+
+	document.addEventListener('DOMContentLoaded', function() {
+		M.Materialbox.init(document.querySelectorAll('#view_box'), {
+			onOpenStart: function() { $('#view_box').removeClass('hide'); },
+			onCloseStart: function() { $('#view_box').addClass('hide'); }
+		});
+	});
 
 	$('#upload_btn').on('click', function() {
 		show_loading($('#upload_loading'));
