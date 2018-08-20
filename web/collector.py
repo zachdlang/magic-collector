@@ -100,9 +100,17 @@ def csv_upload():
 	cursor = g.conn.cursor()
 	for row in rows:
 		foil = int(row['Foil quantity']) > 0
-		qry = """INSERT INTO user_card (cardid, userid, quantity, foil) SELECT id, %s, %s, %s FROM card WHERE multiverseid = %s
-				AND NOT EXISTS (SELECT * FROM user_card WHERE cardid = card.id AND foil = %s AND userid = %s)"""
-		qargs = (session['userid'], row['Quantity'], foil, row['MultiverseID'], foil, session['userid'],)
+		qry = """SELECT id FROM user_card WHERE cardid = (SELECT id FROM card WHERE multiverseid = %s) AND foil = %s AND userid = %s"""
+		qargs = (row['MultiverseID'], foil, session['userid'],)
+		cursor.execute(qry, qargs)
+		if cursor.rowcount > 0:
+			user_cardid = cursor.fetchone()[0]
+			qry = """UPDATE user_card SET quantity = quantity + %s WHERE id = %s"""
+			qargs = (row['Quantity'], user_cardid,)
+		else:
+			qry = """INSERT INTO user_card (cardid, userid, quantity, foil) SELECT id, %s, %s, %s FROM card WHERE multiverseid = %s
+					AND NOT EXISTS (SELECT * FROM user_card WHERE cardid = card.id AND foil = %s AND userid = %s)"""
+			qargs = (session['userid'], row['Quantity'], foil, row['MultiverseID'], foil, session['userid'],)
 		cursor.execute(qry, qargs)
 		g.conn.commit()
 	cursor.close()
