@@ -49,7 +49,17 @@ def home():
 @collector.route('/get_collection', methods=['GET'])
 @login_required
 def get_collection():
+	params = params_to_dict(request.args)
+	limit = 50
+	page = 1
+	if params.get('page'):
+		page = int(params.get('page'))
+	offset = page * limit - limit
+
 	cursor = g.conn.cursor()
+	cursor.execute("""SELECT count(*) FROM user_card WHERE userid = %s""", (session['userid'],))
+	count = pagecount(cursor.fetchone()[0], limit)
+
 	qry = """SELECT 
 				c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber, 
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
@@ -58,14 +68,15 @@ def get_collection():
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
 			WHERE uc.userid = %s
-			ORDER BY c.name ASC"""
-	cursor.execute(qry, (session['userid'],))
+			ORDER BY c.name ASC
+			LIMIT %s OFFSET %s"""
+	cursor.execute(qry, (session['userid'], limit, offset,))
 	cards = query_to_dict_list(cursor)
 	cursor.close()
 	for c in cards:
 		c['card_image'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (c['code'].lower(), c['collectornumber'])
 		c['set_image'] = 'https://img.scryfall.com/sets/%s.svg' % c['code'].lower()
-	return jsonify(cards=cards)
+	return jsonify(cards=cards, count=count)
 
 
 @collector.route('/csv_upload', methods=['POST'])

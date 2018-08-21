@@ -43,6 +43,9 @@
 			<div id="collection_list"></div>
 		</div>
 
+		<div id="collection_pagination">
+		</div>
+
 	</div>
 
 	<br><br>
@@ -107,6 +110,8 @@
 				$('.card-name').on('click', function() {
 					M.Materialbox.getInstance($('#view_box')).open();
 				});
+
+				generate_pagination($('#collection_pagination'), data.count);
 			}
 		}).fail(function() {
 			M.toast({html: "An internal error occurred. Please try again later."});
@@ -140,6 +145,18 @@
 
 		upload_req.send(formdata);
 	});
+
+	function generate_pagination(elem, count) {
+		var pagination_str = '<ul class="pagination">\
+								<li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>';
+		for (var i = 1; i <= count; i++) {
+			var page_class = (i == 1) ? 'active' : 'waves-effect';
+			pagination_str += '<li class="'+page_class+'"><a href="#!">'+i+'</a></li>';
+		}
+		pagination_str += '<li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>\
+						</ul>';
+		elem.html(pagination_str);
+	}
 
 	// basic card layout, needs work
 	// html_str += '<div class="col s12 m4 l3">\

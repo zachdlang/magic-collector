@@ -55,3 +55,17 @@ def strip_unicode_characters(s):
 	for key, value in replacements.items():
 		s = s.replace(key, value)
 	return s.encode('ascii', 'ignore').decode('ascii')
+
+
+def pagecount(count, limit):
+	import math
+	pages = 0
+	if count:
+		pages = count/limit
+		if pages > 0 and pages < 1:
+			pages = 1
+		else:
+			#checking for overflow..
+			if limit % count != 0:
+				pages = math.ceil(pages)
+	return int(pages)
