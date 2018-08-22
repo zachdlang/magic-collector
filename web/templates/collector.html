@@ -58,11 +58,13 @@
 		get_collection();
 	});
 
+	var current_page = 1;
 	function get_collection() {
 		show_loading($('#collection_list'));
 		$.ajax({
 			url: "{{ url_for('collector.get_collection') }}",
-			method: "GET"
+			method: "GET",
+			data: { 'page':current_page }
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
@@ -147,15 +149,46 @@
 	});
 
 	function generate_pagination(elem, count) {
-		var pagination_str = '<ul class="pagination">\
-								<li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>';
-		for (var i = 1; i <= count; i++) {
-			var page_class = (i == 1) ? 'active' : 'waves-effect';
-			pagination_str += '<li class="'+page_class+'"><a href="#!">'+i+'</a></li>';
+		var page_str = '<ul class="pagination">';
+		if (current_page > 1) page_str += '<li class="waves-effect"><a class="first-page"><i class="material-icons">first_page</i></a></li>';
+		if (current_page > 1) page_str += '<li class="waves-effect"><a class="prev-page"><i class="material-icons">chevron_left</i></a></li>';
+		var max_back = 3;
+		var max_forward = 4;
+		if (current_page - max_back > 1) page_str += '<li class="waves-effect"><a class="page">...</a></li>';
+		for (var i = current_page - max_back; i < current_page; i++) {
+			if (i > 0) page_str += '<li class="waves-effect"><a class="page">'+i+'</a></li>';
 		}
-		pagination_str += '<li class="waves-effect"><a href="#!"><i class="material-icons">chevron_right</i></a></li>\
-						</ul>';
-		elem.html(pagination_str);
+		page_str += '<li class="active"><a class="page">'+i+'</a></li>';
+		for (var i = current_page + 1; i < current_page + max_forward; i++) {
+			if (i <= count) page_str += '<li class="waves-effect"><a class="page">'+i+'</a></li>';
+		}
+		if (current_page + max_forward < count) page_str += '<li class="waves-effect"><a class="page">...</a></li>';
+		if (current_page < count) page_str += '<li class="waves-effect"><a class="next-page"><i class="material-icons">chevron_right</i></a></li>';
+		if (current_page < count) page_str += '<li class="waves-effect"><a class="last-page"><i class="material-icons">last_page</i></a></li>'
+		page_str += '</ul>';
+		elem.html(page_str);
+
+		elem.off('click');
+		elem.on('click', '.first-page', function() {
+			current_page = 1;
+			get_collection();
+		});
+		elem.on('click', '.prev-page', function() {
+			current_page--;
+			get_collection();
+		});
+		elem.on('click', '.page', function() {
+			current_page = parseInt($(this).text());
+			get_collection();
+		});
+		elem.on('click', '.next-page', function() {
+			current_page++;
+			get_collection();
+		});
+		elem.on('click', '.last-page', function() {
+			current_page = count;
+			get_collection();
+		});
 	}
 
 	// basic card layout, needs work
