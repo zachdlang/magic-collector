@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
 	<div class="section">
-		<div id="add-row" class="row">
+		<div id="add-row" class="row hide">
 			<div class="col s6">
 				<input type="text">
 			</div>
@@ -140,6 +140,16 @@
 			onOpenStart: function() { $('#view_box').removeClass('hide'); },
 			onCloseStart: function() { $('#view_box').addClass('hide'); }
 		});
+	});
+
+	$('#add-row-show').on('click', function() {
+		$('#add-row').removeClass('hide');
+		$('#search-row').addClass('hide');
+	});
+
+	$('#add-row-hide').on('click', function() {
+		$('#add-row').addClass('hide');
+		$('#search-row').removeClass('hide');
 	});
 
 	$('#upload_btn').on('click', function() {
