@@ -3,37 +3,52 @@
 {% block content %}
 <div class="container">
 	<div class="section">
-		<div class="row">
-				<div class="col s9">
-					<input type="text">
-				</div>
-				<div class="col s1">
-					<a class="waves-effect waves-light btn">Add</a>
-				</div>
-				<div class="col s2">
-					<a class="waves-effect waves-light btn right modal-trigger" href="#upload_modal">Upload CSV</a>
-				</div>
+		<div id="add-row" class="row">
+			<div class="col s6">
+				<input type="text">
+			</div>
+			<div class="col s2">
+				<a class="waves-effect waves-light btn">Add</a>
+			</div>
+			<div class="col s2">
+				<a class="waves-effect waves-light btn modal-trigger" href="#upload_modal">Upload CSV</a>
+			</div>
+			<div class="col s2">
+				<a class="waves-effect waves-light btn btn-flat right" id="add-row-hide">Back</a>
+			</div>
+		</div>
 
-			<div id="upload_modal" class="modal fade">
-				<div class="modal-content">
-					<h4>Upload CSV</h4>
-					<div id="upload_loading"></div>
+		<div id="search-row" class="row">
+			<div class="col s6">
+				<input type="text">
+			</div>
+			<div class="col s2">
+				<a class="waves-effect waves-light btn">Search</a>
+			</div>
+			<div class="col s3 offset-s1">
+				<a class="waves-effect waves-light btn btn-flat right" id="add-row-show">Add Cards</a>
+			</div>
+		</div>
 
-					<div class="file-field input-field">
-						<div class="btn">
-							<span>File</span>
-							<form enctype="multipart/form-data" method="post" name="upload_form">
-								<input type="file" accept="text/csv" name="upload">
-							</form>
-						</div>
-						<div class="file-path-wrapper">
-							<input class="file-path validate" type="text">
-						</div>
+		<div id="upload_modal" class="modal fade">
+			<div class="modal-content">
+				<h4>Upload CSV</h4>
+				<div id="upload_loading"></div>
+
+				<div class="file-field input-field">
+					<div class="btn">
+						<span>File</span>
+						<form enctype="multipart/form-data" method="post" name="upload_form">
+							<input type="file" accept="text/csv" name="upload">
+						</form>
+					</div>
+					<div class="file-path-wrapper">
+						<input class="file-path validate" type="text">
 					</div>
 				</div>
-				<div class="modal-footer">
-					<a class="waves-effect waves-green btn-flat" id=upload_btn>Submit</a>
-				</div>
+			</div>
+			<div class="modal-footer">
+				<a class="waves-effect waves-green btn-flat" id=upload_btn>Submit</a>
 			</div>
 		</div>
 
