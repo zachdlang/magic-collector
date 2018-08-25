@@ -5,7 +5,7 @@
 	<div class="section">
 		<div id="add-row" class="row hide">
 			<div class="col s9 m6">
-				<input type="text">
+				<input type="text" id="add-row-search">
 			</div>
 			<div class="col s3 m2">
 				<a class="waves-effect waves-light btn">Add</a>
@@ -150,6 +150,29 @@
 	$('#add-row-hide').on('click', function() {
 		$('#add-row').addClass('hide');
 		$('#search-row').removeClass('hide');
+	});
+
+	var add_search_req;
+	var add_search_timer;
+	$('#add-row-search').on('keyup', function() {
+		if ($(this).val().length >= 3) {
+			console.log('in here');
+			var query = $(this).val()
+			clearTimeout(add_search_timer);
+		    add_search_timer = setTimeout(function() {
+		    	console.log('searching!');
+				if (add_search_req) add_search_req.abort();
+				add_search_req = $.ajax({
+					url: "{{ url_for('collector.search') }}",
+					method: "GET",
+					data: { 'query':query }
+				}).done(function(data) {
+					console.table(data.results);
+				}).fail(function(jqXHR) {
+					if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred. Please try again later."});
+				});
+		    }, 500);
+		}
 	});
 
 	$('#upload_btn').on('click', function() {

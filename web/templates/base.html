@@ -80,6 +80,10 @@
 				});
 			}
 
+			function ajax_user_aborted(jqXHR) {
+				return !jqXHR.getAllResponseHeaders();
+			}
+
 			$('.validate').on('keyup', function() {
 				$(this).removeClass('valid invalid');
 			});

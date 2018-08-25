@@ -79,6 +79,18 @@ def get_collection():
 	return jsonify(cards=cards, count=count)
 
 
+@collector.route('/search', methods=['GET'])
+@login_required
+def search():
+	params = params_to_dict(request.args)
+	results = []
+
+	if params.get('query'):
+		results = scryfall.search(params['query'])
+
+	return jsonify(results=results)
+
+
 @collector.route('/csv_upload', methods=['POST'])
 @login_required
 def csv_upload():

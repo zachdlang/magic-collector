@@ -15,8 +15,8 @@ def search(name):
 	params = { 'q':name, 'unique':'prints' }
 	resp = scryfall_request('/cards/search', params=params)
 	simple_resp = []
-	for r in resp['data']:
-		if r['multiverseid']:
+	if resp.get('code') != 'not_found':
+		for r in resp['data']:
 			simple_resp.append(simplify(r))
 	return simple_resp
 
