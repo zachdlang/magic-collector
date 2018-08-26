@@ -77,3 +77,8 @@
 .col > .btn {
 	width: 100%;
 }
+
+#search-results {
+	position: absolute;
+	width: 100%;
+}

@@ -58,3 +58,11 @@ def simplify(resp):
 		simple['colors'] = ''.join(resp['colors'])
 
 	return simple
+
+
+def card_image_url(code, collectornumber):
+	return 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (code.lower(), collectornumber)
+
+
+def set_image_url(code):
+	return 'https://img.scryfall.com/sets/%s.svg' % code.lower()

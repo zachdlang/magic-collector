@@ -74,8 +74,8 @@ def get_collection():
 	cards = query_to_dict_list(cursor)
 	cursor.close()
 	for c in cards:
-		c['card_image'] = 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (c['code'].lower(), c['collectornumber'])
-		c['set_image'] = 'https://img.scryfall.com/sets/%s.svg' % c['code'].lower()
+		c['card_image'] = scryfall.card_image_url(c['code'], c['collectornumber'])
+		c['set_image'] = scryfall.set_image_url(c['code'])
 	return jsonify(cards=cards, count=count)
 
 
@@ -87,6 +87,8 @@ def search():
 
 	if params.get('query'):
 		results = scryfall.search(params['query'])
+		for r in results:
+			r['set_image'] = scryfall.set_image_url(r['set'])
 
 	return jsonify(results=results)
 
