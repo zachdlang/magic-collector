@@ -37,6 +37,15 @@ def get_bulk(multiverseids):
 	return simple_resp
 
 
+def bulk_file_import(filename):
+	with open(filename) as f:
+		data = json.loads(f.read())
+	simple_resp = []
+	for r in data:
+		simple_resp.append(simplify(r))
+	return simple_resp
+
+
 def simplify(resp):
 	simple = {
 		'name': resp['name'],

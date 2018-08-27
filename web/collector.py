@@ -156,8 +156,15 @@ def import_cards(cards):
 		qargs = (s['name'], s['code'], s['code'],)
 		cursor.execute(qry, qargs)
 		g.conn.commit()
+
+	# more efficient than attempting inserts
+	cursor.execute("""SELECT multiverseid FROM card""")
+	multiverse_ids = [ x['multiverseid'] for x in query_to_dict_list(cursor) ]
 		
 	for c in cards:
+		if c['multiverseid'] in multiverse_ids:
+			print('Existing %s...' % c['multiverseid'])
+			continue
 		qry = """INSERT INTO card (
 				collectornumber, multiverseid, name, card_setid, colors,
 				rarity, multifaced) SELECT
