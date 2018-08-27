@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS card (
 	rarity CHARACTER,
 	multifaced BOOLEAN NOT NULL DEFAULT FALSE,
 	price MONEY,
-	foilprice MONEY
+	foilprice MONEY,
+	tcgplayer_productid TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (

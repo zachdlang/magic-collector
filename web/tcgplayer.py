@@ -23,7 +23,7 @@ def search_categories():
 
 
 def search(cardname, setname):
-	prices = None
+	productid = None
 	if 'tcgplayer_bearertoken' not in session:
 		login()
 
@@ -36,26 +36,28 @@ def search(cardname, setname):
 	resp = requests.post('http://api.tcgplayer.com/catalog/categories/1/search', data=json.dumps(data), headers=headers)
 	resp = json.loads(resp.text)
 	if len(resp['results']) == 1:
-		prices = get_price(resp['results'][0])
+		productid = resp['results'][0]
 	elif len(resp['results']) > 1:
 		print('MORE THAN ONE RESULT %s %s' % (cardname, setname))
 	else:
 		print('NO RESULT %s %s' % (cardname, setname))
-	return prices
+	return productid
 
 
-def get_price(productid):
-	prices = { 'normal':None, 'foil':None }
+def get_price(cards):
 	if 'tcgplayer_bearertoken' not in session:
 		login()
 	headers = { 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
-	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % productid, headers=headers)
+	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([ cards[cardid] for cardid in cards ]), headers=headers)
 	resp = json.loads(resp.text)
-	for r in resp['results']:
-		if r['subTypeName'] == 'Normal':
-			prices['normal'] = r['midPrice']
-		elif r['subTypeName'] == 'Foil':
-			prices['foil'] = r['midPrice']
-		else:
-			print('UNKNOWN SUBTYPE %s %s' % (productid, r['subTypeName']))
+	prices = { cardid:{ 'normal':None, 'foil':None } for cardid, productid in cards.items() }
+	for cardid, productid in cards.items():
+		for r in resp['results']:
+			if str(r['productId']) == productid:
+				if r['subTypeName'] == 'Normal':
+					prices[cardid]['normal'] = r['midPrice']
+				elif r['subTypeName'] == 'Foil':
+					prices[cardid]['foil'] = r['midPrice']
+				else:
+					print('UNKNOWN SUBTYPE %s %s' % (cards, r['subTypeName']))
 	return prices

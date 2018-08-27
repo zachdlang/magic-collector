@@ -179,10 +179,34 @@ def import_cards(cards):
 		if cursor.rowcount > 0:
 			cardid, setname = cursor.fetchone()
 			prices = tcgplayer.search(c['name'], setname)
+			prices = tcgplayer.get_price()
 			if prices:
 				cursor.execute("""UPDATE card SET price = %s, foilprice = %s WHERE id = %s""", (prices['normal'], prices['foil'], cardid,))
 		g.conn.commit()
 	cursor.close()
+
+
+@collector.route('/update_prices', methods=['GET'])
+def update_prices():
+	cursor = g.conn.cursor()
+	cursor.execute("""SELECT id, name, (SELECT name FROM card_set WHERE id = card_setid) AS setname, tcgplayer_productid AS productid FROM card LIMIT 250""")
+	cards = query_to_dict_list(cursor)
+	for c in cards:
+		if c['productid'] is None:
+			c['productid'] = tcgplayer.search(c['name'], c['setname'])
+			if c['productid'] is not None:
+				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
+				g.conn.commit()
+
+	prices = tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in cards if c['productid'] is not None })
+
+	updates = []
+	for cardid, price in prices.items():
+		updates.append({ 'price':price['normal'], 'foilprice':price['foil'], 'id':cardid })
+	cursor.executemany("""UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s""", updates)
+	g.conn.commit()
+	cursor.close()
+	return jsonify()
 
 
 @collector.route('/update_rates', methods=['POST'])
