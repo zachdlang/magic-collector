@@ -160,7 +160,8 @@ def import_cards(cards):
 	# more efficient than attempting inserts
 	cursor.execute("""SELECT multiverseid FROM card""")
 	multiverse_ids = [ x['multiverseid'] for x in query_to_dict_list(cursor) ]
-		
+	
+	new_cards = []
 	for c in cards:
 		if c['multiverseid'] in multiverse_ids:
 			print('Existing %s...' % c['multiverseid'])
@@ -171,25 +172,36 @@ def import_cards(cards):
 				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
 				%s, %s
 				WHERE NOT EXISTS (SELECT * FROM card WHERE multiverseid = %s)
-				RETURNING id, (SELECT name FROM card_set WHERE id = card_setid)"""
+				RETURNING id"""
 		qargs = (c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
 				c['rarity'], c['multifaced'],
 				c['multiverseid'],)
 		cursor.execute(qry, qargs)
 		if cursor.rowcount > 0:
-			cardid, setname = cursor.fetchone()
-			prices = tcgplayer.search(c['name'], setname)
-			prices = tcgplayer.get_price()
-			if prices:
-				cursor.execute("""UPDATE card SET price = %s, foilprice = %s WHERE id = %s""", (prices['normal'], prices['foil'], cardid,))
+			c['id'] = cursor.fetchone()[0]
+			c['productid'] = tcgplayer.search(c['name'], c['set_name'])
+			if c['productid'] is not None:
+				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
+				new_cards.append({ 'id':c['id'], 'productid':c['productid'] })
 		g.conn.commit()
+
+	bulk_lots = ([ new_cards[i:i + 250] for i in range(0, len(new_cards), 250) ])
+	prices = []
+	for lot in bulk_lots:
+		prices.update(tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in lot if c['productid'] is not None }))
+
+	updates = []
+	for cardid, price in prices.items():
+		updates.append({ 'price':price['normal'], 'foilprice':price['foil'], 'id':cardid })
+	cursor.executemany("""UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s""", updates)
+	g.conn.commit()
 	cursor.close()
 
 
 @collector.route('/update_prices', methods=['GET'])
 def update_prices():
 	cursor = g.conn.cursor()
-	cursor.execute("""SELECT id, name, (SELECT name FROM card_set WHERE id = card_setid) AS setname, tcgplayer_productid AS productid FROM card LIMIT 250""")
+	cursor.execute("""SELECT id, name, (SELECT name FROM card_set WHERE id = card_setid) AS setname, tcgplayer_productid AS productid FROM card""")
 	cards = query_to_dict_list(cursor)
 	for c in cards:
 		if c['productid'] is None:
@@ -198,7 +210,10 @@ def update_prices():
 				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
 				g.conn.commit()
 
-	prices = tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in cards if c['productid'] is not None })
+	bulk_lots = ([ cards[i:i + 250] for i in range(0, len(cards), 250) ])
+	prices = {}
+	for lot in bulk_lots:
+		prices.update(tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in lot if c['productid'] is not None }))
 
 	updates = []
 	for cardid, price in prices.items():
