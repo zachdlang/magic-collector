@@ -56,6 +56,11 @@ def get_collection():
 		page = int(params.get('page'))
 	offset = page * limit - limit
 
+	cols = { 'name':'c.name', 'setname':'cs.name', 'rarity':'c.rarity', 'quantity':'uc.quantity', 'foil':'uc.foil', 'price':'get_price(uc.id)' }
+	sort = cols.get(params.get('sort'), 'c.name')
+	descs = { 'asc':'ASC', 'desc':'DESC' }
+	sort_desc = descs.get(params.get('sort_desc'), 'ASC')
+
 	cursor = g.conn.cursor()
 	if params.get('query'):
 		qry = """SELECT count(*) FROM user_card WHERE userid = %s AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"""
@@ -78,7 +83,7 @@ def get_collection():
 	if params.get('query'):
 		qry += """ AND c.name ILIKE %s"""
 		qargs += ('%' + params['query'] + '%',)
-	qry += """ ORDER BY c.name ASC LIMIT %s OFFSET %s"""
+	qry += """ ORDER BY %s %s LIMIT %%s OFFSET %%s""" % (sort, sort_desc)
 	qargs += (limit, offset,)
 	cursor.execute(qry, qargs)
 	cards = query_to_dict_list(cursor)

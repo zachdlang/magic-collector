@@ -33,6 +33,10 @@
 	left: 25%;
 }
 
+.sort-head {
+	cursor: pointer;
+}
+
 .set-icon {
 	height: 20px;
 	padding-right: 10px;
