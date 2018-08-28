@@ -57,7 +57,13 @@ def get_collection():
 	offset = page * limit - limit
 
 	cursor = g.conn.cursor()
-	cursor.execute("""SELECT count(*) FROM user_card WHERE userid = %s""", (session['userid'],))
+	if params.get('query'):
+		qry = """SELECT count(*) FROM user_card WHERE userid = %s AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"""
+		qargs = (session['userid'], '%' + params['query'] + '%',)
+	else:
+		qry = """SELECT count(*) FROM user_card WHERE userid = %s"""
+		qargs = (session['userid'],)
+	cursor.execute(qry, qargs)
 	count = pagecount(cursor.fetchone()[0], limit)
 
 	qry = """SELECT 
@@ -67,10 +73,14 @@ def get_collection():
 			FROM user_card uc 
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
-			WHERE uc.userid = %s
-			ORDER BY c.name ASC
-			LIMIT %s OFFSET %s"""
-	cursor.execute(qry, (session['userid'], limit, offset,))
+			WHERE uc.userid = %s"""
+	qargs = (session['userid'],)
+	if params.get('query'):
+		qry += """ AND c.name ILIKE %s"""
+		qargs += ('%' + params['query'] + '%',)
+	qry += """ ORDER BY c.name ASC LIMIT %s OFFSET %s"""
+	qargs += (limit, offset,)
+	cursor.execute(qry, qargs)
 	cards = query_to_dict_list(cursor)
 	cursor.close()
 	for c in cards:
@@ -86,9 +96,14 @@ def search():
 	results = []
 
 	if params.get('query'):
-		results = scryfall.search(params['query'])
+		search = '%' + params['query'] + '%'
+		cursor = g.conn.cursor()
+		qry = """SELECT c.id, c.name, s.code, s.name AS setname FROM card c LEFT JOIN card_set s ON (c.card_setid=s.id) WHERE c.name ILIKE %s ORDER BY name ASC LIMIT 50"""
+		cursor.execute(qry, (search,))
+		results = query_to_dict_list(cursor)
 		for r in results:
-			r['set_image'] = scryfall.set_image_url(r['set'])
+			r['set_image'] = scryfall.set_image_url(r['code'])
+			del r['code']
 
 	return jsonify(results=results)
 
