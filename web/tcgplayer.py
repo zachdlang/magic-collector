@@ -30,6 +30,7 @@ def search(cardname, setname):
 	# check for multiface card format
 	if ' // ' in cardname:
 		cardname = cardname.split(' // ')[0]
+	setname = setname.replace(':', '')
 
 	headers = { 'Content-Type':'application/json', 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
 	data = { 'filters':[{ 'name': 'ProductName', 'values': [ cardname ] }, { 'name':'SetName', 'values': [ setname ] }] }
