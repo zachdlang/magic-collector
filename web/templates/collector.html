@@ -244,12 +244,14 @@
 	});
 
 	function generate_pagination(elem, count) {
-		var page_str = '<ul class="pagination">';
+		var page_str = '<ul id="extra-pages-before" class="dropdown-content"></ul>\
+						<ul id="extra-pages-after" class="dropdown-content"></ul>\
+						<ul class="pagination">';
 		if (current_page > 1) page_str += '<li class="waves-effect"><a class="first-page"><i class="material-icons">first_page</i></a></li>';
 		if (current_page > 1) page_str += '<li class="waves-effect"><a class="prev-page"><i class="material-icons">chevron_left</i></a></li>';
 		var max_back = 3;
 		var max_forward = 4;
-		if (current_page - max_back > 1) page_str += '<li class="waves-effect"><a class="page">...</a></li>';
+		if (current_page - max_back > 1) page_str += '<li class="waves-effect"><a class="dropdown-trigger" data-target="extra-pages-before">...</a></li>';
 		for (var i = current_page - max_back; i < current_page; i++) {
 			if (i > 0) page_str += '<li class="waves-effect"><a class="page">'+i+'</a></li>';
 		}
@@ -257,11 +259,21 @@
 		for (var i = current_page + 1; i < current_page + max_forward; i++) {
 			if (i <= count) page_str += '<li class="waves-effect"><a class="page">'+i+'</a></li>';
 		}
-		if (current_page + max_forward < count) page_str += '<li class="waves-effect"><a class="page">...</a></li>';
+		if (current_page + max_forward < count) page_str += '<li class="waves-effect"><a class="dropdown-trigger" data-target="extra-pages-after">...</a></li>';
 		if (current_page < count) page_str += '<li class="waves-effect"><a class="next-page"><i class="material-icons">chevron_right</i></a></li>';
 		if (current_page < count) page_str += '<li class="waves-effect"><a class="last-page"><i class="material-icons">last_page</i></a></li>'
 		page_str += '</ul>';
 		elem.html(page_str);
+
+		var extra_before_html = '';
+		var extra_after_html = '';
+		for (var i = 1; i < count; i++) {
+			if (i < current_page - max_back) extra_before_html += '<li><a class="page">'+i+'</a></li>';
+			if (i >= current_page + max_forward) extra_after_html += '<li><a class="page">'+i+'</a></li>';
+		}
+
+		elem.find('#extra-pages-before').html(extra_before_html);
+		elem.find('#extra-pages-after').html(extra_after_html);
 
 		elem.off('click');
 		elem.on('click', '.first-page', function() {
@@ -272,10 +284,6 @@
 			current_page--;
 			get_collection();
 		});
-		elem.on('click', '.page', function() {
-			current_page = parseInt($(this).text());
-			get_collection();
-		});
 		elem.on('click', '.next-page', function() {
 			current_page++;
 			get_collection();
@@ -284,7 +292,15 @@
 			current_page = count;
 			get_collection();
 		});
+
+		var elems = document.querySelectorAll('.dropdown-trigger');
+		var instances = M.Dropdown.init(elems, { 'container':$('body') });
 	}
+
+	$(document).on('click', '.page', function() {
+		current_page = parseInt($(this).text());
+		get_collection();
+	});
 
 	// basic card layout, needs work
 	// html_str += '<div class="col s12 m4 l3">\
