@@ -163,6 +163,7 @@
 
 	var search_timer;
 	$('#search-row-search').on('keyup', function() {
+		current_page = 1;
 		if ($(this).val().length >= 3) {
 			clearTimeout(search_timer);
 			search_timer = setTimeout(function() {
