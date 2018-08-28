@@ -268,7 +268,7 @@
 
 		var extra_before_html = '';
 		var extra_after_html = '';
-		for (var i = 1; i < count; i++) {
+		for (var i = 1; i <= count; i++) {
 			if (i < current_page - max_back) extra_before_html += '<li><a class="page">'+i+'</a></li>';
 			if (i >= current_page + max_forward) extra_after_html += '<li><a class="page">'+i+'</a></li>';
 		}
