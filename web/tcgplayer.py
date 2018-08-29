@@ -22,26 +22,53 @@ def search_categories():
 				print(i)
 
 
-def search(cardname, setname):
+def search(card):
 	productid = None
 	if 'tcgplayer_bearertoken' not in session:
 		login()
 
 	# check for multiface card format
-	if ' // ' in cardname:
-		cardname = cardname.split(' // ')[0]
-	setname = setname.replace(':', '')
+	if ' // ' in card['name']:
+		card['name'] = card['name'].split(' // ')[0]
 
 	headers = { 'Content-Type':'application/json', 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
-	data = { 'filters':[{ 'name': 'ProductName', 'values': [ cardname ] }, { 'name':'SetName', 'values': [ setname ] }] }
+	data = { 'filters':[{ 'name': 'ProductName', 'values': [ card['name'] ] }, { 'name':'SetName', 'values': [ card['set_name'] ] }, { 'name':'Rarity', 'values': [ card['rarity'] ] }] }
 	resp = requests.post('http://api.tcgplayer.com/catalog/categories/1/search', data=json.dumps(data), headers=headers)
-	resp = json.loads(resp.text)
-	if len(resp['results']) == 1:
-		productid = resp['results'][0]
-	elif len(resp['results']) > 1:
-		print('MORE THAN ONE RESULT %s %s' % (cardname, setname))
+	search_results = json.loads(resp.text)['results']
+	if len(search_results) == 1:
+		productid = search_results[0]
+	elif len(search_results) > 1:
+		# filter down from product details
+		resp = requests.get('http://api.tcgplayer.com/catalog/products/%s' % ','.join([ str(r) for r in search_results ]), params={ 'getExtendedFields':True }, headers=headers)
+		product_results = json.loads(resp.text)['results']
+		products_found = []
+		for r in product_results:
+			found_english = False
+			for pc in r['productConditions']:
+				if pc['language'] == 'English':
+					found_english = True
+			if found_english is True:
+				products_found.append(r)
+		if len(products_found) == 1:
+			productid = products_found[0]['productId']
+			print('Extra product search found result %s for %s %s' % (productid, card['name'], card['set_name']))
+		else:
+			# filter down from set details
+			resp = requests.get('http://api.tcgplayer.com/catalog/groups/%s' % ','.join([ str(r['groupId']) for r in products_found ]), headers=headers)
+			group_results = json.loads(resp.text)['results']
+			groups_found = []
+			for r in group_results:
+				for p in products_found:
+					if r['groupId'] == p['groupId']:
+						if r['name'] == card['set_name']:
+							groups_found.append(p)
+			if len(groups_found) == 1:
+				productid = groups_found[0]['productId']
+				print('Extra group search found result %s for %s %s' % (productid, card['name'], card['set_name']))
+		if productid is None:
+			print('MORE THAN ONE RESULT (%s) %s %s %s' % (len(search_results), card['name'], card['set_name'], card['rarity']))
 	else:
-		print('NO RESULT %s %s' % (cardname, setname))
+		print('NO RESULT %s %s %s' % (card['name'], card['set_name'], card['rarity']))
 	return productid
 
 

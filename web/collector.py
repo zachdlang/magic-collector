@@ -199,7 +199,7 @@ def import_cards(cards):
 		cursor.execute(qry, qargs)
 		if cursor.rowcount > 0:
 			c['id'] = cursor.fetchone()[0]
-			c['productid'] = tcgplayer.search(c['name'], c['set_name'])
+			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
 				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
 				new_cards.append({ 'id':c['id'], 'productid':c['productid'] })
@@ -221,11 +221,11 @@ def import_cards(cards):
 @collector.route('/update_prices', methods=['GET'])
 def update_prices():
 	cursor = g.conn.cursor()
-	cursor.execute("""SELECT id, name, (SELECT name FROM card_set WHERE id = card_setid) AS setname, tcgplayer_productid AS productid FROM card""")
+	cursor.execute("""SELECT id, name, rarity, (SELECT name FROM card_set WHERE id = card_setid) AS set_name, tcgplayer_productid AS productid FROM card ORDER BY name ASC""")
 	cards = query_to_dict_list(cursor)
 	for c in cards:
 		if c['productid'] is None:
-			c['productid'] = tcgplayer.search(c['name'], c['setname'])
+			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
 				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
 				g.conn.commit()
