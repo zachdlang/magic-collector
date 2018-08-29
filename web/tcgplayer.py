@@ -49,6 +49,8 @@ def get_price(cards):
 	if 'tcgplayer_bearertoken' not in session:
 		login()
 	print('Fetching prices for %s cards' % len(cards))
+	if len(cards) == 0:
+		return {}
 	headers = { 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
 	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([ cards[cardid] for cardid in cards ]), headers=headers)
 	resp = json.loads(resp.text)
