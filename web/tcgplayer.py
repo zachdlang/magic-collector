@@ -77,6 +77,7 @@ def get_price(cards):
 		login()
 	print('Fetching prices for %s cards' % len(cards))
 	if len(cards) == 0:
+		print('Ignoring 0 length');
 		return {}
 	headers = { 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
 	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([ cards[cardid] for cardid in cards ]), headers=headers)
