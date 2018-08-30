@@ -64,7 +64,18 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<a class="waves-effect waves-green btn-flat" id=upload_btn>Submit</a>
+				<a class="waves-effect waves-green btn-flat" id="upload_btn">Submit</a>
+			</div>
+		</div>
+
+		<div id="edit_modal" class="modal fade">
+			<div class="modal-content">
+				<h4></h4>
+
+				
+			</div>
+			<div class="modal-footer">
+				<a class="waves-effect waves-green btn-flat">Save</a>
 			</div>
 		</div>
 
@@ -119,6 +130,7 @@
 					html_str += '<th class="sort-head '+sort_class+'" data-sort_col="'+col+'">'+cols[col]+' '+sort_icon+'</th>';
 				}
 				html_str += '\
+											<th></th>\
 										</tr>\
 									</thead>\
 									<tbody>';
@@ -133,6 +145,7 @@
 									<td>'+escapeHTML(c.quantity)+'</td>\
 									<td><i class="material-icons">'+c.foil_icon+'</i></td>\
 									<td>'+escapeHTML(c.price)+'</td>\
+									<td><a class="waves-effect waves-light btn edit-card"><i class="material-icons">edit</i></a></td>\
 								<tr>';
 				}
 				html_str += '</tbody>\
@@ -164,6 +177,10 @@
 
 				$('.card-name').on('click', function() {
 					M.Materialbox.getInstance($('#view_box')).open();
+				});
+
+				$('.edit-card').on('click', function() {
+					M.Modal.getInstance($('#edit_modal')).open();
 				});
 
 				generate_pagination($('#collection_pagination'), data.count);
