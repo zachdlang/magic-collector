@@ -206,7 +206,7 @@ def import_cards(cards):
 		g.conn.commit()
 
 	bulk_lots = ([ new_cards[i:i + 250] for i in range(0, len(new_cards), 250) ])
-	prices = []
+	prices = {}
 	for lot in bulk_lots:
 		prices.update(tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in lot if c['productid'] is not None }))
 
