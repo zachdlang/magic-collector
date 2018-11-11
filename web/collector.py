@@ -83,7 +83,7 @@ def get_collection():
 	if params.get('query'):
 		qry += """ AND c.name ILIKE %s"""
 		qargs += ('%' + params['query'] + '%',)
-	qry += """ ORDER BY %s %s LIMIT %%s OFFSET %%s""" % (sort, sort_desc)
+	qry += """ ORDER BY %s %s, cs.name, c.name LIMIT %%s OFFSET %%s""" % (sort, sort_desc)
 	qargs += (limit, offset,)
 	cursor.execute(qry, qargs)
 	cards = query_to_dict_list(cursor)
