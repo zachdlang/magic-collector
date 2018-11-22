@@ -11,18 +11,20 @@ def login():
 		return redirect(url_for('collector.home'))
 
 	if request.method == 'POST':
+		ok = False
 		params = params_to_dict(request.form)
 		cursor = g.conn.cursor()
 		cursor.execute("""SELECT * FROM app.enduser WHERE TRIM(username) = TRIM(%s)""", (params['username'],))
-		resp = query_to_dict_list(cursor)[0]
-		ok, new_hash = g.passwd_context.verify_and_update(params['password'].strip(), resp['password'].strip())
-		if ok:
-			if new_hash:
-				cursor.execute("""UPDATE app.enduser SET password = %s WHERE id = %s""", (new_hash, resp['id'],))
-				g.conn.commit()
-			session.new = True
-			session.permanent = True
-			session['userid'] = resp['id']
+		if cursor.rowcount > 0:
+			resp = query_to_dict_list(cursor)[0]
+			ok, new_hash = g.passwd_context.verify_and_update(params['password'].strip(), resp['password'].strip())
+			if ok:
+				if new_hash:
+					cursor.execute("""UPDATE app.enduser SET password = %s WHERE id = %s""", (new_hash, resp['id'],))
+					g.conn.commit()
+				session.new = True
+				session.permanent = True
+				session['userid'] = resp['id']
 		cursor.close()
 			
 		if ok:
