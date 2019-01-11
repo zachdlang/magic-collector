@@ -232,6 +232,8 @@ def update_prices():
 				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
 				g.conn.commit()
 
+	# Filter out cards without tcgplayerid to save requests
+	cards = [ c for c in cards if c['productid'] is not None ]
 	bulk_lots = ([ cards[i:i + 250] for i in range(0, len(cards), 250) ])
 	prices = {}
 	for lot in bulk_lots:
