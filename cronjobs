@@ -1,1 +1,2 @@
 0 14 * * * curl -X POST https://collector.zachlang.com/update_rates >/dev/null
+0 20 * * * curl https://collector.zachlang.com/update_prices >/dev/null
