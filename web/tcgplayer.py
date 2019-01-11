@@ -44,9 +44,10 @@ def search(card):
 		products_found = []
 		for r in product_results:
 			found_english = False
-			for pc in r['productConditions']:
-				if pc['language'] == 'English':
-					found_english = True
+			if 'productConditions' in r:
+				for pc in r['productConditions']:
+					if pc['language'] == 'English':
+						found_english = True
 			if found_english is True:
 				products_found.append(r)
 		if len(products_found) == 1:
