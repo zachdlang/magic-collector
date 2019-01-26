@@ -3,7 +3,7 @@ import logging
 from logging.handlers import SMTPHandler
 
 # Third party imports
-from flask import Flask, request, session, g, abort, jsonify
+from flask import Flask, request, session, g, jsonify, send_from_directory
 from passlib.context import CryptContext
 import psycopg2
 import psycopg2.extras
@@ -83,11 +83,11 @@ def before_request():
 	g.config = app.config
 
 
+@app.route('/favicon.ico')
 @app.route('/robots.txt')
 @app.route('/sitemap.xml')
 def static_from_root():
-	abort(404)
-	# return send_from_directory(app.static_folder, request.path[1:])
+	return send_from_directory(app.static_folder, request.path[1:])
 
 
 if __name__ == '__main__':
