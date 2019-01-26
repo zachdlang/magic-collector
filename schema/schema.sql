@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS card_set (
 	name TEXT NOT NULL,
 	code TEXT NOT NULL,
 	released DATE NOT NULL,
-	tcgplayer_groupid INTEGER
+	tcgplayer_groupid INTEGER,
+	iconurl TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS card (

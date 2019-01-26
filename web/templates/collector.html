@@ -151,7 +151,7 @@
 					c.price = (c.price) ? c.price + ' ' + c.currencycode : '';
 					html_str += '<tr data-image="'+escapeHTML(c.imageurl)+'">\
 									<td class="card-name">'+escapeHTML(c.name)+'</td>\
-									<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(c.set_image)+'">'+escapeHTML(c.setname)+'</td>\
+									<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(c.iconurl)+'">'+escapeHTML(c.setname)+'</td>\
 									<td>'+escapeHTML(c.rarity)+'</td>\
 									<td>'+escapeHTML(c.quantity)+'</td>\
 									<td><i class="material-icons">'+c.foil_icon+'</i></td>\
@@ -254,7 +254,7 @@
 						html_str += '<tr>\
 										<td>'+escapeHTML(r.name)+'</td>\
 										<td class="blue-grey-text text-lighten-3">'+escapeHTML(r.setname)+'</td>\
-										<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(r.set_image)+'"></td>\
+										<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(r.iconurl)+'"></td>\
 									</tr>';
 					}
 					$('#search-results-list').html(html_str);

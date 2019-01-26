@@ -80,12 +80,3 @@ def simplify(resp):
 			simple['imageurl'] = resp['image_uris']['normal']
 
 	return simple
-
-
-def set_image_url(code):
-	return 'https://img.scryfall.com/sets/%s.svg' % code.lower()
-
-
-def check_image_url(imageurl):
-	resp = requests.get(imageurl)
-	return resp.status_code == 200

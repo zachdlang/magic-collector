@@ -2,6 +2,7 @@
 import os
 from collections import OrderedDict
 from functools import wraps
+import requests
 
 # Third party imports
 from flask import redirect, url_for, session
@@ -70,3 +71,8 @@ def pagecount(count, limit):
 			if limit % count != 0:
 				pages = math.ceil(pages)
 	return int(pages)
+
+
+def check_image_exists(imageurl):
+	resp = requests.get(imageurl)
+	return resp.status_code == 200

@@ -11,7 +11,7 @@ from flask import (
 from web import scryfall, tcgplayer, openexchangerates
 from web.utility import (
 	is_logged_in, params_to_dict, query_to_dict_list, login_required,
-	pagecount
+	pagecount, check_image_exists
 )
 
 collector = Blueprint('collector', __name__)
@@ -95,10 +95,10 @@ def get_collection():
 	count = pagecount(cursor.fetchone()[0], limit)
 
 	qry = """SELECT
-				c.id, c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber,
+				c.id, c.name, cs.name AS setname, cs.code,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				c.multiverseid, c.imageurl
+				c.multiverseid, c.imageurl, cs.iconurl, c.card_setid
 			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
@@ -116,7 +116,17 @@ def get_collection():
 			c['imageurl'] = scryfall.get(c['multiverseid'])['imageurl']
 			cursor.execute("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
 			g.conn.commit()
-		c['set_image'] = scryfall.set_image_url(c['code'])
+		if c['iconurl'] is None:
+			c['iconurl'] = scryfall.get_set(c['code'])['icon_svg_uri']
+			cursor.execute("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (c['iconurl'], c['card_setid'],))
+			g.conn.commit()
+
+		# Remove keys unnecessary in response
+		del c['id']
+		del c['code']
+		del c['multiverseid']
+		del c['card_setid']
+
 	cursor.close()
 	return jsonify(cards=cards, count=count)
 
@@ -130,12 +140,16 @@ def search():
 	if params.get('query'):
 		search = '%' + params['query'] + '%'
 		cursor = g.conn.cursor()
-		qry = """SELECT c.id, c.name, s.code, s.name AS setname FROM card c LEFT JOIN card_set s ON (c.card_setid=s.id) WHERE c.name ILIKE %s ORDER BY name ASC LIMIT 50"""
+		qry = """SELECT c.id, c.name, s.code, s.name AS setname, s.iconurl FROM card c LEFT JOIN card_set s ON (c.card_setid=s.id) WHERE c.name ILIKE %s ORDER BY name ASC LIMIT 50"""
 		cursor.execute(qry, (search,))
 		results = query_to_dict_list(cursor)
 		for r in results:
-			r['set_image'] = scryfall.set_image_url(r['code'])
-			del r['code']
+			if c['iconurl'] is None:
+				c['iconurl'] = scryfall.get_set(c['code'])['icon_svg_uri']
+				cursor.execute("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (c['iconurl'], c['card_setid'],))
+				g.conn.commit()
+
+		cursor.close()
 
 	return jsonify(results=results)
 
@@ -300,6 +314,27 @@ def update_rates():
 @collector.route('/check_images', methods=['GET'])
 def check_images():
 	cursor = g.conn.cursor()
+	cursor.execute("""SELECT id, name, code, iconurl FROM card_set ORDER BY name ASC""")
+	sets = query_to_dict_list(cursor)
+
+	for s in sets:
+		if s['iconurl'] is not None:
+			# Check for bad icon URLs
+			if check_image_exists(s['iconurl']) is False:
+				print('Set icon URL could not be found for %s.' % s['name'])
+				cursor.execute("""UPDATE card_set SET iconurl = NULL WHERE id = %s""", (s['id'],))
+				g.conn.commit()
+				# Null out local copy for refreshing image below
+				s['iconurl'] = None
+
+		if s['iconurl'] is None:
+			# Fetch icon URLs for anything without one
+			s['iconurl'] = scryfall.get_set(s['code'])['icon_svg_uri']
+			if s['iconurl'] is not None:
+				print('Found new set icon URL for %s.' % s['name'])
+				cursor.execute("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (s['iconurl'], s['id'],))
+				g.conn.commit()
+
 	qry = """SELECT id, name, multiverseid, imageurl
 			FROM card
 			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=card.id)
@@ -310,8 +345,8 @@ def check_images():
 	for c in cards:
 		if c['imageurl'] is not None:
 			# Check for bad image URLs
-			if scryfall.check_image_url(c['imageurl']) is False:
-				print('Image URL for %s could not be found.' % c['name'])
+			if check_image_exists(c['imageurl']) is False:
+				print('Card image URL for could not be found for %s.' % c['name'])
 				cursor.execute("""UPDATE card SET imageurl = NULL WHERE id = %s""", (c['id'],))
 				g.conn.commit()
 				# Null out local copy for refreshing image below
@@ -321,7 +356,7 @@ def check_images():
 			# Fetch image URLs for anything without one
 			c['imageurl'] = scryfall.get(c['multiverseid'])['imageurl']
 			if c['imageurl'] is not None:
-				print('Found new image URL for %s.' % c['name'])
+				print('Found new card image URL for %s.' % c['name'])
 				cursor.execute("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
 				g.conn.commit()
 
