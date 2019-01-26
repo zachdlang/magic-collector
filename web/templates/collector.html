@@ -138,7 +138,7 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
-				var set_html = '<option value="" disabled selected>Set</option>';
+				var set_html = '<option value="" disabled selected>Filter by Set</option>';
 				for (var i = 0; i < data.sets.length; i++) {
 					var s = data.sets[i];
 					set_html += '<option value="'+escapeHTML(s.id)+'" data-icon="'+escapeHTML(s.iconurl)+'">'+escapeHTML(s.name)+'</option>';
@@ -344,7 +344,7 @@
 		if (setid) {
 			var selected_set = $('#filter_set option:selected');
 			var chip_html = '<div class="chip">\
-								<input id="filter_set_value" value="'+escapeHTML(setid)+'" hidden>\
+								<input id="filter_set_value" data-orig="#filter_set" value="'+escapeHTML(setid)+'" hidden>\
 							    <img class="set-icon" src="'+escapeHTML(selected_set.attr('data-icon'))+'">'+escapeHTML(selected_set.text())+'\
 							    <i class="close material-icons filter-remove">close</i>\
 							  </div>';
@@ -357,7 +357,10 @@
 	});
 
 	$(document).on('click', '.filter-remove', function() {
-		$(this).closest('.chip').remove();
+		var chip = $(this).closest('.chip');
+		console.log(chip.find('input').data().orig);
+		$(chip.find('input').data().orig).val('').formSelect();
+		chip.remove();
 		if ($('#filter-chips .chip').length <= 0) $('#filter-chips').empty().addClass('hide');
 		get_collection();
 	});
