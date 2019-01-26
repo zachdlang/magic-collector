@@ -95,9 +95,10 @@ def get_collection():
 	count = pagecount(cursor.fetchone()[0], limit)
 
 	qry = """SELECT
-				c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber,
+				c.id, c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
-				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode
+				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
+				c.multiverseid, c.imageurl
 			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
@@ -110,10 +111,13 @@ def get_collection():
 	qargs += (limit, offset,)
 	cursor.execute(qry, qargs)
 	cards = query_to_dict_list(cursor)
-	cursor.close()
 	for c in cards:
-		c['card_image'] = scryfall.card_image_url(c['code'], c['collectornumber'])
+		if c['imageurl'] is None:
+			c['imageurl'] = scryfall.get(c['multiverseid'])['imageurl']
+			cursor.execute("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
+			g.conn.commit()
 		c['set_image'] = scryfall.set_image_url(c['code'])
+	cursor.close()
 	return jsonify(cards=cards, count=count)
 
 

@@ -60,7 +60,8 @@ def simplify(resp):
 		'set': resp['set'].upper(),
 		'set_name': resp['set_name'],
 		'collectornumber': resp['collector_number'],
-		'multifaced': False
+		'multifaced': False,
+		'imageurl': resp['image_uris']['normal']
 	}
 	if 'colors' in resp:
 		simple['colors'] = ''.join(resp['colors'])
@@ -73,10 +74,6 @@ def simplify(resp):
 		simple['colors'] = ''.join(resp['colors'])
 
 	return simple
-
-
-def card_image_url(code, collectornumber):
-	return 'https://img.scryfall.com/cards/normal/en/%s/%s.jpg' % (code.lower(), collectornumber)
 
 
 def set_image_url(code):
