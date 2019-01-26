@@ -295,3 +295,35 @@ def update_rates():
 	g.conn.commit()
 	cursor.close()
 	return jsonify()
+
+
+@collector.route('/check_images', methods=['GET'])
+def check_images():
+	cursor = g.conn.cursor()
+	qry = """SELECT id, name, multiverseid, imageurl
+			FROM card
+			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=card.id)
+			ORDER BY name ASC"""
+	cursor.execute(qry)
+	cards = query_to_dict_list(cursor)
+
+	for c in cards:
+		if c['imageurl'] is not None:
+			# Check for bad image URLs
+			if scryfall.check_image_url(c['imageurl']) is False:
+				print('Image URL for %s could not be found.' % c['name'])
+				cursor.execute("""UPDATE card SET imageurl = NULL WHERE id = %s""", (c['id'],))
+				g.conn.commit()
+				# Null out local copy for refreshing image below
+				c['imageurl'] = None
+
+		if c['imageurl'] is None:
+			# Fetch image URLs for anything without one
+			c['imageurl'] = scryfall.get(c['multiverseid'])['imageurl']
+			if c['imageurl'] is not None:
+				print('Found new image URL for %s.' % c['name'])
+				cursor.execute("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
+				g.conn.commit()
+
+	cursor.close()
+	return jsonify()
