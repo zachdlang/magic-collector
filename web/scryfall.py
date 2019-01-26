@@ -61,17 +61,23 @@ def simplify(resp):
 		'set_name': resp['set_name'],
 		'collectornumber': resp['collector_number'],
 		'multifaced': False,
-		'imageurl': resp['image_uris']['normal']
 	}
+
+	# These should catch normal & split cards
 	if 'colors' in resp:
 		simple['colors'] = ''.join(resp['colors'])
+	if 'image_uris' in resp:
+		simple['imageurl'] = resp['image_uris']['normal']
 
 	if resp.get('card_faces'):
 		resp = resp['card_faces'][0]
 		simple['multifaced'] = True
 
-	if 'colors' not in simple:
-		simple['colors'] = ''.join(resp['colors'])
+		# These should catch double-sided cards
+		if 'colors' not in simple:
+			simple['colors'] = ''.join(resp['colors'])
+		if 'imageurl' not in simple:
+			simple['imageurl'] = resp['image_uris']['normal']
 
 	return simple
 
