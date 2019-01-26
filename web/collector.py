@@ -225,7 +225,13 @@ def import_cards(cards):
 @collector.route('/update_prices', methods=['GET'])
 def update_prices():
 	cursor = g.conn.cursor()
-	cursor.execute("""SELECT id, name, rarity, (SELECT name FROM card_set WHERE id = card_setid) AS set_name, tcgplayer_productid AS productid FROM card ORDER BY name ASC""")
+	qry = """SELECT id, name, rarity,
+				(SELECT name FROM card_set WHERE id = card_setid) AS set_name,
+				tcgplayer_productid AS productid
+			FROM card
+			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=card.id)
+			ORDER BY name ASC"""
+	cursor.execute(qry)
 	cards = query_to_dict_list(cursor)
 	for c in cards:
 		if c['productid'] is None:
