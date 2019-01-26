@@ -256,7 +256,7 @@ def update_prices():
 			FROM card c
 			LEFT JOIN card_set s ON (s.id = c.card_setid)
 			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id)
-			ORDER BY c.id DESC, c.name ASC"""
+			ORDER BY c.name ASC"""
 	cursor.execute(qry)
 	cards = query_to_dict_list(cursor)
 	for c in cards:
