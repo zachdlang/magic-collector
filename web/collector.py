@@ -83,6 +83,7 @@ def get_collection():
 		page = int(params.get('page'))
 	offset = page * limit - limit
 
+	# Sorting
 	cols = {
 		'name': 'c.name',
 		'setname': 'cs.name',
@@ -95,13 +96,22 @@ def get_collection():
 	descs = {'asc': 'ASC', 'desc': 'DESC'}
 	sort_desc = descs.get(params.get('sort_desc'), 'ASC')
 
+	# Filters
+	filters = {
+		'search': '%' + params['filter_search'] + '%' if params.get('filter_search') else None,
+		'set': params.get('filter_set')
+	}
+
 	cursor = g.conn.cursor()
-	if params.get('query'):
-		qry = """SELECT count(*) FROM user_card WHERE userid = %s AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"""
-		qargs = (session['userid'], '%' + params['query'] + '%',)
-	else:
-		qry = """SELECT count(*) FROM user_card WHERE userid = %s"""
-		qargs = (session['userid'],)
+
+	qry = """SELECT count(*) FROM user_card WHERE userid = %s"""
+	qargs = (session['userid'],)
+	if filters['search']:
+		qry += """ AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"""
+		qargs += (filters['search'],)
+	if filters['set']:
+		qry += """ AND (SELECT card_setid FROM card WHERE id = cardid) = %s"""
+		qargs += (filters['set'],)
 	cursor.execute(qry, qargs)
 	count = pagecount(cursor.fetchone()[0], limit)
 
@@ -116,14 +126,12 @@ def get_collection():
 			WHERE uc.userid = %s"""
 	qargs = (session['userid'],)
 
-	# Search parameter
-	if params.get('query'):
+	if filters['search']:
 		qry += """ AND c.name ILIKE %s"""
-		qargs += ('%' + params['query'] + '%',)
-	# card_setid filter
-	if params.get('filter_set'):
+		qargs += ('%' + filters['search'] + '%',)
+	if filters['set']:
 		qry += """ AND c.card_setid = %s"""
-		qargs += (params['filter_set'],)
+		qargs += (filters['set'],)
 
 	qry += """ ORDER BY %s %s, cs.code, c.collectornumber LIMIT %%s OFFSET %%s""" % (sort, sort_desc)
 	qargs += (limit, offset,)
@@ -162,9 +170,9 @@ def search():
 		cursor.execute(qry, (search,))
 		results = query_to_dict_list(cursor)
 		for r in results:
-			if c['iconurl'] is None:
-				c['iconurl'] = scryfall.get_set(c['code'])['icon_svg_uri']
-				cursor.execute("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (c['iconurl'], c['card_setid'],))
+			if r['iconurl'] is None:
+				r['iconurl'] = scryfall.get_set(r['code'])['icon_svg_uri']
+				cursor.execute("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (r['iconurl'], r['card_setid'],))
 				g.conn.commit()
 
 		cursor.close()
