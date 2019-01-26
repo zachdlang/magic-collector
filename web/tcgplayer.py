@@ -1,10 +1,18 @@
+# Standard library imports
+import requests
+import json
 
-from web.utility import *
+# Third party imports
+from flask import g, session
 
 
 def login():
-	headers = { 'Content-Type':'application/x-www-form-urlencoded' }
-	data = { 'grant_type':'client_credentials', 'client_id':g.config['TCGPLAYER_PUBLICKEY'], 'client_secret':g.config['TCGPLAYER_PRIVATEKEY'] }
+	headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+	data = {
+		'grant_type': 'client_credentials',
+		'client_id': g.config['TCGPLAYER_PUBLICKEY'],
+		'client_secret': g.config['TCGPLAYER_PRIVATEKEY']
+	}
 	resp = requests.post('https://api.tcgplayer.com/token', data=data, headers=headers)
 	resp = json.loads(resp.text)
 	session['tcgplayer_bearertoken'] = resp['access_token']
@@ -13,7 +21,7 @@ def login():
 def search_categories():
 	if 'tcgplayer_bearertoken' not in session:
 		login()
-	headers = { 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
+	headers = {'Authorization': 'bearer %s' % session['tcgplayer_bearertoken']}
 	resp = requests.get('http://api.tcgplayer.com/catalog/categories/1/search/manifest', headers=headers)
 	resp = json.loads(resp.text)
 	for r in resp['results'][0]['filters']:
@@ -100,12 +108,12 @@ def get_price(cards):
 		login()
 	print('Fetching prices for %s cards' % len(cards))
 	if len(cards) == 0:
-		print('Ignoring 0 length');
+		print('Ignoring 0 length')
 		return {}
-	headers = { 'Authorization':'bearer %s' % session['tcgplayer_bearertoken'] }
-	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([ cards[cardid] for cardid in cards ]), headers=headers)
+	headers = {'Authorization': 'bearer %s' % session['tcgplayer_bearertoken']}
+	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([cards[cardid] for cardid in cards]), headers=headers)
 	resp = json.loads(resp.text)
-	prices = { cardid:{ 'normal':None, 'foil':None } for cardid, productid in cards.items() }
+	prices = {cardid: {'normal': None, 'foil': None} for cardid, productid in cards.items()}
 	for cardid, productid in cards.items():
 		for r in resp['results']:
 			if str(r['productId']) == productid:

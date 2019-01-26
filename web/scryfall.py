@@ -1,18 +1,19 @@
-
-from web.utility import *
+# Standard library imports
+import requests
+import json
 
 
 def scryfall_request(endpoint, params=None, data=None, post=False):
 	func = requests.get
 	if post is True:
 		func = requests.post
-	r = func('https://api.scryfall.com%s' % endpoint, params=params, data=data, headers={ 'Content-Type':'application/json' }).text
+	r = func('https://api.scryfall.com%s' % endpoint, params=params, data=data, headers={'Content-Type': 'application/json'}).text
 	resp = json.loads(r)
 	return resp
 
 
 def search(name):
-	params = { 'q':name, 'unique':'prints' }
+	params = {'q': name, 'unique': 'prints'}
 	resp = scryfall_request('/cards/search', params=params)
 	simple_resp = []
 	if resp.get('code') != 'not_found':
@@ -32,7 +33,7 @@ def get(multiverseid):
 
 
 def get_bulk(multiverseids):
-	data = { 'identifiers':[ { 'multiverse_id':x } for x in multiverseids ] }
+	data = {'identifiers': [{'multiverse_id': x} for x in multiverseids]}
 	resp = scryfall_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
 	if resp['not_found']:

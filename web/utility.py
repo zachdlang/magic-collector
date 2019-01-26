@@ -1,14 +1,15 @@
-
-from flask import Flask, request, g, Blueprint, redirect, url_for, session, render_template, flash, jsonify, send_from_directory, abort
-from functools import wraps
-from collections import OrderedDict
-import psycopg2, psycopg2.extras
+# Standard library imports
 import os
-import json
-import requests
+from collections import OrderedDict
+from functools import wraps
+
+# Third party imports
+from flask import redirect, url_for, session
+
 
 class CollectorException(Exception):
 	pass
+
 
 def login_required(f):
 	@wraps(f)
@@ -38,9 +39,9 @@ def query_to_dict_list(cursor):
 	d = []
 	for row in cursor.fetchall():
 		r = OrderedDict()
-		for (attr, val) in zip((d[0] for d in cursor.description), row) :
+		for (attr, val) in zip((d[0] for d in cursor.description), row):
 			if val == '':
-			  val = None
+				val = None
 			r[str(attr)] = val
 		d.append(r)
 	return d
@@ -51,7 +52,7 @@ def get_file_location(filename):
 
 
 def strip_unicode_characters(s):
-	replacements = { '’':"'" }
+	replacements = {'’': "'"}
 	for key, value in replacements.items():
 		s = s.replace(key, value)
 	return s.encode('ascii', 'ignore').decode('ascii')
@@ -61,11 +62,11 @@ def pagecount(count, limit):
 	import math
 	pages = 0
 	if count:
-		pages = count/limit
+		pages = count / limit
 		if pages > 0 and pages < 1:
 			pages = 1
 		else:
-			#checking for overflow..
+			# Checking for overflow
 			if limit % count != 0:
 				pages = math.ceil(pages)
 	return int(pages)

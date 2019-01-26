@@ -1,11 +1,23 @@
+# Standard library imports
+import os
 
-from web.utility import *
+# Third party imports
+from flask import (
+	Blueprint, g, session, flash, redirect, url_for, request,
+	render_template, jsonify
+)
+
+# Local imports
 from web import scryfall, tcgplayer, openexchangerates
+from web.utility import (
+	is_logged_in, params_to_dict, query_to_dict_list, login_required,
+	pagecount
+)
 
 collector = Blueprint('collector', __name__)
 
 
-@collector.route('/login', methods=['GET','POST'])
+@collector.route('/login', methods=['GET', 'POST'])
 def login():
 	if is_logged_in():
 		return redirect(url_for('collector.home'))
@@ -28,7 +40,7 @@ def login():
 					session.permanent = True
 					session['userid'] = resp['id']
 			cursor.close()
-			
+
 		if ok:
 			return redirect(url_for('collector.home'))
 		else:
@@ -60,9 +72,16 @@ def get_collection():
 		page = int(params.get('page'))
 	offset = page * limit - limit
 
-	cols = { 'name':'c.name', 'setname':'cs.name', 'rarity':'c.rarity', 'quantity':'uc.quantity', 'foil':'uc.foil', 'price':'get_price(uc.id)' }
+	cols = {
+		'name': 'c.name',
+		'setname': 'cs.name',
+		'rarity': 'c.rarity',
+		'quantity': 'uc.quantity',
+		'foil': 'uc.foil',
+		'price': 'get_price(uc.id)'
+	}
 	sort = cols.get(params.get('sort'), 'c.name')
-	descs = { 'asc':'ASC', 'desc':'DESC' }
+	descs = {'asc': 'ASC', 'desc': 'DESC'}
 	sort_desc = descs.get(params.get('sort_desc'), 'ASC')
 
 	cursor = g.conn.cursor()
@@ -75,11 +94,11 @@ def get_collection():
 	cursor.execute(qry, qargs)
 	count = pagecount(cursor.fetchone()[0], limit)
 
-	qry = """SELECT 
-				c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber, 
+	qry = """SELECT
+				c.name, cs.name AS setname, cs.code, get_collectornumber(c.id) AS collectornumber,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode
-			FROM user_card uc 
+			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
 			WHERE uc.userid = %s"""
@@ -141,7 +160,7 @@ def csv_upload():
 			new.append(multiverseid)
 	cursor.close()
 
-	bulk_lots = ([ new[i:i + 75] for i in range(0, len(new), 75) ])
+	bulk_lots = ([new[i:i + 75] for i in range(0, len(new), 75)])
 	for lot in bulk_lots:
 		resp = scryfall.get_bulk(lot)
 		import_cards(resp)
@@ -201,26 +220,28 @@ def import_cards(cards):
 				%s, %s
 				WHERE NOT EXISTS (SELECT * FROM card WHERE multiverseid = %s)
 				RETURNING id"""
-		qargs = (c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
-				c['rarity'], c['multifaced'],
-				c['multiverseid'],)
+		qargs = (
+			c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
+			c['rarity'], c['multifaced'],
+			c['multiverseid'],
+		)
 		cursor.execute(qry, qargs)
 		if cursor.rowcount > 0:
 			c['id'] = cursor.fetchone()[0]
 			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
 				cursor.execute("""UPDATE card SET tcgplayer_productid = %s WHERE id = %s""", (c['productid'], c['id'],))
-				new_cards.append({ 'id':c['id'], 'productid':c['productid'] })
+				new_cards.append({'id': c['id'], 'productid': c['productid']})
 		g.conn.commit()
 
-	bulk_lots = ([ new_cards[i:i + 250] for i in range(0, len(new_cards), 250) ])
+	bulk_lots = ([new_cards[i:i + 250] for i in range(0, len(new_cards), 250)])
 	prices = {}
 	for lot in bulk_lots:
-		prices.update(tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in lot if c['productid'] is not None }))
+		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}))
 
 	updates = []
 	for cardid, price in prices.items():
-		updates.append({ 'price':price['normal'], 'foilprice':price['foil'], 'id':cardid })
+		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
 	cursor.executemany("""UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s""", updates)
 	g.conn.commit()
 	cursor.close()
@@ -246,15 +267,15 @@ def update_prices():
 				g.conn.commit()
 
 	# Filter out cards without tcgplayerid to save requests
-	cards = [ c for c in cards if c['productid'] is not None ]
-	bulk_lots = ([ cards[i:i + 250] for i in range(0, len(cards), 250) ])
+	cards = [c for c in cards if c['productid'] is not None]
+	bulk_lots = ([cards[i:i + 250] for i in range(0, len(cards), 250)])
 	prices = {}
 	for lot in bulk_lots:
-		prices.update(tcgplayer.get_price({ str(c['id']):str(c['productid']) for c in lot if c['productid'] is not None }))
+		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}))
 
 	updates = []
 	for cardid, price in prices.items():
-		updates.append({ 'price':price['normal'], 'foilprice':price['foil'], 'id':cardid })
+		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
 	cursor.executemany("""UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s""", updates)
 	g.conn.commit()
 	cursor.close()
