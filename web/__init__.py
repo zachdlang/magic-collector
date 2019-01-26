@@ -3,7 +3,7 @@ import logging
 from logging.handlers import SMTPHandler
 
 # Third party imports
-from flask import Flask, request, session, g, abort
+from flask import Flask, request, session, g, abort, jsonify
 from passlib.context import CryptContext
 import psycopg2
 import psycopg2.extras
@@ -61,6 +61,11 @@ if not app.debug:
 	mail_handler = SMTPHandler('127.0.0.1', app.config['FROM_EMAIL'], ADMINISTRATORS, msg)
 	mail_handler.setLevel(logging.CRITICAL)
 	app.logger.addHandler(mail_handler)
+
+
+@app.errorhandler(500)
+def internal_error(e):
+	return jsonify(error='Internal error occurred. Please try again later.'), 500
 
 
 @app.before_request
