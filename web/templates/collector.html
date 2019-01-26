@@ -174,7 +174,7 @@
 				var html_str = '<table class="highlight">\
 									<thead>\
 										<tr>';
-				var cols = { 'name':'Card', 'setname':'Set', 'rarity':'Rarity', 'quantity':'Quantity', 'foil':'Foil', 'price':'Price' };
+				var cols = { 'name':'Card', 'setname':'Set', 'rarity':'Rarity', 'quantity':'Qty', 'foil':'Foil', 'price':'Price' };
 				for (var col in cols) {
 					var sort_class = '';
 					var sort_icon = '';
@@ -196,12 +196,15 @@
 					c.price = (c.price) ? c.price + ' ' + c.currencycode : '';
 					html_str += '<tr data-image="'+escapeHTML(c.imageurl)+'">\
 									<td class="card-name">'+escapeHTML(c.name)+'</td>\
-									<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(c.iconurl)+'">'+escapeHTML(c.setname)+'</td>\
+									<td class="valign-wrapper">\
+										<img class="set-icon" src="'+escapeHTML(c.iconurl)+'">\
+										<span class="hide-on-small-only">'+escapeHTML(c.setname)+'</span>\
+									</td>\
 									<td>'+escapeHTML(c.rarity)+'</td>\
 									<td>'+escapeHTML(c.quantity)+'</td>\
 									<td><i class="material-icons">'+c.foil_icon+'</i></td>\
 									<td>'+escapeHTML(c.price)+'</td>\
-									<td><a class="waves-effect waves-light btn disabled edit-card"><i class="material-icons">edit</i></a></td>\
+									<td class="hide"><a class="waves-effect waves-light btn disabled edit-card"><i class="material-icons">edit</i></a></td>\
 								<tr>';
 				}
 				html_str += '</tbody>\
