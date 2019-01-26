@@ -37,6 +37,14 @@
 	cursor: pointer;
 }
 
+.chip .set-icon {
+	padding-right: 0px;
+	margin-top: 5px;
+	margin-left: -3px;
+	height: 30px;
+	width: 30px;
+}
+
 .set-icon {
 	max-height: 20px;
 	max-width: 30px;

@@ -62,6 +62,17 @@ def home():
 	return render_template('collector.html')
 
 
+@collector.route('/get_sets', methods=['GET'])
+@login_required
+def get_sets():
+	cursor = g.conn.cursor()
+	cursor.execute("""SELECT id, name, iconurl FROM card_set ORDER BY released DESC""")
+	sets = query_to_dict_list(cursor)
+	cursor.close()
+
+	return jsonify(sets=sets)
+
+
 @collector.route('/get_collection', methods=['GET'])
 @login_required
 def get_collection():
@@ -104,9 +115,16 @@ def get_collection():
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
 			WHERE uc.userid = %s"""
 	qargs = (session['userid'],)
+
+	# Search parameter
 	if params.get('query'):
 		qry += """ AND c.name ILIKE %s"""
 		qargs += ('%' + params['query'] + '%',)
+	# card_setid filter
+	if params.get('filter_set'):
+		qry += """ AND c.card_setid = %s"""
+		qargs += (params['filter_set'],)
+
 	qry += """ ORDER BY %s %s, cs.code, c.collectornumber LIMIT %%s OFFSET %%s""" % (sort, sort_desc)
 	qargs += (limit, offset,)
 	cursor.execute(qry, qargs)
