@@ -171,20 +171,24 @@ def import_cards(cards):
 	cursor = g.conn.cursor()
 	sets = []
 	for c in cards:
-		if c['set'] not in [ x['code'] for x in sets ]:
-			sets.append({ 'code':c['set'], 'name':c['set_name'] })
+		if c['set'] not in [x['code'] for x in sets]:
+			sets.append({'code': c['set'], 'name': c['set_name']})
 
 	for s in sets:
-		qry = """INSERT INTO card_set (name, code) SELECT %s, %s 
-				WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)"""
-		qargs = (s['name'], s['code'], s['code'],)
-		cursor.execute(qry, qargs)
-		g.conn.commit()
+		# Check if already have a record of this set
+		cursor.execute("""SELECT 1 FROM card_set WHERE code = %s""", (s['code'],))
+		if cursor.rowcount == 0:
+			resp = scryfall.get_set(s['code'])
+			qry = """INSERT INTO card_set (name, code, released, tcgplayer_groupid) SELECT %s, %s
+					WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)"""
+			qargs = (resp['name'], s['code'], resp['released_at'], resp.get('tcgplayer_id'), s['code'],)
+			cursor.execute(qry, qargs)
+			g.conn.commit()
 
 	# more efficient than attempting inserts
 	cursor.execute("""SELECT multiverseid FROM card""")
-	multiverse_ids = [ x['multiverseid'] for x in query_to_dict_list(cursor) ]
-	
+	multiverse_ids = [x['multiverseid'] for x in query_to_dict_list(cursor)]
+
 	new_cards = []
 	for c in cards:
 		if c['multiverseid'] in multiverse_ids:

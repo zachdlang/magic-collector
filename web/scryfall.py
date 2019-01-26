@@ -21,6 +21,11 @@ def search(name):
 	return simple_resp
 
 
+def get_set(code):
+	resp = scryfall_request('/sets/%s' % code)
+	return resp
+
+
 def get(multiverseid):
 	resp = scryfall_request('/cards/multiverse/%s' % multiverseid)
 	return simplify(resp)
