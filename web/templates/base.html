@@ -14,10 +14,10 @@
 	<body>
 		{% macro get_menu() -%}
 			{% if is_logged_in() -%}
-			<li><a href="{{ url_for('collector.home') }}">Collection</a></li>
-			<li><a href="{{ url_for('collector.logout') }}">Log Out</a></li>
+			<li><a href="{{ url_for('home') }}">Collection</a></li>
+			<li><a href="{{ url_for('logout') }}">Log Out</a></li>
 			{%- else -%}
-			<li><a href="{{ url_for('collector.login') }}">Log In</a></li>
+			<li><a href="{{ url_for('login') }}">Log In</a></li>
 			{%- endif %}
 		{%- endmacro %}
 

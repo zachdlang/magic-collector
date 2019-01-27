@@ -133,7 +133,7 @@
 
 	function get_sets() {
 		$.ajax({
-			url: "{{ url_for('collector.get_sets') }}",
+			url: "{{ url_for('get_sets') }}",
 			method: "GET"
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
@@ -159,7 +159,7 @@
 		show_loading($('#collection_list'));
 		$('#collection_pagination').empty();
 		search_req = $.ajax({
-			url: "{{ url_for('collector.get_collection') }}",
+			url: "{{ url_for('get_collection') }}",
 			method: "GET",
 			data: {
 				'page': current_page,
@@ -291,7 +291,7 @@
 		    add_search_timer = setTimeout(function() {
 				if (add_search_req) add_search_req.abort();
 				add_search_req = $.ajax({
-					url: "{{ url_for('collector.search') }}",
+					url: "{{ url_for('search') }}",
 					method: "GET",
 					data: { 'query':query }
 				}).done(function(data) {
@@ -324,7 +324,7 @@
 		var formdata = new FormData(form);
 
 		var upload_req = new XMLHttpRequest();
-		upload_req.open("POST", "{{ url_for('collector.csv_upload') }}", true);
+		upload_req.open("POST", "{{ url_for('csv_upload') }}", true);
 		upload_req.onload = function(oEvent) {
 			$('#upload_loading').empty();
 			if (upload_req.status == 200) {
