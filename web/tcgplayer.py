@@ -3,15 +3,15 @@ import requests
 import json
 
 # Third party imports
-from flask import g, session
+from flask import current_app as app, session
 
 
 def login():
 	headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 	data = {
 		'grant_type': 'client_credentials',
-		'client_id': g.config['TCGPLAYER_PUBLICKEY'],
-		'client_secret': g.config['TCGPLAYER_PRIVATEKEY']
+		'client_id': app.config['TCGPLAYER_PUBLICKEY'],
+		'client_secret': app.config['TCGPLAYER_PRIVATEKEY']
 	}
 	resp = requests.post('https://api.tcgplayer.com/token', data=data, headers=headers)
 	resp = json.loads(resp.text)

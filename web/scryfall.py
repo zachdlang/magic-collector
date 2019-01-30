@@ -3,7 +3,7 @@ import requests
 import json
 
 
-def scryfall_request(endpoint, params=None, data=None, post=False):
+def send_request(endpoint, params=None, data=None, post=False):
 	func = requests.get
 	if post is True:
 		func = requests.post
@@ -14,7 +14,7 @@ def scryfall_request(endpoint, params=None, data=None, post=False):
 
 def search(name):
 	params = {'q': name, 'unique': 'prints'}
-	resp = scryfall_request('/cards/search', params=params)
+	resp = send_request('/cards/search', params=params)
 	simple_resp = []
 	if resp.get('code') != 'not_found':
 		for r in resp['data']:
@@ -23,18 +23,18 @@ def search(name):
 
 
 def get_set(code):
-	resp = scryfall_request('/sets/%s' % code)
+	resp = send_request('/sets/%s' % code)
 	return resp
 
 
 def get(multiverseid):
-	resp = scryfall_request('/cards/multiverse/%s' % multiverseid)
+	resp = send_request('/cards/multiverse/%s' % multiverseid)
 	return simplify(resp)
 
 
 def get_bulk(multiverseids):
 	data = {'identifiers': [{'multiverse_id': x} for x in multiverseids]}
-	resp = scryfall_request('/cards/collection', data=json.dumps(data), post=True)
+	resp = send_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
 	if resp['not_found']:
 		raise Exception('Not found: %s' % resp['not_found'])
