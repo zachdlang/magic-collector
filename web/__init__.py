@@ -290,5 +290,11 @@ def check_images():
 	return jsonify()
 
 
+@app.route('/decks', methods=['GET'])
+@login_required
+def decks():
+	return render_template('decks.html')
+
+
 if __name__ == '__main__':
 	app.run()
