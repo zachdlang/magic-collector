@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+	<div class="section">
+		<div class="row">
+			<div id="deck_list"></div>
+		</div>
+	</div>
+
+	<br><br>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+	$(document).ready(function() {
+		get_decks();
+	});
+
+	function get_decks() {
+		$.ajax({
+			url: "{{ url_for('get_decks') }}",
+			method: "GET"
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				for (var i = 0; i < data.decks.length; i++) {
+					var d = data.decks[i];
+					console.log(d);
+				}
+			}
+		}).fail(function(jqXHR) {
+			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting sets. Please try again later."});
+		});
+	}
+</script>
+{% endblock %}

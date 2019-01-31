@@ -10,7 +10,7 @@ from flask import (
 )
 
 # Local imports
-from web import collection, scryfall, tcgplayer, openexchangerates
+from web import collection, deck, scryfall, tcgplayer, openexchangerates
 from sitetools.utility import (
 	BetterExceptionFlask, is_logged_in, params_to_dict,
 	login_required, check_image_exists, check_login, fetch_query,
@@ -77,7 +77,7 @@ def logout():
 @app.route('/', methods=['GET'])
 @login_required
 def home():
-	return render_template('collector.html')
+	return render_template('collection.html', active='collection')
 
 
 @app.route('/get_sets', methods=['GET'])
@@ -293,7 +293,14 @@ def check_images():
 @app.route('/decks', methods=['GET'])
 @login_required
 def decks():
-	return render_template('decks.html')
+	return render_template('decks.html', active='decks')
+
+
+@app.route('/get_decks', methods=['GET'])
+@login_required
+def get_decks():
+	decks = deck.get_all()
+	return jsonify(decks=decks)
 
 
 if __name__ == '__main__':

@@ -14,29 +14,33 @@
 	<body>
 		{% macro get_menu() -%}
 			{% if is_logged_in() -%}
-			<li><a href="{{ url_for('home') }}">Collection</a></li>
-			<li><a href="{{ url_for('decks') }}">Decks</a></li>
+			<li {% if active == 'collection' -%} class="active" {%- endif %}><a href="{{ url_for('home') }}">Collection</a></li>
+			<li {% if active == 'decks' -%} class="active" {%- endif %}><a href="{{ url_for('decks') }}">Decks</a></li>
 			<li><a href="{{ url_for('logout') }}">Log Out</a></li>
 			{%- else -%}
 			<li><a href="{{ url_for('login') }}">Log In</a></li>
 			{%- endif %}
 		{%- endmacro %}
 
-		<nav class="light-blue lighten-1" role="navigation">
-			<div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Magic Collector</a>
-				<ul class="right hide-on-med-and-down">
-					{{ get_menu() }}
-				</ul>
+		<header>
+			<nav class="light-blue lighten-1" role="navigation">
+				<div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Magic Collector</a>
+					<ul class="right hide-on-med-and-down">
+						{{ get_menu() }}
+					</ul>
 
-				<ul id="nav-mobile" class="sidenav">
-					{{ get_menu() }}
-				</ul>
-				<a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-			</div>
-		</nav>
+					<ul id="nav-mobile" class="sidenav">
+						{{ get_menu() }}
+					</ul>
+					<a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+				</div>
+			</nav>
+		</header>
 
+		<main>
 		{% block content %}
 		{% endblock %}
+		</main>
 
 		<footer class="page-footer orange">
 			<div class="footer-copyright">
