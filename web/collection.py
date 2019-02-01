@@ -33,10 +33,11 @@ def get(params):
 	# Filters
 	filters = {
 		'search': '%' + params['filter_search'] + '%' if params.get('filter_search') else None,
-		'set': params.get('filter_set')
+		'set': params.get('filter_set'),
+		'rarity': params.get('filter_rarity')
 	}
 
-	qry = "SELECT count(*) FROM user_card WHERE userid = %s"
+	qry = "SELECT count(*) AS count, sum(quantity) AS sum FROM user_card WHERE userid = %s"
 	qargs = (session['userid'],)
 	if filters['search']:
 		qry += " AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"
@@ -44,7 +45,12 @@ def get(params):
 	if filters['set']:
 		qry += " AND (SELECT card_setid FROM card WHERE id = cardid) = %s"
 		qargs += (filters['set'],)
-	resp['count'] = pagecount(fetch_query(qry, qargs, single_row=True)['count'], limit)
+	if filters['rarity']:
+		qry += " AND (SELECT rarity FROM card WHERE id = cardid) = %s"
+		qargs += (filters['rarity'],)
+	aggregate = fetch_query(qry, qargs, single_row=True)
+	resp['count'] = pagecount(aggregate['count'], limit)
+	resp['total'] = aggregate['sum']
 
 	qry = """SELECT
 				c.id, c.name, cs.name AS setname, cs.code,
@@ -63,6 +69,9 @@ def get(params):
 	if filters['set']:
 		qry += " AND c.card_setid = %s"
 		qargs += (filters['set'],)
+	if filters['rarity']:
+		qry += " AND c.rarity = %s"
+		qargs += (filters['rarity'],)
 
 	qry += " ORDER BY %s %s, cs.code, c.collectornumber LIMIT %%s OFFSET %%s" % (sort, sort_desc)
 	qargs += (limit, offset,)

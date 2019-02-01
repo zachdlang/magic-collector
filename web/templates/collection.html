@@ -8,13 +8,13 @@
 				<input type="text" id="add-row-search">
 			</div>
 			<div class="col s3 m2">
-				<a class="waves-effect waves-light btn">Add</a>
+				<a class="btn bg-secondary">Add</a>
 			</div>
-			<div class="col s9 m1">
-				<a class="waves-effect waves-light btn modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
+			<div class="col s9 m2 l1">
+				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
 			</div>
-			<div class="col s3 m2 offset-m1">
-				<a class="waves-effect waves-light btn btn-flat" id="add-row-hide">Back</a>
+			<div class="col s3 m2 l2 offset-l1">
+				<a class="btn btn-flat bg-secondary" id="add-row-hide">Back</a>
 			</div>
 		</div>
 
@@ -23,13 +23,13 @@
 				<input type="text" id="search-row-search">
 			</div>
 			<div class="col s3 m2">
-				<a class="waves-effect waves-light btn" id="search-row-button">Search</a>
+				<a class="btn bg-secondary" id="search-row-button">Search</a>
 			</div>
-			<div class="col s6 m1 offset-m2">
-				<a class="waves-effect waves-light btn modal-trigger" href="#filter_modal"><i class="material-icons">filter_list</i></a>
+			<div class="col s6 m2 l1 offset-l2">
+				<a class="btn bg-secondary modal-trigger" href="#filter_modal"><i class="material-icons">filter_list</i></a>
 			</div>
-			<div class="col s6 m1">
-				<a class="waves-effect waves-light btn" id="add-row-show"><i class="material-icons">add</i></a>
+			<div class="col s6 m2 l1">
+				<a class="btn bg-secondary" id="add-row-show"><i class="material-icons">add</i></a>
 			</div>
 		</div>
 
@@ -57,7 +57,7 @@
 				<div id="upload_loading"></div>
 
 				<div class="file-field input-field">
-					<div class="btn">
+					<div class="btn bg-secondary">
 						<span>File</span>
 						<form enctype="multipart/form-data" method="post" name="upload_form">
 							<input type="file" accept="text/csv" name="upload">
@@ -69,7 +69,7 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<a class="waves-effect waves-green btn-flat" id="upload_btn">Submit</a>
+				<a class="btn-flat bg-secondary" id="upload_btn">Submit</a>
 			</div>
 		</div>
 
@@ -81,9 +81,19 @@
 					<select class="icons" id="filter_set">
 					</select>
 				</div>
+
+				 <div class="input-field col s12 m6">
+					<select class="icons" id="filter_rarity">
+						<option value="" disabled selected>Filter by Rarity</option>
+						<option value="C" data-icon="{{ url_for('static', filename='images/common.png') }}">Common</option>
+						<option value="U" data-icon="{{ url_for('static', filename='images/uncommon.png') }}">Uncommon</option>
+						<option value="R" data-icon="{{ url_for('static', filename='images/rare.png') }}">Rare</option>
+						<option value="M" data-icon="{{ url_for('static', filename='images/mythic.png') }}">Mythic</option>
+					</select>
+				</div>
 			</div>
 			<div class="modal-footer">
-				<a class="waves-effect waves-green btn-flat" id="filter_btn">Submit</a>
+				<a class="btn-flat bg-secondary" id="filter_btn">Submit</a>
 			</div>
 		</div>
 
@@ -105,7 +115,7 @@
 
 			</div>
 			<div class="modal-footer">
-				<a class="waves-effect waves-green btn-flat">Save</a>
+				<a class="btn-flat bg-secondary">Save</a>
 			</div>
 		</div> -->
 
@@ -115,7 +125,11 @@
 			<div id="collection_list"></div>
 		</div>
 
-		<div id="collection_pagination">
+		<div class="row">
+			<div id="collection_pagination" class="col s12 m6">
+			</div>
+			<div id="collection_total" class="col s12 m6 right-align">
+			</div>
 		</div>
 
 	</div>
@@ -129,6 +143,8 @@
 	$(document).ready(function() {
 		get_sets();
 		get_collection();
+
+		$('#filter_rarity').formSelect();
 	});
 
 	function get_sets() {
@@ -157,7 +173,8 @@
 	function get_collection() {
 		if (search_req) search_req.abort();
 		show_loading($('#collection_list'));
-		$('#collection_pagination').empty();
+		$('#collection_pagination, #collection_total').empty();
+
 		search_req = $.ajax({
 			url: "{{ url_for('get_collection') }}",
 			method: "GET",
@@ -166,7 +183,8 @@
 				'sort': sort,
 				'sort_desc': sort_desc,
 				'filter_search': $('#search-row-search').val(),
-				'filter_set': $('#filter_set_value').val()
+				'filter_set': $('#filter_set_value').val(),
+				'filter_rarity': $('#filter_rarity_value').val()
 			}
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
@@ -204,7 +222,7 @@
 									<td>'+escapeHTML(c.quantity)+'</td>\
 									<td><i class="material-icons">'+c.foil_icon+'</i></td>\
 									<td>'+escapeHTML(c.price)+'</td>\
-									<td class="hide"><a class="waves-effect waves-light btn disabled edit-card"><i class="material-icons">edit</i></a></td>\
+									<td class="hide"><a class="btn disabled edit-card"><i class="material-icons">edit</i></a></td>\
 								<tr>';
 				}
 				html_str += '</tbody>\
@@ -243,6 +261,7 @@
 				});
 
 				generate_pagination($('#collection_pagination'), data.count);
+				$('#collection_total').html('<span class="badge new bg-tertiary" data-badge-caption="cards">' + data.total + '</span>');
 			}
 		}).fail(function(jqXHR) {
 			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting collection. Please try again later."});
@@ -340,18 +359,24 @@
 	});
 
 	$('#filter_btn').on('click', function() {
-		var setid = $('#filter_set').val();
-		if (setid) {
-			var selected_set = $('#filter_set option:selected');
-			var chip_html = '<div class="chip">\
-								<input id="filter_set_value" data-orig="#filter_set" value="'+escapeHTML(setid)+'" hidden>\
-							    <img class="set-icon" src="'+escapeHTML(selected_set.attr('data-icon'))+'">'+escapeHTML(selected_set.text())+'\
-							    <i class="close material-icons filter-remove">close</i>\
-							  </div>';
-			$('#filter-chips').html(chip_html).removeClass('hide');
-		} else {
-			$('#filter-chips').empty().addClass('hide');
-		}
+		$('#filter-chips').empty();
+		$('#filter_modal select').each(function() {
+			var filter_key = escapeHTML($(this).attr('id'));
+			if ($(this).val()) {
+				var selected = $(this).find('option:selected');
+				var classes = (filter_key === 'filter_set') ? 'class="set-icon"' : '';
+				var chip_html = '<div class="chip">\
+									<input id="'+filter_key+'_value" data-orig="#'+filter_key+'" value="'+escapeHTML(selected.attr('value'))+'" hidden>\
+									<img '+classes+' src="'+escapeHTML(selected.attr('data-icon'))+'">'+escapeHTML(selected.text())+'\
+									<i class="close material-icons filter-remove">close</i>\
+								</div>';
+				$('#filter-chips').append(chip_html);
+			}
+		});
+
+		if ($('#filter-chips .chip').length === -1) $('#filter-chips').addClass('hide');
+		else $('#filter-chips').removeClass('hide');
+
 		M.Modal.getInstance($('#filter_modal')).close();
 		get_collection();
 	});
@@ -369,21 +394,21 @@
 		var page_str = '<ul id="extra-pages-before" class="dropdown-content"></ul>\
 						<ul id="extra-pages-after" class="dropdown-content"></ul>\
 						<ul class="pagination">';
-		if (current_page > 1) page_str += '<li class="waves-effect"><a class="first-page"><i class="material-icons">first_page</i></a></li>';
-		if (current_page > 1) page_str += '<li class="waves-effect"><a class="prev-page"><i class="material-icons">chevron_left</i></a></li>';
+		if (current_page > 1) page_str += '<li><a class="first-page"><i class="material-icons">first_page</i></a></li>';
+		if (current_page > 1) page_str += '<li><a class="prev-page"><i class="material-icons">chevron_left</i></a></li>';
 		var max_back = 3;
 		var max_forward = 4;
-		if (current_page - max_back > 1) page_str += '<li class="waves-effect"><a class="dropdown-trigger" data-target="extra-pages-before">...</a></li>';
+		if (current_page - max_back > 1) page_str += '<li><a class="dropdown-trigger" data-target="extra-pages-before">...</a></li>';
 		for (var i = current_page - max_back; i < current_page; i++) {
-			if (i > 0) page_str += '<li class="waves-effect"><a class="page">'+i+'</a></li>';
+			if (i > 0) page_str += '<li><a class="page">'+i+'</a></li>';
 		}
-		page_str += '<li class="active"><a class="page">'+i+'</a></li>';
+		page_str += '<li class="active bg-tertiary"><a class="page">'+i+'</a></li>';
 		for (var i = current_page + 1; i < current_page + max_forward; i++) {
-			if (i <= count) page_str += '<li class="waves-effect"><a class="page">'+i+'</a></li>';
+			if (i <= count) page_str += '<li><a class="page">'+i+'</a></li>';
 		}
-		if (current_page + max_forward < count) page_str += '<li class="waves-effect"><a class="dropdown-trigger" data-target="extra-pages-after">...</a></li>';
-		if (current_page < count) page_str += '<li class="waves-effect"><a class="next-page"><i class="material-icons">chevron_right</i></a></li>';
-		if (current_page < count) page_str += '<li class="waves-effect"><a class="last-page"><i class="material-icons">last_page</i></a></li>'
+		if (current_page + max_forward < count) page_str += '<li><a class="dropdown-trigger" data-target="extra-pages-after">...</a></li>';
+		if (current_page < count) page_str += '<li><a class="next-page"><i class="material-icons">chevron_right</i></a></li>';
+		if (current_page < count) page_str += '<li><a class="last-page"><i class="material-icons">last_page</i></a></li>'
 		page_str += '</ul>';
 		elem.html(page_str);
 

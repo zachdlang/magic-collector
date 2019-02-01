@@ -94,7 +94,7 @@ def get_collection():
 	params = params_to_dict(request.args)
 	resp = collection.get(params)
 
-	return jsonify(cards=resp['cards'], count=resp['count'])
+	return jsonify(**resp)
 
 
 @app.route('/search', methods=['GET'])
