@@ -160,8 +160,8 @@ def import_cards(cards):
 
 	for s in sets:
 		# Check if already have a record of this set
-		existing = fetch_query("SELECT 1 FROM card_set WHERE code = %s", (s['code'],))
-		if existing:
+		existing = fetch_query("SELECT 1 FROM card_set WHERE LOWER(code) = LOWER(%s)", (s['code'],))
+		if not existing:
 			resp = scryfall.get_set(s['code'])
 			qry = """INSERT INTO card_set (name, code, released, tcgplayer_groupid) SELECT %s, %s
 					WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)"""
