@@ -163,7 +163,7 @@ def import_cards(cards):
 		existing = fetch_query("SELECT 1 FROM card_set WHERE LOWER(code) = LOWER(%s)", (s['code'],))
 		if not existing:
 			resp = scryfall.get_set(s['code'])
-			qry = """INSERT INTO card_set (name, code, released, tcgplayer_groupid) SELECT %s, %s
+			qry = """INSERT INTO card_set (name, code, released, tcgplayer_groupid) SELECT %s, %s, %s, %s
 					WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)"""
 			qargs = (resp['name'], s['code'], resp['released_at'], resp.get('tcgplayer_id'), s['code'],)
 			mutate_query(qry, qargs)
