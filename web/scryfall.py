@@ -68,6 +68,7 @@ def simplify(resp):
 		simple['colors'] = ''.join(resp['colors'])
 	if 'image_uris' in resp:
 		simple['imageurl'] = resp['image_uris']['normal']
+		simple['arturl'] = resp['image_uris']['art_crop']
 
 	if resp.get('card_faces'):
 		resp = resp['card_faces'][0]
@@ -78,5 +79,6 @@ def simplify(resp):
 			simple['colors'] = ''.join(resp['colors'])
 		if 'imageurl' not in simple:
 			simple['imageurl'] = resp['image_uris']['normal']
+			simple['arturl'] = resp['image_uris']['art_crop']
 
 	return simple

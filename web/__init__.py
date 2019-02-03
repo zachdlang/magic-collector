@@ -124,7 +124,7 @@ def search():
 def csv_upload():
 	import csv
 
-	filename = '/tmp/upload_%s.csv' % session['userid']
+	filename = '/tmp/upload_%s_%s.csv' % (os.urandom(32), session['userid'])
 	request.files['upload'].save(filename)
 	rows = []
 	multiverse_ids = []
@@ -188,7 +188,7 @@ def import_cards(cards):
 			c['rarity'], c['multifaced'],
 			c['multiverseid'],
 		)
-		new = mutate_query(qry, qargs)
+		new = mutate_query(qry, qargs, returning=True)
 		if new:
 			c['id'] = new['id']
 			c['productid'] = tcgplayer.search(c)
@@ -287,6 +287,24 @@ def check_images():
 				print('Found new card image URL for %s.' % c['name'])
 				mutate_query("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
 
+	decks = fetch_query("SELECT id, name, arturl FROM deck")
+
+	for d in decks:
+		if d['arturl'] is not None:
+			# Check for bad image URLs
+			if check_image_exists(d['arturl']) is False:
+				print('Deck image URL for could not be found for %s.' % d['name'])
+				mutate_query("""UPDATE deck SET arturl = NULL WHERE id = %s""", (d['id'],))
+				# Null out local copy for refreshing image below
+				d['arturl'] = None
+
+		if d['arturl'] is None:
+			# Fetch image URLs for anything without one
+			d['arturl'] = deck.get_image(d['id'])
+			if d['arturl'] is not None:
+				print('Found new deck image URL for %s.' % d['name'])
+				mutate_query("""UPDATE deck SET arturl = %s WHERE id = %s""", (d['arturl'], d['id'],))
+
 	return jsonify()
 
 
@@ -296,11 +314,43 @@ def decks():
 	return render_template('decks.html', active='decks')
 
 
-@app.route('/get_decks', methods=['GET'])
+@app.route('/decks/get', methods=['GET'])
 @login_required
-def get_decks():
+def decks_get():
 	decks = deck.get_all()
 	return jsonify(decks=decks)
+
+
+@app.route('/decks/import', methods=['POST'])
+@login_required
+def decks_import():
+	import csv
+
+	filename = '/tmp/upload_%s_%s.csv' % (os.urandom(32), session['userid'])
+	request.files['upload'].save(filename)
+	rows = []
+	with open(filename) as csvfile:
+		importreader = csv.DictReader(csvfile)
+		for row in importreader:
+			rows.append(row)
+	os.remove(filename)
+
+	qry = """INSERT INTO deck (name, userid)
+			VALUES (concat('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS')), %s)
+			RETURNING id"""
+	deckid = mutate_query(qry, (session['userid'],), returning=True)['id']
+
+	for row in rows:
+		qry = """INSERT INTO deck_card (deckid, cardid, quantity, section)
+				VALUES (%s, (SELECT c.id FROM card c LEFT JOIN card_set s ON (c.card_setid = s.id) WHERE c.name = %s ORDER BY s.released DESC LIMIT 1), %s, %s)"""
+		qargs = (deckid, row['Name'], row['Count'], row['Section'],)
+		mutate_query(qry, qargs)
+
+	# Automatically populate image from first card
+	arturl = deck.get_image(deckid)
+	mutate_query("UPDATE deck SET arturl = %s WHERE id = %s", (arturl, deckid,))
+
+	return jsonify()
 
 
 if __name__ == '__main__':

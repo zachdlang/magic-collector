@@ -4,6 +4,40 @@
 <div class="container">
 	<div class="section">
 		<div class="row">
+			<div class="col s2">
+				<a class="btn bg-secondary sidenav-trigger" data-target="deck-menu">Decks</a>
+			</div>
+			<div class="col s2 offset-s8">
+				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
+			</div>
+		</div>
+
+		<div id="upload_modal" class="modal bottom-sheet">
+			<div class="modal-content">
+				<h4>Upload CSV</h4>
+				<div id="upload_loading"></div>
+
+				<div class="file-field input-field">
+					<div class="btn bg-secondary">
+						<span>File</span>
+						<form enctype="multipart/form-data" method="post" name="upload_form">
+							<input type="file" accept="text/csv" name="upload">
+						</form>
+					</div>
+					<div class="file-path-wrapper">
+						<input class="file-path validate" type="text">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a class="btn-flat bg-secondary" id="upload_btn">Submit</a>
+			</div>
+		</div>
+
+		<ul id="deck-menu" class="sidenav collection">
+		</ul>
+
+		<div class="row">
 			<div id="deck_list"></div>
 		</div>
 	</div>
@@ -20,19 +54,47 @@
 
 	function get_decks() {
 		$.ajax({
-			url: "{{ url_for('get_decks') }}",
+			url: "{{ url_for('decks_get') }}",
 			method: "GET"
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
+				var html_str = '';
 				for (var i = 0; i < data.decks.length; i++) {
 					var d = data.decks[i];
-					console.log(d);
+					html_str += '<li class="collection-item avatar">\
+										<img src="'+escapeHTML(d.arturl)+'" alt="" class="circle">\
+										<span class="title">'+escapeHTML(d.name)+'</span>\
+										<p>First Line</p>\
+									</li>';
 				}
+				$('#deck-menu').html(html_str);
+				M.Sidenav.getInstance($('#deck-menu')).open();
 			}
 		}).fail(function(jqXHR) {
 			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting sets. Please try again later."});
 		});
 	}
+
+	$('#upload_btn').on('click', function() {
+		show_loading($('#upload_loading'));
+		var form = document.forms.namedItem('upload_form');
+		var formdata = new FormData(form);
+
+		var upload_req = new XMLHttpRequest();
+		upload_req.open("POST", "{{ url_for('decks_import') }}", true);
+		upload_req.onload = function(oEvent) {
+			$('#upload_loading').empty();
+			if (upload_req.status == 200) {
+				M.Modal.getInstance($('#upload_modal')).close();
+				M.toast({html: "Successfully Uploaded"});
+				get_decks();
+			} else {
+				M.toast({html: "An internal error occurred. Please try again later."});
+			}
+		};
+
+		upload_req.send(formdata);
+	});
 </script>
 {% endblock %}
