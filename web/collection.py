@@ -78,6 +78,7 @@ def get(params):
 	resp['cards'] = fetch_query(qry, qargs)
 	for c in resp['cards']:
 		if c['imageurl'] is None or c['arturl'] is None:
+			print('Fetching images for %s' % c['name'])
 			image_resp = scryfall.get(c['multiverseid'])
 			c['imageurl'] = image_resp['imageurl']
 			c['arturl'] = image_resp['arturl']

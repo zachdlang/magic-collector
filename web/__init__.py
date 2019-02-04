@@ -361,10 +361,6 @@ def decks_import():
 		qargs = (deckid, row['Name'], row['Count'], row['Section'],)
 		mutate_query(qry, qargs)
 
-	# Automatically populate image from first card
-	arturl = deck.get_image(deckid)
-	mutate_query("UPDATE deck SET arturl = %s WHERE id = %s", (arturl, deckid,))
-
 	return jsonify()
 
 
