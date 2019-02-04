@@ -1,14 +1,23 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
+<div class="decks-page container">
 	<div class="section">
-		<div class="row">
-			<div class="col s2">
-				<a class="btn bg-secondary sidenav-trigger" data-target="deck-menu">Decks</a>
+		<div id="list-row" class="row">
+			<div class="show-deleted col s6 m3 offset-s4 offset-m7">
+				<label>
+					<input type="checkbox" id="deleted">
+					<span>Show Deleted</span>
+				</label>
 			</div>
-			<div class="col s2 offset-s8">
+			<div class="col s2">
 				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
+			</div>
+		</div>
+
+		<div id="edit-row" class="row hide">
+			<div class="col s3">
+				<a class="btn bg-secondary" id="edit-row-hide">Decks</a>
 			</div>
 		</div>
 
@@ -34,11 +43,12 @@
 			</div>
 		</div>
 
-		<ul id="deck-menu" class="sidenav collection">
-		</ul>
+		<div id="deck-menu" class="row">
+		</div>
 
-		<div class="row">
-			<div id="deck_list"></div>
+		<div id="deck-details" class="row hide">
+			<div class="deck-info"></div>
+			<div class="deck-contents"></div>
 		</div>
 	</div>
 
@@ -53,28 +63,88 @@
 	});
 
 	function get_decks() {
+		var data = {};
+		data['deleted'] = ($('#deleted').prop('checked')) ? 1 : 0;
+		$.ajax({
+			url: "{{ url_for('decks_get_all') }}",
+			method: "GET",
+			data: data
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				$('#edit-row, #deck-details').addClass('hide');
+				$('#list-row, #deck-menu').removeClass('hide');
+				var html_str = '';
+				for (var i = 0; i < data.results.length; i++) {
+					var d = data.results[i];
+					html_str += '<div class="col s12 m4 l3">\
+									<div class="card">\
+										<div class="card-image">\
+											<img src="'+escapeHTML(d.arturl)+'">\
+											<a class="btn-floating halfway-fab bg-tertiary edit-deck" data-deckid="'+escapeHTML(d.id)+'">\
+												<i class="material-icons">edit</i>\
+											</a>\
+										</div>\
+										<div class="card-content">\
+											<span class="card-title">'+escapeHTML(d.name)+'</span>\
+										</div>\
+									</div>\
+								</div>';
+				}
+				$('#deck-menu').html(html_str);
+
+				$('.edit-deck').on('click', function() {
+					show_details($(this).data().deckid);
+				});
+			}
+		}).fail(function(jqXHR) {
+			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting dekcs. Please try again later."});
+		});
+	}
+
+	function show_details(deckid) {
+		$('#list-row, #deck-menu').addClass('hide');
+		$('#edit-row, #deck-details').removeClass('hide');
+
 		$.ajax({
 			url: "{{ url_for('decks_get') }}",
-			method: "GET"
+			method: "GET",
+			data: {'deckid': deckid}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				show_cards(deckid);
+				var html_str = '';
+
+				$('#deck-details .deck-info').html(html_str);
+			}
+		}).fail(function(jqXHR) {
+			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting deck. Please try again later."});
+		});
+	}
+
+	function show_cards(deckid) {
+		$.ajax({
+			url: "{{ url_for('decks_get_cards') }}",
+			method: "GET",
+			data: {'deckid': deckid}
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
 				var html_str = '';
-				for (var i = 0; i < data.decks.length; i++) {
-					var d = data.decks[i];
-					html_str += '<li class="collection-item avatar">\
-										<img src="'+escapeHTML(d.arturl)+'" alt="" class="circle">\
-										<span class="title">'+escapeHTML(d.name)+'</span>\
-										<p>First Line</p>\
-									</li>';
-				}
-				$('#deck-menu').html(html_str);
-				M.Sidenav.getInstance($('#deck-menu')).open();
+
+				$('#deck-details .deck-contents').html(html_str);
 			}
 		}).fail(function(jqXHR) {
-			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting sets. Please try again later."});
+			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting deck. Please try again later."});
 		});
 	}
+
+	$('#deleted').on('change', get_decks);
+
+	$('#edit-row-hide').on('click', function() {
+		get_decks();
+	});
 
 	$('#upload_btn').on('click', function() {
 		show_loading($('#upload_loading'));

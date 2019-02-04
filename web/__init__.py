@@ -314,11 +314,28 @@ def decks():
 	return render_template('decks.html', active='decks')
 
 
+@app.route('/decks/get/all', methods=['GET'])
+@login_required
+def decks_get_all():
+	params = params_to_dict(request.args)
+	results = deck.get_all(params.get('deleted') == '1')
+	return jsonify(results=results)
+
+
 @app.route('/decks/get', methods=['GET'])
 @login_required
 def decks_get():
-	decks = deck.get_all()
-	return jsonify(decks=decks)
+	params = params_to_dict(request.args)
+	result = deck.get(params.get('deckid'))
+	return jsonify(result=result)
+
+
+@app.route('/decks/get/cards', methods=['GET'])
+@login_required
+def decks_get_cards():
+	params = params_to_dict(request.args)
+	results = deck.get_cards(params.get('deckid'))
+	return jsonify(results=results)
 
 
 @app.route('/decks/import', methods=['POST'])
@@ -341,8 +358,9 @@ def decks_import():
 	deckid = mutate_query(qry, (session['userid'],), returning=True)['id']
 
 	for row in rows:
+		print(row)
 		qry = """INSERT INTO deck_card (deckid, cardid, quantity, section)
-				VALUES (%s, (SELECT c.id FROM card c LEFT JOIN card_set s ON (c.card_setid = s.id) WHERE c.name = %s ORDER BY s.released DESC LIMIT 1), %s, %s)"""
+				VALUES (%s, deck_card_match(%s), %s, %s)"""
 		qargs = (deckid, row['Name'], row['Count'], row['Section'],)
 		mutate_query(qry, qargs)
 

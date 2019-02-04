@@ -8,9 +8,18 @@ from sitetools.utility import (
 )
 
 
-def get_all():
-	decks = fetch_query("SELECT id, name, arturl FROM deck WHERE userid = %s", (session['userid'],))
+def get_all(deleted):
+	qry = "SELECT id, name, arturl FROM deck WHERE deleted = %s AND userid = %s"
+	qargs = (deleted, session['userid'],)
+	decks = fetch_query(qry, qargs)
 	return decks
+
+
+def get(deckid):
+	qry = "SELECT id, name, arturl FROM deck WHERE userid = %s AND id = %s"
+	qargs = (session['userid'], deckid,)
+	result = fetch_query(qry, qargs, single_row=True)
+	return result
 
 
 def get_image(deckid):
@@ -20,7 +29,7 @@ def get_image(deckid):
 
 
 def get_cards(deckid):
-	qry = "SELECT cardid, quantity FROM deck_card WHERE id = %s AND userid = %s"
+	qry = "SELECT cardid, quantity FROM deck_card WHERE id = %s AND (SELECT userid FROM deck WHERE id = deckid) = %s"
 	qargs = (deckid, session['userid'],)
 	cards = fetch_query(qry, qargs)
 	return cards

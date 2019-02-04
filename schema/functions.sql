@@ -41,3 +41,28 @@ BEGIN
 	RETURN;
 END;
 $$ LANGUAGE 'plpgsql';
+
+
+DROP FUNCTION IF EXISTS collector.deck_card_match(TEXT);
+CREATE OR REPLACE FUNCTION collector.deck_card_match(_name TEXT) RETURNS INTEGER AS $$
+DECLARE
+	cardid INTEGER;
+BEGIN
+	SELECT c.id INTO cardid
+		FROM card c
+		LEFT JOIN card_set s ON (c.card_setid = s.id)
+		WHERE LOWER(c.name) = LOWER(_name)
+		ORDER BY s.released DESC LIMIT 1;
+
+	-- If no matches, ILIKE for multifaced cards
+	IF cardid IS NULL THEN
+		SELECT c.id INTO cardid
+			FROM card c
+			LEFT JOIN card_set s ON (c.card_setid = s.id)
+			WHERE c.name ILIKE concat('%', _name, '%')
+			ORDER BY s.released DESC LIMIT 1;
+	END IF;
+
+	RETURN cardid;
+END;
+$$ LANGUAGE 'plpgsql';
