@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS card (
 	price MONEY,
 	foilprice MONEY,
 	tcgplayer_productid TEXT,
-	imageurl TEXT
+	imageurl TEXT,
+	arturl TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (

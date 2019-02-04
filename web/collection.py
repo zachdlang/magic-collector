@@ -56,7 +56,7 @@ def get(params):
 				c.id, c.name, cs.name AS setname, cs.code,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				c.multiverseid, c.imageurl, cs.iconurl, c.card_setid
+				c.multiverseid, c.imageurl, c.arturl, cs.iconurl, c.card_setid
 			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
@@ -77,9 +77,11 @@ def get(params):
 	qargs += (limit, offset,)
 	resp['cards'] = fetch_query(qry, qargs)
 	for c in resp['cards']:
-		if c['imageurl'] is None:
-			c['imageurl'] = scryfall.get(c['multiverseid'])['imageurl']
-			mutate_query("UPDATE card SET imageurl = %s WHERE id = %s", (c['imageurl'], c['id'],))
+		if c['imageurl'] is None or c['arturl'] is None:
+			image_resp = scryfall.get(c['multiverseid'])
+			c['imageurl'] = image_resp['imageurl']
+			c['arturl'] = image_resp['arturl']
+			mutate_query("UPDATE card SET imageurl = %s, arturl = %s WHERE id = %s", (c['imageurl'], c['arturl'], c['id'],))
 		if c['iconurl'] is None:
 			c['iconurl'] = scryfall.get_set(c['code'])['icon_svg_uri']
 			mutate_query("UPDATE card_set SET iconurl = %s WHERE id = %s", (c['iconurl'], c['card_setid'],))

@@ -265,7 +265,7 @@ def check_images():
 				print('Found new set icon URL for %s.' % s['name'])
 				mutate_query("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (s['iconurl'], s['id'],))
 
-	qry = """SELECT id, name, multiverseid, imageurl
+	qry = """SELECT id, name, multiverseid, imageurl, arturl
 			FROM card
 			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=card.id)
 			ORDER BY name ASC"""
@@ -287,23 +287,20 @@ def check_images():
 				print('Found new card image URL for %s.' % c['name'])
 				mutate_query("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
 
-	decks = fetch_query("SELECT id, name, arturl FROM deck")
-
-	for d in decks:
-		if d['arturl'] is not None:
+		if c['arturl'] is not None:
 			# Check for bad image URLs
-			if check_image_exists(d['arturl']) is False:
-				print('Deck image URL for could not be found for %s.' % d['name'])
-				mutate_query("""UPDATE deck SET arturl = NULL WHERE id = %s""", (d['id'],))
+			if check_image_exists(c['arturl']) is False:
+				print('Cardart image URL for could not be found for %s.' % c['name'])
+				mutate_query("""UPDATE card SET arturl = NULL WHERE id = %s""", (c['id'],))
 				# Null out local copy for refreshing image below
-				d['arturl'] = None
+				c['arturl'] = None
 
-		if d['arturl'] is None:
+		if c['arturl'] is None:
 			# Fetch image URLs for anything without one
-			d['arturl'] = deck.get_image(d['id'])
-			if d['arturl'] is not None:
-				print('Found new deck image URL for %s.' % d['name'])
-				mutate_query("""UPDATE deck SET arturl = %s WHERE id = %s""", (d['arturl'], d['id'],))
+			c['arturl'] = scryfall.get(c['multiverseid'])['arturl']
+			if c['arturl'] is not None:
+				print('Found new cardart image URL for %s.' % c['name'])
+				mutate_query("""UPDATE card SET arturl = %s WHERE id = %s""", (c['arturl'], c['id'],))
 
 	return jsonify()
 
