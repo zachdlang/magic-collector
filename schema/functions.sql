@@ -59,7 +59,7 @@ BEGIN
 		SELECT c.id INTO cardid
 			FROM card c
 			LEFT JOIN card_set s ON (c.card_setid = s.id)
-			WHERE c.name ILIKE concat('%', _name, '%')
+			WHERE c.multifaced AND c.name ILIKE concat('%', _name, '%')
 			ORDER BY s.released DESC LIMIT 1;
 	END IF;
 
