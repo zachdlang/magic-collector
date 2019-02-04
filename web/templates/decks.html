@@ -46,9 +46,9 @@
 		<div id="deck-menu" class="row">
 		</div>
 
-		<div id="deck-details" class="row hide">
-			<div class="deck-info"></div>
-			<div class="deck-contents"></div>
+		<div id="deck-details" class="hide">
+			<div class="row deck-info"></div>
+			<div class="row deck-contents"></div>
 		</div>
 	</div>
 
@@ -116,7 +116,18 @@
 			if (data.error) M.toast({html: data.error});
 			else {
 				show_cards(deckid);
-				var html_str = '';
+
+				var d = data.result;
+				var html_str = '<div class="card horizontal">\
+							      <div class="card-image">\
+							        <img src="'+escapeHTML(d.arturl)+'">\
+							      </div>\
+							      <div class="card-stacked">\
+							        <div class="card-content">\
+							          <p>'+escapeHTML(d.name)+'</p>\
+							        </div>\
+							      </div>\
+							  </div>';
 
 				$('#deck-details .deck-info').html(html_str);
 			}

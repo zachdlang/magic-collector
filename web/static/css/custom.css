@@ -142,3 +142,7 @@ for this trick to center the overflow image
 	right: -9999px;
 	margin: auto;
 }
+
+.decks-page #deck-details .deck-info .card-image {
+	max-width: 25%;
+}
