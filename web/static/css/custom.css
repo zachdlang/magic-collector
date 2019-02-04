@@ -123,3 +123,22 @@ main {
 .decks-page .show-deleted {
 	padding-top: 8px;
 }
+
+/*
+Thank you to https://stackoverflow.com/a/19414020
+for this trick to center the overflow image
+*/
+.decks-page #deck-menu .card-image-container {
+	height: 140px;
+	position: relative;
+    overflow: hidden;
+}
+
+.decks-page #deck-menu .card-image-container img {
+	position: absolute;
+	top: -9999px;
+	bottom: -9999px;
+	left: -9999px;
+	right: -9999px;
+	margin: auto;
+}

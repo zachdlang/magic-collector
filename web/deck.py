@@ -10,8 +10,7 @@ from sitetools.utility import (
 
 def get_all(deleted):
 	qry = """SELECT id, name,
-				(SELECT arturl FROM card WHERE id =
-					(SELECT cardid FROM deck_card WHERE deckid = deck.id LIMIT 1))
+				(SELECT arturl FROM card WHERE id = cardartid)
 			FROM deck WHERE deleted = %s AND userid = %s"""
 	qargs = (deleted, session['userid'],)
 	decks = fetch_query(qry, qargs)
@@ -20,8 +19,7 @@ def get_all(deleted):
 
 def get(deckid):
 	qry = """SELECT id, name,
-				(SELECT arturl FROM card WHERE id =
-					(SELECT cardid FROM deck_card WHERE deckid = deck.id LIMIT 1))
+				(SELECT arturl FROM card WHERE id = cardartid)
 			FROM deck WHERE userid = %s AND id = %s"""
 	qargs = (session['userid'], deckid,)
 	result = fetch_query(qry, qargs, single_row=True)
