@@ -34,12 +34,14 @@ def get_image(deckid):
 
 
 def get_cards(deckid):
-	qry = """SELECT dc.cardid, dc.quantity, dc.section, c.name, c.arturl, c.multiverseid
+	qry = """SELECT dc.cardid, dc.quantity, dc.section,
+				c.name, c.arturl, c.multiverseid,
+				has_deck_card(%s, dc.cardid) AS has_quantity
 			FROM deck_card dc
 			LEFT JOIN card c ON c.id = dc.cardid
 			WHERE dc.deckid = %s
 			AND (SELECT userid FROM deck WHERE id = dc.deckid) = %s"""
-	qargs = (deckid, session['userid'],)
+	qargs = (session['userid'], deckid, session['userid'],)
 	cards = fetch_query(qry, qargs)
 
 	for c in cards:

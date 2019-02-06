@@ -68,6 +68,16 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
+DROP FUNCTION IF EXISTS collector.has_deck_card(INTEGER, INTEGER);
+CREATE OR REPLACE FUNCTION collector.has_deck_card(_userid INTEGER, _cardid INTEGER) RETURNS INTEGER AS $$
+	SELECT COALESCE(
+		(SELECT SUM(quantity) FROM user_card uc WHERE uc.userid = _userid AND uc.cardid IN (
+			SELECT id FROM card WHERE name = (SELECT name FROM card WHERE id = _cardid)
+		)
+	), 0)::INTEGER; 
+$$ LANGUAGE 'sql';
+
+
 DROP FUNCTION IF EXISTS collector.get_format(INTEGER);
 CREATE OR REPLACE FUNCTION collector.get_format(_formatid INTEGER) RETURNS TEXT AS $$
 	SELECT name FROM format WHERE id = _formatid;

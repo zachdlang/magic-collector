@@ -143,9 +143,8 @@
 									</div>\
 								</div>\
 								<div class="row">\
-									<div id="list-main" class="col s12 m4"></div>\
-									<div id="list-sideboard" class="col s12 m4"></div>\
-									<div id="list-scratchpad" class="col s12 m4"></div>\
+									<div id="list-main" class="col s12 m6"></div>\
+									<div id="list-sideboard" class="col s12 m6"></div>\
 								</div>';
 
 				$('#deck-details .deck-info').html(html_str);
@@ -153,24 +152,19 @@
 
 				var html_str_main = '<div class="list-heading">Main</div>';
 				var html_str_sideboard = '<div class="list-heading">Sideboard</div>';
-				var html_str_scratchpad = '<div class="list-heading">Scratchpad</div>';
 				for (var i = 0; i < data.cards.length; i++) {
 					var c = data.cards[i];
 					switch (c.section) {
 						case 'main':
-							html_str_main += escapeHTML(c.name)+' ('+escapeHTML(c.quantity)+')<br>';
+							html_str_main += escapeHTML(c.name)+' ('+escapeHTML(c.has_quantity)+'/'+escapeHTML(c.quantity)+')<br>';
 							break;
 						case 'sideboard':
-							html_str_sideboard += escapeHTML(c.name)+' ('+escapeHTML(c.quantity)+')<br>';
-							break;
-						case 'scratchpad':
-							html_str_scratchpad += escapeHTML(c.name)+' ('+escapeHTML(c.quantity)+')<br>';
+							html_str_sideboard += escapeHTML(c.name)+' ('+escapeHTML(c.has_quantity)+'/'+escapeHTML(c.quantity)+')<br>';
 							break;
 					}
 				}
 				$('#list-main').html(html_str_main);
 				$('#list-sideboard').html(html_str_sideboard);
-				$('#list-scratchpad').html(html_str_scratchpad);
 
 				$('#deck-back').on('click', get_decks);
 
