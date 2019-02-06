@@ -19,7 +19,7 @@ def get_all(deleted):
 
 
 def get(deckid):
-	qry = """SELECT id, name, formatid,
+	qry = """SELECT id, name, formatid, deleted,
 				(SELECT arturl FROM card WHERE id = cardartid)
 			FROM deck WHERE userid = %s AND id = %s"""
 	qargs = (session['userid'], deckid,)

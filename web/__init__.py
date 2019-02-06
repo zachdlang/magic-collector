@@ -334,11 +334,26 @@ def decks_get():
 @login_required
 def decks_save():
 	params = params_to_dict(request.form)
-	error = None
 	qry = "UPDATE deck SET name = %s, formatid = %s WHERE id = %s AND userid = %s"
 	qargs = (params['name'], params['formatid'], params['deckid'], session['userid'],)
 	mutate_query(qry, qargs)
-	return jsonify(error=error)
+	return jsonify()
+
+
+@app.route('/decks/delete', methods=['POST'])
+@login_required
+def decks_delete():
+	params = params_to_dict(request.form)
+	mutate_query("UPDATE deck SET deleted = true WHERE id = %s AND userid = %s", (params['deckid'], session['userid'],))
+	return jsonify()
+
+
+@app.route('/decks/restore', methods=['POST'])
+@login_required
+def decks_restore():
+	params = params_to_dict(request.form)
+	mutate_query("UPDATE deck SET deleted = false WHERE id = %s AND userid = %s", (params['deckid'], session['userid'],))
+	return jsonify()
 
 
 @app.route('/decks/import', methods=['POST'])
@@ -366,6 +381,13 @@ def decks_import():
 				VALUES (%s, deck_card_match(%s), %s, %s)"""
 		qargs = (deckid, row['Name'], row['Count'], row['Section'],)
 		mutate_query(qry, qargs)
+
+	qry = """UPDATE deck SET cardartid = (
+				SELECT id FROM card WHERE EXISTS (
+					SELECT 1 FROM deck_card WHERE cardid = card.id AND deckid = deck.id
+				) ORDER BY random() LIMIT 1
+			) WHERE id = %s"""
+	mutate_query(qry, (deckid,))
 
 	return jsonify()
 
