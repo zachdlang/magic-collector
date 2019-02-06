@@ -143,6 +143,20 @@ for this trick to center the overflow image
 	margin: auto;
 }
 
-.decks-page #deck-details .deck-info .card-image {
-	max-width: 25%;
+.decks-page #deck-menu .card-content {
+	height: 120px;
+}
+
+.decks-page #deck-menu .card .deck-name,
+.decks-page #deck-details .list-heading {
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.decks-page #deck-menu .card .deck-format {
+	font-style: italic;
+}
+
+.decks-page #deck-details a {
+	cursor: pointer;
 }

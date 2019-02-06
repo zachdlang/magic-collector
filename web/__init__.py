@@ -323,16 +323,22 @@ def decks_get_all():
 @login_required
 def decks_get():
 	params = params_to_dict(request.args)
-	result = deck.get(params.get('deckid'))
-	return jsonify(result=result)
+	resp = {}
+	resp['deck'] = deck.get(params['deckid'])
+	resp['cards'] = deck.get_cards(params['deckid'])
+	resp['formats'] = deck.get_formats()
+	return jsonify(**resp)
 
 
-@app.route('/decks/get/cards', methods=['GET'])
+@app.route('/decks/save', methods=['POST'])
 @login_required
-def decks_get_cards():
-	params = params_to_dict(request.args)
-	results = deck.get_cards(params.get('deckid'))
-	return jsonify(results=results)
+def decks_save():
+	params = params_to_dict(request.form)
+	error = None
+	qry = "UPDATE deck SET name = %s, formatid = %s WHERE id = %s AND userid = %s"
+	qargs = (params['name'], params['formatid'], params['deckid'], session['userid'],)
+	mutate_query(qry, qargs)
+	return jsonify(error=error)
 
 
 @app.route('/decks/import', methods=['POST'])
@@ -349,8 +355,8 @@ def decks_import():
 			rows.append(row)
 	os.remove(filename)
 
-	qry = """INSERT INTO deck (name, userid)
-			VALUES (concat('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS')), %s)
+	qry = """INSERT INTO deck (name, userid, formatid)
+			VALUES (concat('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS')), %s, (SELECT id FROM format WHERE name = 'Other'))
 			RETURNING id"""
 	deckid = mutate_query(qry, (session['userid'],), returning=True)['id']
 

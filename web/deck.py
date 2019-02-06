@@ -9,16 +9,17 @@ from sitetools.utility import (
 
 
 def get_all(deleted):
-	qry = """SELECT id, name,
+	qry = """SELECT id, name, get_format(formatid) AS formatname,
 				(SELECT arturl FROM card WHERE id = cardartid)
-			FROM deck WHERE deleted = %s AND userid = %s"""
+			FROM deck WHERE deleted = %s AND userid = %s
+			ORDER BY formatid, name"""
 	qargs = (deleted, session['userid'],)
 	decks = fetch_query(qry, qargs)
 	return decks
 
 
 def get(deckid):
-	qry = """SELECT id, name,
+	qry = """SELECT id, name, formatid,
 				(SELECT arturl FROM card WHERE id = cardartid)
 			FROM deck WHERE userid = %s AND id = %s"""
 	qargs = (session['userid'], deckid,)
@@ -33,7 +34,7 @@ def get_image(deckid):
 
 
 def get_cards(deckid):
-	qry = """SELECT dc.cardid, dc.quantity, c.name, c.arturl, c.multiverseid
+	qry = """SELECT dc.cardid, dc.quantity, dc.section, c.name, c.arturl, c.multiverseid
 			FROM deck_card dc
 			LEFT JOIN card c ON c.id = dc.cardid
 			WHERE dc.deckid = %s
@@ -50,3 +51,8 @@ def get_cards(deckid):
 		del c['multiverseid']
 
 	return cards
+
+
+def get_formats():
+	formats = fetch_query("SELECT id, name FROM format ORDER BY id")
+	return formats

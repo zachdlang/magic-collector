@@ -66,3 +66,9 @@ BEGIN
 	RETURN cardid;
 END;
 $$ LANGUAGE 'plpgsql';
+
+
+DROP FUNCTION IF EXISTS collector.get_format(INTEGER);
+CREATE OR REPLACE FUNCTION collector.get_format(_formatid INTEGER) RETURNS TEXT AS $$
+	SELECT name FROM format WHERE id = _formatid;
+$$ LANGUAGE 'sql';

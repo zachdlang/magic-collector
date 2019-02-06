@@ -15,12 +15,6 @@
 			</div>
 		</div>
 
-		<div id="edit-row" class="row hide">
-			<div class="col s3">
-				<a class="btn bg-secondary" id="edit-row-hide">Decks</a>
-			</div>
-		</div>
-
 		<div id="upload_modal" class="modal bottom-sheet">
 			<div class="modal-content">
 				<h4>Upload CSV</h4>
@@ -72,7 +66,7 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
-				$('#edit-row, #deck-details').addClass('hide');
+				$('#deck-details').addClass('hide');
 				$('#list-row, #deck-menu').removeClass('hide');
 				var html_str = '';
 				for (var i = 0; i < data.results.length; i++) {
@@ -88,7 +82,8 @@
 											</a>\
 										</div>\
 										<div class="card-content">\
-											<span class="card-title">'+escapeHTML(d.name)+'</span>\
+											<div class="deck-name">'+escapeHTML(d.name)+'</div>\
+											<div class="deck-format">'+escapeHTML(d.formatname)+'</div>\
 										</div>\
 									</div>\
 								</div>';
@@ -105,8 +100,9 @@
 	}
 
 	function show_details(deckid) {
+		$('#deck-details .deck-info').empty();
 		$('#list-row, #deck-menu').addClass('hide');
-		$('#edit-row, #deck-details').removeClass('hide');
+		$('#deck-details').removeClass('hide');
 
 		$.ajax({
 			url: "{{ url_for('decks_get') }}",
@@ -115,38 +111,85 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
-				show_cards(deckid);
+				var d = data.deck;
+				var html_str_select = '';
+				for (var i = 0; i < data.formats.length; i++) {
+					var f = data.formats[i];
+					var selected = (f.id == d.formatid) ? 'selected' : '';
+					html_str_select += '<option value="'+escapeHTML(f.id)+'" '+selected+'>'+escapeHTML(f.name)+'</option>';
+				}
 
-				var d = data.result;
-				var html_str = '<div class="card horizontal">\
-							      <div class="card-image">\
-							        <img src="'+escapeHTML(d.arturl)+'">\
-							      </div>\
-							      <div class="card-stacked">\
-							        <div class="card-content">\
-							          <p>'+escapeHTML(d.name)+'</p>\
-							        </div>\
-							      </div>\
-							  </div>';
+				var html_str = '<div class="row">\
+									<div class="col s3">\
+										<img class="responsive-img" src="'+escapeHTML(d.arturl)+'">\
+									</div>\
+									<div class="col s9">\
+										<div class="row">\
+											<div class="col s12 m6">\
+												<input type="text" value="'+escapeHTML(d.name)+'" id="edit-deck-name">\
+											</div>\
+											<div class="col s12 m6">\
+												<select id="edit-deck-format">'+html_str_select+'</select>\
+											</div>\
+										</div>\
+										<div class="row">\
+											<div class="col s2 offset-s8">\
+												<a class="btn bg-secondary" id="deck-back">Back</a>\
+											</div>\
+											<div class="col s2">\
+												<a class="btn bg-secondary" id="deck-save">Save</a>\
+											</div>\
+										</div>\
+									</div>\
+								</div>\
+								<div class="row">\
+									<div id="list-main" class="col s12 m4"></div>\
+									<div id="list-sideboard" class="col s12 m4"></div>\
+									<div id="list-scratchpad" class="col s12 m4"></div>\
+								</div>';
 
 				$('#deck-details .deck-info').html(html_str);
-			}
-		}).fail(function(jqXHR) {
-			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting deck. Please try again later."});
-		});
-	}
+				$('#deck-details .deck-info #edit-deck-format').formSelect();
 
-	function show_cards(deckid) {
-		$.ajax({
-			url: "{{ url_for('decks_get_cards') }}",
-			method: "GET",
-			data: {'deckid': deckid}
-		}).done(function(data) {
-			if (data.error) M.toast({html: data.error});
-			else {
-				var html_str = '';
+				var html_str_main = '<div class="list-heading">Main</div>';
+				var html_str_sideboard = '<div class="list-heading">Sideboard</div>';
+				var html_str_scratchpad = '<div class="list-heading">Scratchpad</div>';
+				for (var i = 0; i < data.cards.length; i++) {
+					var c = data.cards[i];
+					switch (c.section) {
+						case 'main':
+							html_str_main += escapeHTML(c.name)+' ('+escapeHTML(c.quantity)+')<br>';
+							break;
+						case 'sideboard':
+							html_str_sideboard += escapeHTML(c.name)+' ('+escapeHTML(c.quantity)+')<br>';
+							break;
+						case 'scratchpad':
+							html_str_scratchpad += escapeHTML(c.name)+' ('+escapeHTML(c.quantity)+')<br>';
+							break;
+					}
+				}
+				$('#list-main').html(html_str_main);
+				$('#list-sideboard').html(html_str_sideboard);
+				$('#list-scratchpad').html(html_str_scratchpad);
 
-				$('#deck-details .deck-contents').html(html_str);
+				$('#deck-back').on('click', get_decks);
+
+				$('#deck-save').on('click', function() {
+					$.ajax({
+						url: "{{ url_for('decks_save') }}",
+						method: "POST",
+						data: {
+							'deckid': deckid,
+							'name': $('#edit-deck-name').val(),
+							'formatid': $('#edit-deck-format').val()
+						}
+					}).done(function(data) {
+						if (data.error) M.toast({html: data.error});
+						else M.toast({html: 'Saved successfully.'});
+					}).fail(function(jqXHR) {
+						if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred saving deck. Please try again later."});
+					});
+				});
 			}
 		}).fail(function(jqXHR) {
 			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting deck. Please try again later."});
@@ -154,10 +197,6 @@
 	}
 
 	$('#deleted').on('change', get_decks);
-
-	$('#edit-row-hide').on('click', function() {
-		get_decks();
-	});
 
 	$('#upload_btn').on('click', function() {
 		show_loading($('#upload_loading'));
