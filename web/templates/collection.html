@@ -123,7 +123,7 @@
 
 		<div class="row">
 			<table class="highlight">
-				<thead>
+				<thead id="collection_head" class="hide">
 					<tr>
 						<th class="sort-head valign-wrapper" data-sort_col="name">Card <i class="material-icons">keyboard_arrow_up</i></th>
 						<th class="sort-head" data-sort_col="setname">Set</th>
@@ -240,6 +240,7 @@
 	var sort_desc = 'asc';
 	function get_collection() {
 		if (search_req) search_req.abort();
+		$('#collection_head').addClass('hide');
 		show_loading($('#collection_list'));
 		$('#collection_pagination, #collection_total').empty();
 
@@ -257,6 +258,7 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
+				$('#collection_head').removeClass('hide');
 				compile_handlebars('collection-template', '#collection_list', data);
 
 				$('.card-name').hover(function() {
