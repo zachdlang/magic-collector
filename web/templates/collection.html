@@ -138,9 +138,9 @@
 		</div>
 
 		<div class="row">
-			<div id="collection_pagination" class="col s12 m6">
+			<div id="collection_pagination" class="col s12 m8">
 			</div>
-			<div id="collection_total" class="col s12 m6 right-align">
+			<div id="collection_total" class="col s12 m4 right-align">
 			</div>
 		</div>
 
@@ -183,6 +183,30 @@
 		<div class="card-panel card-hover" style="top: {{vert_pos}}px; left: {{horiz_pos}}px;">
 			<img class="responsive-img" src="{{image_url}}">
 		</div>
+	</script>
+
+	<script id="pagination-template" type="text/x-handlebars-template">
+		<ul id="extra-pages-before" class="dropdown-content">
+			{{#each extras_before}}
+			<li><a class="{{class}}">{{label}}</a></li>
+			{{/each}}
+		</ul>
+		<ul id="extra-pages-after" class="dropdown-content">
+			{{#each extras_after}}
+			<li><a class="{{class}}">{{label}}</a></li>
+			{{/each}}
+		</ul>
+		<ul class="pagination">
+			{{#each pages}}
+			<li {{#if active}}class="active bg-tertiary"{{/if}}><a class="{{class}}" {{#if target}}data-target="{{target}}"{{/if}}>
+				{{#if label}}
+				{{label}}
+				{{else}} 
+				<i class="material-icons">{{icon}}</i>
+				{{/if}}
+			</a></li>
+			{{/each}}
+		</ul>
 	</script>
 
 	<script id="collectiontotal-template" type="text/x-handlebars-template">
@@ -425,36 +449,52 @@
 	});
 
 	function generate_pagination(elem, count) {
-		var page_str = '<ul id="extra-pages-before" class="dropdown-content"></ul>\
-						<ul id="extra-pages-after" class="dropdown-content"></ul>\
-						<ul class="pagination">';
-		if (current_page > 1) page_str += '<li><a class="first-page"><i class="material-icons">first_page</i></a></li>';
-		if (current_page > 1) page_str += '<li><a class="prev-page"><i class="material-icons">chevron_left</i></a></li>';
-		var max_back = 3;
-		var max_forward = 4;
-		if (current_page - max_back > 1) page_str += '<li><a class="dropdown-trigger" data-target="extra-pages-before">...</a></li>';
-		for (var i = current_page - max_back; i < current_page; i++) {
-			if (i > 0) page_str += '<li><a class="page">'+i+'</a></li>';
-		}
-		page_str += '<li class="active bg-tertiary"><a class="page">'+i+'</a></li>';
-		for (var i = current_page + 1; i < current_page + max_forward; i++) {
-			if (i <= count) page_str += '<li><a class="page">'+i+'</a></li>';
-		}
-		if (current_page + max_forward < count) page_str += '<li><a class="dropdown-trigger" data-target="extra-pages-after">...</a></li>';
-		if (current_page < count) page_str += '<li><a class="next-page"><i class="material-icons">chevron_right</i></a></li>';
-		if (current_page < count) page_str += '<li><a class="last-page"><i class="material-icons">last_page</i></a></li>'
-		page_str += '</ul>';
-		elem.html(page_str);
+		var data = {};
+		data['pages'] = [];
 
-		var extra_before_html = '';
-		var extra_after_html = '';
+		if (current_page > 1) {
+			data['pages'].push({'class': 'first-page', 'icon': 'first_page'});
+			data['pages'].push({'class': 'prev-page', 'icon': 'chevron_left'});
+		}
+
+		var max_back = 2;
+		var max_forward = 3;
+		if (current_page - max_back > 1) data['pages'].push({
+			'class': 'dropdown-trigger',
+			'label': '...',
+			'target': 'extra-pages-before'
+		});
+
+		for (var i = current_page - max_back; i < current_page + max_forward; i++) {
+			if (i > 0 && i <= count) {
+				var page = {'class': 'page', 'label': i};
+				if (i == current_page) page['active'] = true;
+				data['pages'].push(page);
+			}
+		}
+
+		if (current_page + max_forward < count) data['pages'].push({
+			'class': 'dropdown-trigger',
+			'label': '...',
+			'target': 'extra-pages-after'
+		});
+
+		if (current_page < count) {
+			data['pages'].push({'class': 'next-page', 'icon': 'chevron_right'});
+			data['pages'].push({'class': 'last-page', 'icon': 'last_page'});
+		}
+
+		data['extras_before'] = [];
+		data['extras_after'] = [];
 		for (var i = 1; i <= count; i++) {
-			if (i < current_page - max_back) extra_before_html += '<li><a class="page">'+i+'</a></li>';
-			if (i >= current_page + max_forward) extra_after_html += '<li><a class="page">'+i+'</a></li>';
+			if (i < current_page - max_back) data['extras_before'].push({'class': 'page', 'label': i});
+			if (i >= current_page + max_forward) data['extras_after'].push({'class': 'page', 'label': i});
 		}
 
-		elem.find('#extra-pages-before').html(extra_before_html);
-		elem.find('#extra-pages-after').html(extra_after_html);
+		compile_handlebars('pagination-template', elem, data);
+		
+		var elems = document.querySelectorAll('.dropdown-trigger');
+		var instances = M.Dropdown.init(elems, {'container': $('body')});
 
 		elem.off('click');
 		elem.on('click', '.first-page', function() {
@@ -473,11 +513,10 @@
 			current_page = count;
 			get_collection();
 		});
-
-		var elems = document.querySelectorAll('.dropdown-trigger');
-		var instances = M.Dropdown.init(elems, { 'container':$('body') });
 	}
 
+	// Outside of pagination function as Materialize
+	// dropdown won't be in pagination element
 	$(document).on('click', '.page', function() {
 		current_page = parseInt($(this).text());
 		get_collection();
