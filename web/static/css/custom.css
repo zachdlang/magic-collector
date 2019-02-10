@@ -57,6 +57,18 @@ main {
 	cursor: pointer;
 }
 
+.collection-page .pagination li {
+	cursor: pointer;
+}
+
+.collection-page .pagination li .first-page,
+.collection-page .pagination li .prev-page,
+.collection-page .pagination li .next-page,
+.collection-page .pagination li .last-page {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
 .collection-page .chip .set-icon {
 	padding-right: 0px;
 	margin-top: 5px;
