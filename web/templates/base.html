@@ -51,38 +51,46 @@
 		</footer>
 
 		<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/handlebars.min.js') }}"></script>
 		<script type="text/javascript" src="{{ url_for('static', filename='js/materialize.min.js') }}"></script>
 
+		<script type="text/javascript">
+			Handlebars.registerHelper('isEqual', function(x, y, options) {
+				if(x === y) return options.fn(this);
+				else return options.inverse(this);
+			});
+
+		</script>
+
+		<script id="loading-template" type="text/x-handlebars-template">
+			<div class="col s12 offset-s6">
+				<div class="preloader-wrapper big active">
+					<div class="spinner-layer spinner-blue-only">
+						<div class="circle-clipper left">
+							<div class="circle"></div>
+						</div>
+						<div class="gap-patch">
+							<div class="circle"></div>
+						</div>
+						<div class="circle-clipper right">
+							<div class="circle"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</script>
+
+		{% block handlebars %}
+		{% endblock %}
+
 		<script>
-			function show_loading(elem) {
-				elem.html('<div class="col s12 offset-s6">\
-							<div class="preloader-wrapper big active">\
-								<div class="spinner-layer spinner-blue-only">\
-									<div class="circle-clipper left">\
-										<div class="circle"></div>\
-									</div>\
-									<div class="gap-patch">\
-										<div class="circle"></div>\
-									</div>\
-									<div class="circle-clipper right">\
-										<div class="circle"></div>\
-									</div>\
-								</div>\
-							</div>\
-						</div>');
+			function compile_handlebars(template_id, destination_selector, data) {
+				var template = Handlebars.compile(document.getElementById(template_id).innerHTML);
+				$(destination_selector).html(template(data));
 			}
 
-			function escapeHTML(str) {
-				var escapes = {
-					'&': '&amp;',
-					'<': '&lt;',
-					'>': '&gt;',
-					'"': '&quot;',
-					"'": '&#x27;'
-				};
-				return ('' + str).replace(/[&<>"']/g, function(match) {
-					return escapes[match];
-				});
+			function show_loading(elem) {
+				compile_handlebars('loading-template', elem, {});
 			}
 
 			function ajax_user_aborted(jqXHR) {

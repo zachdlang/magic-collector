@@ -121,7 +121,20 @@
 
 		<img id="view_box" class="materialboxed hide">
 
-		<div id="collection_list" class="row">
+		<div class="row">
+			<table class="highlight">
+				<thead>
+					<tr>
+						<th class="sort-head valign-wrapper" data-sort_col="name">Card <i class="material-icons">keyboard_arrow_up</i></th>
+						<th class="sort-head" data-sort_col="setname">Set</th>
+						<th class="sort-head" data-sort_col="rarity">Rarity</th>
+						<th class="sort-head" data-sort_col="quantity">Qty</th>
+						<th class="sort-head" data-sort_col="foil">Foil</th>
+						<th class="sort-head" data-sort_col="price">Price</th>
+					</tr>
+				</thead>
+				<tbody id="collection_list"></tbody>
+			</table>
 		</div>
 
 		<div class="row">
@@ -135,6 +148,66 @@
 
 	<br><br>
 </div>
+{% endblock %}
+
+{% block handlebars %}
+	{% raw %}
+	<script id="filtersets-template" type="text/x-handlebars-template">
+		<option value="" disabled selected>Filter by Set</option>
+		{{#each sets}}
+		<option value="{{id}}" data-icon="{{iconurl}}">{{name}}</option>
+		{{/each}}
+	</script>
+
+	<script id="collection-template" type="text/x-handlebars-template">
+		{{#each cards}}
+		<tr data-image="{{imageurl}}">
+			<td class="card-name">
+				{{name}}
+				<span class="card-hover-img"></span>
+			</td>
+			<td class="valign-wrapper">
+				<img class="set-icon" src="{{iconurl}}">
+				<span class="hide-on-small-only">{{setname}}</span>
+			</td>
+			<td>{{rarity}}</td>
+			<td>{{quantity}}</td>
+			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
+			<td>{{#if price}}{{price}} {{currencycode}}{{/if}}</td>
+			{{!--<td class="hide"><a class="btn disabled edit-card"><i class="material-icons">edit</i></a></td>--}}
+		<tr>
+		{{/each}}
+	</script>
+
+	<script id="hover-template" type="text/x-handlebars-template">
+		<div class="card-panel card-hover" style="top: {{vert_pos}}px; left: {{horiz_pos}}px;">
+			<img class="responsive-img" src="{{image_url}}">
+		</div>
+	</script>
+
+	<script id="collectiontotal-template" type="text/x-handlebars-template">
+		<span class="badge new bg-tertiary" data-badge-caption="cards">{{total}}</span>
+	</script>
+
+	<script id="search-template" type="text/x-handlebars-template">
+		{{#each results}}
+		<tr>
+			<td>{{name}}</td>
+			<td class="blue-grey-text text-lighten-3">{{setname}}</td>
+			<td class="valign-wrapper"><img class="set-icon" src="{{iconurl}}"></td>
+		</tr>
+		{{/each}}
+	</script>
+
+	<script id="filterchip-template" type="text/x-handlebars-template">
+		{{#each filters}}
+		<div class="chip">
+			<input id="{{key}}_value" data-orig="#{{key}}" value="{{value}}" hidden>
+			<img class="{{#isEqual key 'filter_set'}}set-icon{{/isEqual}}" src="{{icon}}">{{label}}<i class="close material-icons filter-remove">close</i>
+		</div>
+		{{/each}}
+	</script>
+	{% endraw %}
 {% endblock %}
 
 {% block script %}
@@ -153,12 +226,8 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
-				var set_html = '<option value="" disabled selected>Filter by Set</option>';
-				for (var i = 0; i < data.sets.length; i++) {
-					var s = data.sets[i];
-					set_html += '<option value="'+escapeHTML(s.id)+'" data-icon="'+escapeHTML(s.iconurl)+'">'+escapeHTML(s.name)+'</option>';
-				}
-				$('#filter_set').html(set_html).formSelect();
+				compile_handlebars('filtersets-template', '#filter_set', data);
+				$('#filter_set').formSelect();
 			}
 		}).fail(function(jqXHR) {
 			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting sets. Please try again later."});
@@ -188,64 +257,17 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
-				var html_str = '<table class="highlight">\
-									<thead>\
-										<tr>';
-				var cols = { 'name':'Card', 'setname':'Set', 'rarity':'Rarity', 'quantity':'Qty', 'foil':'Foil', 'price':'Price' };
-				for (var col in cols) {
-					var sort_class = '';
-					var sort_icon = '';
-					if (sort == col) {
-						sort_class = 'valign-wrapper';
-						sort_icon = '<i class="material-icons">keyboard_arrow_down</i>';
-						if (sort_desc == 'asc') sort_icon = '<i class="material-icons">keyboard_arrow_up</i>';
-					}
-					html_str += '<th class="sort-head '+sort_class+'" data-sort_col="'+col+'">'+cols[col]+' '+sort_icon+'</th>';
-				}
-				html_str += '\
-											<th></th>\
-										</tr>\
-									</thead>\
-									<tbody>';
-				for (var i = 0; i < data.cards.length; i++) {
-					var c = data.cards[i];
-					c.foil_icon = (c.foil) ? 'check_box' : 'check_box_outline_blank';
-					c.price = (c.price) ? c.price + ' ' + c.currencycode : '';
-					html_str += '<tr data-image="'+escapeHTML(c.imageurl)+'">\
-									<td class="card-name">'+escapeHTML(c.name)+'</td>\
-									<td class="valign-wrapper">\
-										<img class="set-icon" src="'+escapeHTML(c.iconurl)+'">\
-										<span class="hide-on-small-only">'+escapeHTML(c.setname)+'</span>\
-									</td>\
-									<td>'+escapeHTML(c.rarity)+'</td>\
-									<td>'+escapeHTML(c.quantity)+'</td>\
-									<td><i class="material-icons">'+c.foil_icon+'</i></td>\
-									<td>'+escapeHTML(c.price)+'</td>\
-									<td class="hide"><a class="btn disabled edit-card"><i class="material-icons">edit</i></a></td>\
-								<tr>';
-				}
-				html_str += '</tbody>\
-							</table>';
-				$('#collection_list').html(html_str);
-
-				$('.sort-head').on('click', function() {
-					sort = $(this).data()['sort_col'];
-					if ($(this).hasClass('valign-wrapper')) {
-						if (sort_desc == 'asc') sort_desc = 'desc';
-						else sort_desc = 'asc';
-					} else {
-						sort_desc = 'desc';
-					}
-					get_collection();
-				});
+				compile_handlebars('collection-template', '#collection_list', data);
 
 				$('.card-name').hover(function() {
 					var image_url = $(this).closest('tr').data()['image'];
 					var vert_pos = $(this).position().top - $(this).height() - 75;
 					var horiz_pos = $(this).position().left + $(this).width();
-					$(this).append('<div class="card-panel card-hover" style="top: '+escapeHTML(vert_pos)+'px; left: '+escapeHTML(horiz_pos)+'px;">\
-										<img class="responsive-img" src="'+escapeHTML(image_url)+'">\
-									</div>');
+					compile_handlebars('hover-template', $(this).find('.card-hover-img'), {
+						'vert_pos': vert_pos,
+						'horiz_pos': horiz_pos,
+						'image_url': image_url
+					});
 					$('#view_box').attr('src', image_url);
 				}, function() {
 					$('.card-hover').remove();
@@ -260,12 +282,31 @@
 				});
 
 				generate_pagination($('#collection_pagination'), data.count);
-				$('#collection_total').html('<span class="badge new bg-tertiary" data-badge-caption="cards">' + data.total + '</span>');
+				compile_handlebars('collectiontotal-template', '#collection_total', data);
 			}
 		}).fail(function(jqXHR) {
 			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting collection. Please try again later."});
 		});
 	}
+
+	$('.sort-head').on('click', function() {
+		sort = $(this).data()['sort_col'];
+		if ($(this).hasClass('valign-wrapper')) {
+			if (sort_desc == 'asc') sort_desc = 'desc';
+			else sort_desc = 'asc';
+		} else {
+			sort_desc = 'asc';
+		}
+
+		// Reset sort classes etc
+		$('.sort-head').removeClass('valign-wrapper').find('.material-icons').remove();
+
+		$(this).addClass('valign-wrapper').append('<i class="material-icons"></i>');
+		if (sort_desc === 'asc') $(this).find('.material-icons').html('keyboard_arrow_up');
+		else $(this).find('.material-icons').html('keyboard_arrow_down')
+
+		get_collection();
+	});
 
 	document.addEventListener('DOMContentLoaded', function() {
 		M.Materialbox.init(document.querySelectorAll('#view_box'), {
@@ -277,7 +318,7 @@
 	var search_timer;
 	$('#search-row-search').on('keyup', function() {
 		current_page = 1;
-		if ($(this).val().length >= 3) {
+		if ($(this).val().length >= 3 || $(this).val().length == 0) {
 			clearTimeout(search_timer);
 			search_timer = setTimeout(function() {
 				$('#search-row-button').click();
@@ -303,7 +344,7 @@
 	var add_search_req;
 	var add_search_timer;
 	$('#add-row-search').on('keyup', function() {
-		if ($(this).val().length >= 3) {
+		if ($(this).val().length >= 3 || $(this).val().length == 0) {
 			var query = $(this).val()
 			clearTimeout(add_search_timer);
 		    add_search_timer = setTimeout(function() {
@@ -314,16 +355,7 @@
 					data: { 'query':query }
 				}).done(function(data) {
 					$('#search-results').removeClass('hide');
-					var html_str = '';
-					for (var i = 0; i < data.results.length; i++) {
-						var r = data.results[i];
-						html_str += '<tr>\
-										<td>'+escapeHTML(r.name)+'</td>\
-										<td class="blue-grey-text text-lighten-3">'+escapeHTML(r.setname)+'</td>\
-										<td class="valign-wrapper"><img class="set-icon" src="'+escapeHTML(r.iconurl)+'"></td>\
-									</tr>';
-					}
-					$('#search-results-list').html(html_str);
+					compile_handlebars('search-template', '#search-results-list', data);
 				}).fail(function(jqXHR) {
 					if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred. Please try again later."});
 				});
@@ -358,20 +390,21 @@
 	});
 
 	$('#filter_btn').on('click', function() {
-		$('#filter-chips').empty();
+		var filters = [];
 		$('#filter_modal select').each(function() {
-			var filter_key = escapeHTML($(this).attr('id'));
 			if ($(this).val()) {
+				var filter_key = $(this).attr('id');
 				var selected = $(this).find('option:selected');
-				var classes = (filter_key === 'filter_set') ? 'class="set-icon"' : '';
-				var chip_html = '<div class="chip">\
-									<input id="'+filter_key+'_value" data-orig="#'+filter_key+'" value="'+escapeHTML(selected.attr('value'))+'" hidden>\
-									<img '+classes+' src="'+escapeHTML(selected.attr('data-icon'))+'">'+escapeHTML(selected.text())+'\
-									<i class="close material-icons filter-remove">close</i>\
-								</div>';
-				$('#filter-chips').append(chip_html);
+				filters.push({
+					'key': filter_key,
+					'value': selected.attr('value'),
+					'label': selected.text(),
+					'icon': selected.attr('data-icon')
+				});
 			}
 		});
+
+		compile_handlebars('filterchip-template', '#filter-chips', {'filters': filters});
 
 		if ($('#filter-chips .chip').length === -1) $('#filter-chips').addClass('hide');
 		else $('#filter-chips').removeClass('hide');
@@ -447,24 +480,5 @@
 		current_page = parseInt($(this).text());
 		get_collection();
 	});
-
-	// basic card layout, needs work
-	// html_str += '<div class="col s12 m4 l3">\
-	// 								<div class="card">\
-	// 									<div class="card-image">\
-	// 										<img src="'+escapeHTML(c.imageurl)+'">\
-	// 									</div>\
-	// 									<div class="card-content">\
-	// 										<div class="row">\
-	// 											<div class="col s1">\
-	// 												<img src="'+escapeHTML(c.set_image)+'" title="'+escapeHTML(c.setname)+'">\
-	// 											</div>\
-	// 											<div class="col s11">\
-	// 												<p>'+escapeHTML(c.name)+'</p>\
-	// 											</div>\
-	// 										</div>\
-	// 									</div>\
-	// 								</div>\
-	// 							</div>';
 </script>
 {% endblock %}
