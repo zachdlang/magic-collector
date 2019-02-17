@@ -216,7 +216,8 @@
 	<script id="search-template" type="text/x-handlebars-template">
 		{{#each results}}
 		<tr>
-			<td>{{name}}</td>
+			<td><a class="btn bg-secondary search-results-add" data-cardid="{{id}}"><i class="material-icons">add</i></a></td>
+			<td class="cardname">{{name}}</td>
 			<td class="blue-grey-text text-lighten-3">{{setname}}</td>
 			<td class="valign-wrapper"><img class="set-icon" src="{{iconurl}}"></td>
 		</tr>
@@ -392,6 +393,32 @@
 	$('#search-results-dismiss').on('click', function() {
 		$('#search-results').addClass('hide');
 		$('#search-results-list').empty();
+	});
+
+	$('#search-results-list').on('click', '.search-results-add', function() {
+		var cardname = $(this).closest('tr').find('.cardname').text();
+		var cardid = $(this).data().cardid;
+		var foil = 0;
+		var quantity = 1;
+		$.ajax({
+			url: "{{ url_for('search_add') }}",
+			method: "POST",
+			data: {
+				'cardid': cardid,
+				'foil': foil,
+				'quantity': quantity
+			}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				var success_str = cardname + " (x" + quantity + ")";
+				if (foil === 1) success_str = "Foil " + success_str;
+				M.toast({html: "Added " + success_str + " successfully."});
+				get_collection();
+			}
+		}).fail(function(jqXHR) {
+			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred adding card. Please try again later."});
+		});
 	});
 
 	$('#upload_btn').on('click', function() {

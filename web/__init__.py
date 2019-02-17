@@ -109,7 +109,7 @@ def search():
 				FROM card c
 				LEFT JOIN card_set s ON (c.card_setid=s.id)
 				WHERE c.name ILIKE %s
-				ORDER BY name ASC LIMIT 50"""
+				ORDER BY c.name ASC, s.released DESC LIMIT 50"""
 		results = fetch_query(qry, (search,))
 		for r in results:
 			if r['iconurl'] is None:
@@ -117,6 +117,20 @@ def search():
 				mutate_query("UPDATE card_set SET iconurl = %s WHERE id = %s", (r['iconurl'], r['card_setid'],))
 
 	return jsonify(results=results)
+
+
+@app.route('/search/add', methods=['POST'])
+@login_required
+def search_add():
+	params = params_to_dict(request.form)
+	resp = {}
+
+	if params.get('cardid'):
+		collection.add_card(params['cardid'], str(params['foil']) == '1', params['quantity'])
+	else:
+		resp['error'] = 'No card selected.'
+
+	return jsonify(**resp)
 
 
 @app.route('/csv_upload', methods=['POST'])
