@@ -96,23 +96,7 @@ def get(params):
 	return resp
 
 
-def add(rows):
-	for row in rows:
-		foil = int(row['Foil quantity']) > 0
-		qry = "SELECT id FROM user_card WHERE cardid = (SELECT id FROM card WHERE multiverseid = %s) AND foil = %s AND userid = %s"
-		qargs = (row['MultiverseID'], foil, session['userid'],)
-		existing = fetch_query(qry, qargs, single_row=True)
-		if existing:
-			qry = "UPDATE user_card SET quantity = quantity + %s WHERE id = %s"
-			qargs = (row['Quantity'], existing['id'],)
-		else:
-			qry = """INSERT INTO user_card (cardid, userid, quantity, foil) SELECT id, %s, %s, %s FROM card WHERE multiverseid = %s
-					AND NOT EXISTS (SELECT * FROM user_card WHERE cardid = card.id AND foil = %s AND userid = %s)"""
-			qargs = (session['userid'], row['Quantity'], foil, row['MultiverseID'], foil, session['userid'],)
-		mutate_query(qry, qargs)
-
-
-def add_card(cardid, foil, quantity):
+def add(cardid, foil, quantity):
 	qry = "SELECT id FROM user_card WHERE cardid = %s AND foil = %s AND userid = %s"
 	qargs = (cardid, foil, session['userid'],)
 	existing = fetch_query(qry, qargs, single_row=True)

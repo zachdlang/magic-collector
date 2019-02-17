@@ -161,7 +161,9 @@ def csv_upload():
 		resp = scryfall.get_bulk(lot)
 		import_cards(resp)
 
-	collection.add(rows)
+	for row in rows:
+		cardid = fetch_query("SELECT id FROM card WHERE multiverseid = %s", (row['MultiverseID'],))['id']
+		collection.add(cardid, int(row['Foil quantity']) > 0, row['Quantity'])
 
 	return jsonify(new)
 
