@@ -292,7 +292,7 @@
 				$('#collection_head').removeClass('hide');
 				compile_handlebars('collection-template', '#collection_list', data);
 
-				$('.card-name').hover(function() {
+				$('#collection_list .name').hover(function() {
 					var image_url = $(this).closest('tr').data().image;
 					var vert_pos = $(this).position().top - $(this).height() - 75;
 					var horiz_pos = $(this).position().left + $(this).width();
@@ -306,7 +306,7 @@
 					$('.card-hover').remove();
 				});
 
-				$('.card-name').on('click', function() {
+				$('#collection_list .name').on('click', function() {
 					M.Materialbox.getInstance($('#view_box')).open();
 				});
 
