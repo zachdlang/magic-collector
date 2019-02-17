@@ -100,11 +100,11 @@ def get_collection():
 @app.route('/collection/card/add', methods=['POST'])
 @login_required
 def collection_card_add():
-	params = params_to_dict(request.form)
+	params = params_to_dict(request.form, bool_keys=['foil'])
 	resp = {}
 
 	if params.get('cardid'):
-		collection.add(params['cardid'], str(params['foil']) == '1', params['quantity'])
+		collection.add(params['cardid'], params['foil'], params['quantity'])
 	else:
 		resp['error'] = 'No card selected.'
 
@@ -368,8 +368,8 @@ def decks():
 @app.route('/decks/get/all', methods=['GET'])
 @login_required
 def decks_get_all():
-	params = params_to_dict(request.args)
-	results = deck.get_all(params.get('deleted') == '1')
+	params = params_to_dict(request.args, bool_keys=['deleted'])
+	results = deck.get_all(params['deleted'])
 	return jsonify(results=results)
 
 

@@ -135,12 +135,10 @@
 
 	function get_decks() {
 		show_loading($('#deck-menu'));
-		var data = {};
-		data['deleted'] = ($('#deleted').prop('checked')) ? 1 : 0;
 		$.ajax({
 			url: "{{ url_for('decks_get_all') }}",
 			method: "GET",
-			data: data
+			data: {'deleted': $('#deleted').prop('checked')}
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
