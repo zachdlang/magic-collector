@@ -47,6 +47,18 @@ main {
 .bg-tertiary:not(.btn-flat) { background-color: #AF5990 !important; }
 .bg-tertiary.btn:hover { background-color: #E88EC6; }
 
+.modal .modal-content {
+	padding: 20px;
+}
+
+.modal.bottom-sheet {
+	max-height: none;
+}
+
+.form-row {
+	margin-bottom: 20px;
+}
+
 .collection-page #view_box {
 	position: absolute;
 	top: 10%;
@@ -83,7 +95,7 @@ main {
 	padding-right: 10px;
 }
 
-.collection-page .card-name {
+.collection-page #collection_list .name {
 	cursor: pointer;
 }
 
@@ -130,6 +142,10 @@ main {
 	margin-top: 14px;
 	margin-bottom: 14px;
 	padding-top: 4px;
+}
+
+.collection-page #edit_modal .row {
+	margin-bottom: 0px;
 }
 
 .decks-page .show-deleted {

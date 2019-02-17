@@ -60,6 +60,9 @@
 				else return options.inverse(this);
 			});
 
+			Handlebars.registerHelper('substring', function(input, maxChars) {
+				return new Handlebars.SafeString(input.substring(0, maxChars));
+			});
 		</script>
 
 		<script id="loading-template" type="text/x-handlebars-template">
@@ -93,8 +96,9 @@
 				compile_handlebars('loading-template', elem, {});
 			}
 
-			function ajax_user_aborted(jqXHR) {
-				return !jqXHR.getAllResponseHeaders();
+			function ajax_failed(jqXHR) {
+				// Only shows error message if not user aborted
+				if (jqXHR.getAllResponseHeaders()) M.toast({html: "An internal error occurred. Please try again later."});
 			}
 
 			$('.validate').on('keyup', function() {

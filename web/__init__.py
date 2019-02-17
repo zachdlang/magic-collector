@@ -97,6 +97,56 @@ def get_collection():
 	return jsonify(**resp)
 
 
+@app.route('/collection/card/add', methods=['POST'])
+@login_required
+def collection_card_add():
+	params = params_to_dict(request.form)
+	resp = {}
+
+	if params.get('cardid'):
+		collection.add(params['cardid'], str(params['foil']) == '1', params['quantity'])
+	else:
+		resp['error'] = 'No card selected.'
+
+	return jsonify(**resp)
+
+
+@app.route('/collection/card/edit', methods=['POST'])
+@login_required
+def collection_card_edit():
+	params = params_to_dict(request.form, bool_keys=['foil'])
+
+	update_current = True
+	existing = fetch_query(
+		"SELECT * FROM user_card WHERE id = %s AND userid = %s",
+		(params['user_cardid'], session['userid'],),
+		single_row=True
+	)
+	if existing['foil'] != params['foil']:
+		# Foil has changed, need to check for opposite record
+		opposite = fetch_query(
+			"SELECT * FROM user_card WHERE cardid = %s AND userid = %s AND foil != %s",
+			(existing['cardid'], session['userid'], existing['foil'],),
+			single_row=True
+		)
+		if opposite:
+			# There's an opposite record, update this instead
+			mutate_query(
+				"UPDATE user_card SET quantity = quantity + %s WHERE id = %s",
+				(params['quantity'], opposite['id'],)
+			)
+			mutate_query("DELETE FROM user_card WHERE id = %s", (params['user_cardid'],))
+			update_current = False
+
+	if (update_current):
+		mutate_query(
+			"UPDATE user_card SET quantity = %s, foil = %s WHERE id = %s AND userid = %s",
+			(params['quantity'], params['foil'], params['user_cardid'], session['userid'],)
+		)
+
+	return jsonify()
+
+
 @app.route('/search', methods=['GET'])
 @login_required
 def search():
@@ -117,20 +167,6 @@ def search():
 				mutate_query("UPDATE card_set SET iconurl = %s WHERE id = %s", (r['iconurl'], r['card_setid'],))
 
 	return jsonify(results=results)
-
-
-@app.route('/search/add', methods=['POST'])
-@login_required
-def search_add():
-	params = params_to_dict(request.form)
-	resp = {}
-
-	if params.get('cardid'):
-		collection.add_card(params['cardid'], str(params['foil']) == '1', params['quantity'])
-	else:
-		resp['error'] = 'No card selected.'
-
-	return jsonify(**resp)
 
 
 @app.route('/csv_upload', methods=['POST'])

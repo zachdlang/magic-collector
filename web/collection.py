@@ -53,7 +53,7 @@ def get(params):
 	resp['total'] = aggregate['sum']
 
 	qry = """SELECT
-				c.id, c.name, cs.name AS setname, cs.code,
+				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
 				c.multiverseid, c.imageurl, c.arturl, cs.iconurl, c.card_setid

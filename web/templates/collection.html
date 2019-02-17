@@ -23,7 +23,7 @@
 				<input type="text" id="search-row-search">
 			</div>
 			<div class="col s3 m2">
-				<a class="btn bg-secondary" id="search-row-button">Search</a>
+				<a class="btn bg-secondary" id="search-row-button"><i class="material-icons">search</i></a>
 			</div>
 			<div class="col s6 m2 l1 offset-l2">
 				<a class="btn bg-secondary modal-trigger" href="#filter_modal"><i class="material-icons">filter_list</i></a>
@@ -97,27 +97,33 @@
 			</div>
 		</div>
 
-		<!-- <div id="edit_modal" class="modal fade">
+		<div id="edit_modal" class="modal bottom-sheet fade">
 			<div class="modal-content">
-				<h4>Edit</h4>
-
 				<div class="row">
-					<div class="col s6">
-						<img class="responsive-img" src="https://img.scryfall.com/cards/large/en/isd/165a.jpg?1518206105">
+					<div class="col s12 m4 l3">
+						<img class="responsive-img art">
 					</div>
 
-					<div class="col s6">
-						<h5>Tormented Pariah</h5>
+					<div class="col s12 m8 l9">
+						<h5 class="name"></h5>
 
-						<input type="number">
+						<div class="form-row">
+							<input class="quantity" type="number" placeholder="Quantity">
+						</div>
+						<div class="form-row">
+							<label>
+								<input class="foil" type="checkbox">
+								<span>Foil</span>
+							</label>
+						</div>
+						<input class="user_cardid" type="hidden">
 					</div>
 				</div>
-
 			</div>
 			<div class="modal-footer">
-				<a class="btn-flat bg-secondary">Save</a>
+				<a class="btn-flat bg-secondary" id="edit_btn">Save</a>
 			</div>
-		</div> -->
+		</div>
 
 		<img id="view_box" class="materialboxed hide">
 
@@ -131,6 +137,7 @@
 						<th class="sort-head" data-sort_col="quantity">Qty</th>
 						<th class="sort-head" data-sort_col="foil">Foil</th>
 						<th class="sort-head" data-sort_col="price">Price</th>
+						<th>&nbsp;</th>
 					</tr>
 				</thead>
 				<tbody id="collection_list"></tbody>
@@ -161,8 +168,8 @@
 
 	<script id="collection-template" type="text/x-handlebars-template">
 		{{#each cards}}
-		<tr data-image="{{imageurl}}">
-			<td class="card-name">
+		<tr data-image="{{imageurl}}" data-art="{{arturl}}" data-usercard_id="{{user_cardid}}" {{#if foil}}data-foil="1"{{/if}}>
+			<td class="name">
 				{{name}}
 				<span class="card-hover-img"></span>
 			</td>
@@ -170,11 +177,12 @@
 				<img class="set-icon" src="{{iconurl}}">
 				<span class="hide-on-small-only">{{setname}}</span>
 			</td>
-			<td>{{rarity}}</td>
-			<td>{{quantity}}</td>
+			<td class="hide-on-med-and-up">{{substring rarity 1}}</td>
+			<td class="hide-on-small-only">{{rarity}}</td>
+			<td class="quantity">{{quantity}}</td>
 			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
-			<td>{{#if price}}{{price}} {{currencycode}}{{/if}}</td>
-			{{!--<td class="hide"><a class="btn disabled edit-card"><i class="material-icons">edit</i></a></td>--}}
+			<td>{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}</td>
+			<td><a class="btn edit-card"><i class="material-icons">edit</i></a></td>
 		<tr>
 		{{/each}}
 	</script>
@@ -254,9 +262,7 @@
 				compile_handlebars('filtersets-template', '#filter_set', data);
 				$('#filter_set').formSelect();
 			}
-		}).fail(function(jqXHR) {
-			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting sets. Please try again later."});
-		});
+		}).fail(ajax_failed);
 	}
 
 	var search_req;
@@ -287,7 +293,7 @@
 				compile_handlebars('collection-template', '#collection_list', data);
 
 				$('.card-name').hover(function() {
-					var image_url = $(this).closest('tr').data()['image'];
+					var image_url = $(this).closest('tr').data().image;
 					var vert_pos = $(this).position().top - $(this).height() - 75;
 					var horiz_pos = $(this).position().left + $(this).width();
 					compile_handlebars('hover-template', $(this).find('.card-hover-img'), {
@@ -305,19 +311,26 @@
 				});
 
 				$('.edit-card').on('click', function() {
+					// Clear out to account for loading delays
+					$('#edit_modal .art').attr('src', '');
+
+					var row = $(this).closest('tr');
+					$('#edit_modal .art').attr('src', row.data().art);
+					$('#edit_modal .name').text(row.find('.name').text());
+					$('#edit_modal .quantity').val(row.find('.quantity').text());
+					$('#edit_modal .foil').prop('checked', row.data().foil === 1);
+					$('#edit_modal .user_cardid').val(row.data().usercard_id);
 					M.Modal.getInstance($('#edit_modal')).open();
 				});
 
 				generate_pagination($('#collection_pagination'), data.count);
 				compile_handlebars('collectiontotal-template', '#collection_total', data);
 			}
-		}).fail(function(jqXHR) {
-			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred getting collection. Please try again later."});
-		});
+		}).fail(ajax_failed);
 	}
 
 	$('.sort-head').on('click', function() {
-		sort = $(this).data()['sort_col'];
+		sort = $(this).data().sort_col;
 		if ($(this).hasClass('valign-wrapper')) {
 			if (sort_desc == 'asc') sort_desc = 'desc';
 			else sort_desc = 'asc';
@@ -383,9 +396,7 @@
 				}).done(function(data) {
 					$('#search-results').removeClass('hide');
 					compile_handlebars('search-template', '#search-results-list', data);
-				}).fail(function(jqXHR) {
-					if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred. Please try again later."});
-				});
+				}).fail(ajax_failed);
 		    }, 250);
 		}
 	});
@@ -401,7 +412,7 @@
 		var foil = 0;
 		var quantity = 1;
 		$.ajax({
-			url: "{{ url_for('search_add') }}",
+			url: "{{ url_for('collection_card_add') }}",
 			method: "POST",
 			data: {
 				'cardid': cardid,
@@ -416,9 +427,26 @@
 				M.toast({html: "Added " + success_str + " successfully."});
 				get_collection();
 			}
-		}).fail(function(jqXHR) {
-			if (!ajax_user_aborted(jqXHR)) M.toast({html: "An internal error occurred adding card. Please try again later."});
-		});
+		}).fail(ajax_failed);
+	});
+
+	$('#edit_btn').on('click', function() {
+		$.ajax({
+			url: "{{ url_for('collection_card_edit') }}",
+			method: "POST",
+			data: {
+				'user_cardid': $('#edit_modal .user_cardid').val(),
+				'quantity': $('#edit_modal .quantity').val(),
+				'foil': $('#edit_modal .foil').prop('checked')
+			}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				M.toast({html: "Saved successfully."});
+				get_collection();
+				M.Modal.getInstance($('#edit_modal')).close();
+			}
+		}).fail(ajax_failed)
 	});
 
 	$('#upload_btn').on('click', function() {
