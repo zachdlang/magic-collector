@@ -294,7 +294,7 @@
 
 				$('#collection_list .name').hover(function() {
 					var image_url = $(this).closest('tr').data().image;
-					var vert_pos = $(this).position().top - $(this).height() - 75;
+					var vert_pos = $(this).position().top - $(this).height() - 65;
 					var horiz_pos = $(this).position().left + $(this).width();
 					compile_handlebars('hover-template', $(this).find('.card-hover-img'), {
 						'vert_pos': vert_pos,
