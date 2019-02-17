@@ -246,7 +246,9 @@ def update_prices():
 
 	updates = []
 	for cardid, price in prices.items():
-		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
+		# Only update if we received have prices
+		if price['normal'] is not None or price['foil'] is not None:
+			updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
 	mutate_query("UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)
 	return jsonify()
 
