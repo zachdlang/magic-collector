@@ -20,7 +20,7 @@ def get(params):
 	# Sorting
 	cols = {
 		'name': 'c.name',
-		'setname': 'cs.name',
+		'setname': 'cs.released',
 		'rarity': 'c.rarity',
 		'quantity': 'uc.quantity',
 		'foil': 'uc.foil',
