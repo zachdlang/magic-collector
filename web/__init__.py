@@ -198,7 +198,7 @@ def csv_upload():
 		import_cards(resp)
 
 	for row in rows:
-		cardid = fetch_query("SELECT id FROM card WHERE multiverseid = %s", (row['MultiverseID'],))['id']
+		cardid = fetch_query("SELECT id FROM card WHERE multiverseid = %s", (row['MultiverseID'],), single_row=True)['id']
 		collection.add(cardid, int(row['Foil quantity']) > 0, row['Quantity'])
 
 	return jsonify(new)
