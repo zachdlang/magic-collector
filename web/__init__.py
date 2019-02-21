@@ -139,10 +139,16 @@ def collection_card_edit():
 			update_current = False
 
 	if (update_current):
-		mutate_query(
-			"UPDATE user_card SET quantity = %s, foil = %s WHERE id = %s AND userid = %s",
-			(params['quantity'], params['foil'], params['user_cardid'], session['userid'],)
-		)
+		if int(params['quantity']) > 0:
+			mutate_query(
+				"UPDATE user_card SET quantity = %s, foil = %s WHERE id = %s AND userid = %s",
+				(params['quantity'], params['foil'], params['user_cardid'], session['userid'],)
+			)
+		else:
+			mutate_query(
+				"DELETE FROM user_card WHERE id = %s AND userid = %s",
+				(params['user_cardid'], session['userid'],)
+			)
 
 	return jsonify()
 
