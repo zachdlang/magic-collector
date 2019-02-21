@@ -23,7 +23,8 @@ def search(name):
 
 
 def get_set(code):
-	resp = send_request('/sets/%s' % code)
+	endpoint = '/sets/%s' % code if code is not None else '/sets'
+	resp = send_request(endpoint)
 	return resp
 
 
