@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS card_set (
 CREATE TABLE IF NOT EXISTS card (
 	id SERIAL PRIMARY KEY,
 	collectornumber TEXT NOT NULL,
-	multiverseid INTEGER NOT NULL,
+	multiverseid INTEGER,
 	name TEXT NOT NULL,
 	card_setid INTEGER NOT NULL REFERENCES card_set(id) ON DELETE CASCADE,
 	colors TEXT,

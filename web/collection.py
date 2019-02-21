@@ -56,7 +56,7 @@ def get(params):
 				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				c.multiverseid, c.imageurl, c.arturl, cs.iconurl, c.card_setid
+				c.collectornumber, c.imageurl, c.arturl, cs.iconurl, c.card_setid
 			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
@@ -79,7 +79,7 @@ def get(params):
 	for c in resp['cards']:
 		if c['imageurl'] is None or c['arturl'] is None:
 			print('Fetching images for %s' % c['name'])
-			image_resp = scryfall.get(c['multiverseid'])
+			image_resp = scryfall.get(c['code'], c['collectornumber'])
 			c['imageurl'] = image_resp['imageurl']
 			c['arturl'] = image_resp['arturl']
 			mutate_query("UPDATE card SET imageurl = %s, arturl = %s WHERE id = %s", (c['imageurl'], c['arturl'], c['id'],))
@@ -90,7 +90,7 @@ def get(params):
 		# Remove keys unnecessary in response
 		del c['id']
 		del c['code']
-		del c['multiverseid']
+		del c['collectornumber']
 		del c['card_setid']
 
 	return resp

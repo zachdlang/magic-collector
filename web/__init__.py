@@ -233,12 +233,15 @@ def import_cards(cards):
 				rarity, multifaced) SELECT
 				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
 				%s, %s
-				WHERE NOT EXISTS (SELECT * FROM card WHERE multiverseid = %s)
+				WHERE NOT EXISTS (
+					SELECT 1 FROM card
+					WHERE collectornumber = %s
+					AND card_setid = (SELECT id FROM card_set WHERE code = %s))
 				RETURNING id"""
 		qargs = (
 			c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
 			c['rarity'], c['multifaced'],
-			c['multiverseid'],
+			c['collectornumber'], c['set'],
 		)
 		new = mutate_query(qry, qargs, returning=True)
 		if new:
@@ -319,7 +322,9 @@ def check_images():
 				print('Found new set icon URL for %s.' % s['name'])
 				mutate_query("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (s['iconurl'], s['id'],))
 
-	qry = """SELECT id, name, multiverseid, imageurl, arturl
+	qry = """SELECT
+				id, name, collectornumber, imageurl, arturl,
+				(SELECT code FROM card_set WHERE id = card_setid)
 			FROM card
 			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=card.id)
 			ORDER BY name ASC"""
@@ -336,7 +341,7 @@ def check_images():
 
 		if c['imageurl'] is None:
 			# Fetch image URLs for anything without one
-			c['imageurl'] = scryfall.get(c['multiverseid'])['imageurl']
+			c['imageurl'] = scryfall.get(c['code'], c['collectornumber'])['imageurl']
 			if c['imageurl'] is not None:
 				print('Found new card image URL for %s.' % c['name'])
 				mutate_query("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
@@ -351,7 +356,7 @@ def check_images():
 
 		if c['arturl'] is None:
 			# Fetch image URLs for anything without one
-			c['arturl'] = scryfall.get(c['multiverseid'])['arturl']
+			c['arturl'] = scryfall.get(c['code'], c['collectornumber'])['arturl']
 			if c['arturl'] is not None:
 				print('Found new cardart image URL for %s.' % c['name'])
 				mutate_query("""UPDATE card SET arturl = %s WHERE id = %s""", (c['arturl'], c['id'],))

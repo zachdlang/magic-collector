@@ -28,14 +28,17 @@ def get(deckid):
 
 
 def get_image(deckid):
-	qry = "SELECT multiverseid FROM card WHERE id = (SELECT cardid FROM deck_card WHERE deckid = %s ORDER BY id LIMIT 1)"
+	qry = """SELECT collectornumber, (SELECT code FROM card_set WHERE id = card_setid)
+			FROM card
+			WHERE id = (SELECT cardid FROM deck_card WHERE deckid = %s ORDER BY id LIMIT 1)"""
 	imgcard = fetch_query(qry, (deckid,), single_row=True)
-	return scryfall.get(imgcard['multiverseid'])['arturl']
+	return scryfall.get(imgcard['code'], imgcard['collectornumber'])['arturl']
 
 
 def get_cards(deckid):
 	qry = """SELECT dc.cardid, dc.quantity, dc.section,
-				c.name, c.arturl, c.multiverseid,
+				c.name, c.arturl, c.collectornumber,
+				(SELECT code FROM card_set WHERE id = card_set_id),
 				has_deck_card(%s, dc.cardid) AS has_quantity
 			FROM deck_card dc
 			LEFT JOIN card c ON c.id = dc.cardid
@@ -47,10 +50,10 @@ def get_cards(deckid):
 	for c in cards:
 		if c['arturl'] is None:
 			print('Fetching images for %s' % c['name'])
-			c['arturl'] = scryfall.get(c['multiverseid'])['arturl']
+			c['arturl'] = scryfall.get(c['code'], c['collectornumber'])['arturl']
 			mutate_query("UPDATE card SET arturl = %s WHERE id = %s", (c['arturl'], c['cardid'],))
 
-		del c['multiverseid']
+		del c['collectornumber']
 
 	return cards
 

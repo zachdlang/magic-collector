@@ -28,8 +28,8 @@ def get_set(code):
 	return resp
 
 
-def get(multiverseid):
-	resp = send_request('/cards/multiverse/%s' % multiverseid)
+def get(code, collectornumber):
+	resp = send_request('/cards/%s/%s' % (code, collectornumber))
 	return simplify(resp)
 
 
@@ -56,13 +56,16 @@ def bulk_file_import(filename):
 def simplify(resp):
 	simple = {
 		'name': resp['name'],
-		'multiverseid': resp['multiverse_ids'][0],
+		'multiverseid': None,
 		'rarity': resp['rarity'].upper()[0],
 		'set': resp['set'].upper(),
 		'set_name': resp['set_name'],
 		'collectornumber': resp['collector_number'],
 		'multifaced': False,
 	}
+
+	if resp['multiverse_ids']:
+		simple['multiverseid'] = resp['multiverse_ids'][0]
 
 	# These should catch normal & split cards
 	if 'colors' in resp:
