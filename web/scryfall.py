@@ -29,7 +29,7 @@ def get_set(code):
 
 
 def get(code, collectornumber):
-	resp = send_request('/cards/%s/%s' % (code, collectornumber))
+	resp = send_request('/cards/%s/%s' % (code.lower(), collectornumber))
 	return simplify(resp)
 
 
