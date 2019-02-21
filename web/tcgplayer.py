@@ -50,6 +50,7 @@ def search(card):
 				'name': 'SetName',
 				'values': [card['set_name']]
 			},
+			# Comment out rarity for fetching promos
 			{
 				'name': 'Rarity',
 				'values': [card['rarity']]
