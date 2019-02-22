@@ -38,7 +38,7 @@ def get_image(deckid):
 def get_cards(deckid):
 	qry = """SELECT dc.cardid, dc.quantity, dc.section,
 				c.name, c.arturl, c.collectornumber,
-				(SELECT code FROM card_set WHERE id = card_set_id),
+				(SELECT code FROM card_set WHERE id = card_setid),
 				has_deck_card(%s, dc.cardid) AS has_quantity
 			FROM deck_card dc
 			LEFT JOIN card c ON c.id = dc.cardid
