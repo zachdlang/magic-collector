@@ -1,0 +1,12 @@
+[Unit]
+Description=collector-celery
+After=network.target
+
+[Service]
+User=www-data
+Restart=on-failure
+WorkingDirectory=/var/www/collector
+ExecStart=/usr/local/bin/celery worker -A web.celery --workdir /var/www/collector --logfile /tmp/scheduler_celery.log
+
+[Install]
+WantedBy=multi-user.target

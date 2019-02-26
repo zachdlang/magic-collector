@@ -14,13 +14,16 @@ from web import collection, deck, scryfall, tcgplayer, openexchangerates
 from sitetools.utility import (
 	BetterExceptionFlask, is_logged_in, params_to_dict,
 	login_required, check_image_exists, check_login, fetch_query,
-	mutate_query, disconnect_database, handle_exception
+	mutate_query, disconnect_database, handle_exception,
+	setup_celery, check_celery_running
 )
 
 app = BetterExceptionFlask(__name__)
 
 app.config.from_pyfile('site_config.cfg')
 app.secret_key = app.config['SECRETKEY']
+
+celery = setup_celery(app)
 
 app.jinja_env.globals.update(is_logged_in=is_logged_in)
 
@@ -269,6 +272,7 @@ def import_cards(cards):
 
 
 @app.route('/update_prices', methods=['GET'])
+@check_celery_running
 def update_prices():
 	qry = """SELECT c.id, c.collectornumber, c.name, c.rarity,
 				s.name AS set_name, s.tcgplayer_groupid AS groupid,
@@ -278,9 +282,20 @@ def update_prices():
 			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id)
 			ORDER BY c.name ASC"""
 	cards = fetch_query(qry)
+
+	tcgplayer_token = tcgplayer.login()
+
+	fetch_prices.delay(cards, tcgplayer_token)
+
+	return jsonify()
+
+
+@celery.task()
+def fetch_prices(cards, tcgplayer_token):
 	for c in cards:
 		if c['productid'] is None:
-			c['productid'] = tcgplayer.search(c)
+			print('Searching for TCGPlayer ID for {} ({}).'.format(c['name'], c['set_name']))
+			c['productid'] = tcgplayer.search(c, token=tcgplayer_token)
 			if c['productid'] is not None:
 				mutate_query("UPDATE card SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
 
@@ -289,7 +304,7 @@ def update_prices():
 	bulk_lots = ([cards[i:i + 250] for i in range(0, len(cards), 250)])
 	prices = {}
 	for lot in bulk_lots:
-		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}))
+		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}, token=tcgplayer_token))
 
 	updates = []
 	for cardid, price in prices.items():
@@ -297,36 +312,32 @@ def update_prices():
 		if price['normal'] is not None or price['foil'] is not None:
 			updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
 	mutate_query("UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)
+	print('Updated prices for {} cards.'.format(len(updates)))
+
+
+@app.route('/update_rates', methods=['GET'])
+@check_celery_running
+def update_rates():
+	fetch_rates.delay()
 	return jsonify()
 
 
-@app.route('/update_rates', methods=['POST'])
-def update_rates():
+@celery.task()
+def fetch_rates():
+	print('Fetching exchange rates')
 	rates = openexchangerates.get()
 	updates = [{'code': code, 'rate': rate} for code, rate in rates.items()]
 	mutate_query("SELECT update_rates(%(code)s, %(rate)s)", updates, executemany=True)
-	return jsonify()
+	print('Updated exchange rates')
 
 
 @app.route('/check_images', methods=['GET'])
+@check_celery_running
 def check_images():
 	sets = fetch_query("SELECT id, name, code, iconurl FROM card_set ORDER BY name ASC")
 
 	for s in sets:
-		if s['iconurl'] is not None:
-			# Check for bad icon URLs
-			if check_image_exists(s['iconurl']) is False:
-				print('Set icon URL could not be found for %s.' % s['name'])
-				mutate_query("""UPDATE card_set SET iconurl = NULL WHERE id = %s""", (s['id'],))
-				# Null out local copy for refreshing image below
-				s['iconurl'] = None
-
-		if s['iconurl'] is None:
-			# Fetch icon URLs for anything without one
-			s['iconurl'] = scryfall.get_set(s['code'])['icon_svg_uri']
-			if s['iconurl'] is not None:
-				print('Found new set icon URL for %s.' % s['name'])
-				mutate_query("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (s['iconurl'], s['id'],))
+		check_set_icon.delay(s)
 
 	qry = """SELECT
 				id, name, collectornumber, imageurl, arturl,
@@ -337,37 +348,67 @@ def check_images():
 	cards = fetch_query(qry)
 
 	for c in cards:
-		if c['imageurl'] is not None:
-			# Check for bad image URLs
-			if check_image_exists(c['imageurl']) is False:
-				print('Card image URL for could not be found for %s.' % c['name'])
-				mutate_query("""UPDATE card SET imageurl = NULL WHERE id = %s""", (c['id'],))
-				# Null out local copy for refreshing image below
-				c['imageurl'] = None
-
-		if c['imageurl'] is None:
-			# Fetch image URLs for anything without one
-			c['imageurl'] = scryfall.get(c['code'], c['collectornumber'])['imageurl']
-			if c['imageurl'] is not None:
-				print('Found new card image URL for %s.' % c['name'])
-				mutate_query("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
-
-		if c['arturl'] is not None:
-			# Check for bad image URLs
-			if check_image_exists(c['arturl']) is False:
-				print('Cardart image URL for could not be found for %s.' % c['name'])
-				mutate_query("""UPDATE card SET arturl = NULL WHERE id = %s""", (c['id'],))
-				# Null out local copy for refreshing image below
-				c['arturl'] = None
-
-		if c['arturl'] is None:
-			# Fetch image URLs for anything without one
-			c['arturl'] = scryfall.get(c['code'], c['collectornumber'])['arturl']
-			if c['arturl'] is not None:
-				print('Found new cardart image URL for %s.' % c['name'])
-				mutate_query("""UPDATE card SET arturl = %s WHERE id = %s""", (c['arturl'], c['id'],))
+		check_card_image.delay(c)
+		check_card_art.delay(c)
 
 	return jsonify()
+
+
+@celery.task()
+def check_set_icon(s):
+	print('Checking set icon for {}.'.format(s['name']))
+	if s['iconurl'] is not None:
+		# Check for bad icon URLs
+		if check_image_exists(s['iconurl']) is False:
+			print('Set icon URL could not be found for {}.'.format(s['name']))
+			mutate_query("""UPDATE card_set SET iconurl = NULL WHERE id = %s""", (s['id'],))
+			# Null out local copy for refreshing image below
+			s['iconurl'] = None
+
+	if s['iconurl'] is None:
+		# Fetch icon URLs for anything without one
+		s['iconurl'] = scryfall.get_set(s['code'])['icon_svg_uri']
+		if s['iconurl'] is not None:
+			print('Found new set icon URL for {}.'.format(s['name']))
+			mutate_query("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (s['iconurl'], s['id'],))
+
+
+@celery.task()
+def check_card_image(c):
+	print('Checking card image for {}.'.format(c['name']))
+	if c['imageurl'] is not None:
+		# Check for bad image URLs
+		if check_image_exists(c['imageurl']) is False:
+			print('Card image URL for could not be found for {}.'.format(c['name']))
+			mutate_query("""UPDATE card SET imageurl = NULL WHERE id = %s""", (c['id'],))
+			# Null out local copy for refreshing image below
+			c['imageurl'] = None
+
+	if c['imageurl'] is None:
+		# Fetch image URLs for anything without one
+		c['imageurl'] = scryfall.get(c['code'], c['collectornumber'])['imageurl']
+		if c['imageurl'] is not None:
+			print('Found new card image URL for {}.'.format(c['name']))
+			mutate_query("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
+
+
+@celery.task()
+def check_card_art(c):
+	print('Checking card art for {}.'.format(c['name']))
+	if c['arturl'] is not None:
+		# Check for bad image URLs
+		if check_image_exists(c['arturl']) is False:
+			print('Card art URL for could not be found for {}.'.format(c['name']))
+			mutate_query("""UPDATE card SET arturl = NULL WHERE id = %s""", (c['id'],))
+			# Null out local copy for refreshing image below
+			c['arturl'] = None
+
+	if c['arturl'] is None:
+		# Fetch image URLs for anything without one
+		c['arturl'] = scryfall.get(c['code'], c['collectornumber'])['arturl']
+		if c['arturl'] is not None:
+			print('Found new card art URL for {}.'.format(c['name']))
+			mutate_query("""UPDATE card SET arturl = %s WHERE id = %s""", (c['arturl'], c['id'],))
 
 
 @app.route('/decks', methods=['GET'])

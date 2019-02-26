@@ -3,7 +3,7 @@ import requests
 import json
 
 # Third party imports
-from flask import current_app as app, session
+from flask import current_app as app
 
 
 def login():
@@ -15,13 +15,14 @@ def login():
 	}
 	resp = requests.post('https://api.tcgplayer.com/token', data=data, headers=headers)
 	resp = json.loads(resp.text)
-	session['tcgplayer_bearertoken'] = resp['access_token']
+
+	return resp['access_token']
 
 
-def search_categories():
-	if 'tcgplayer_bearertoken' not in session:
-		login()
-	headers = {'Authorization': 'bearer %s' % session['tcgplayer_bearertoken']}
+def search_categories(token=None):
+	if token is None:
+		token = login()
+	headers = {'Authorization': 'bearer %s' % token}
 	resp = requests.get('http://api.tcgplayer.com/catalog/categories/1/search/manifest', headers=headers)
 	resp = json.loads(resp.text)
 	for r in resp['results'][0]['filters']:
@@ -30,16 +31,16 @@ def search_categories():
 				print(i)
 
 
-def search(card):
-	productid = None
-	if 'tcgplayer_bearertoken' not in session:
-		login()
+def search(card, token=None):
+	if token is None:
+		token = login()
 
+	productid = None
 	# check for multiface card format
 	if ' // ' in card['name']:
 		card['name'] = card['name'].split(' // ')[0]
 
-	headers = {'Content-Type': 'application/json', 'Authorization': 'bearer %s' % session['tcgplayer_bearertoken']}
+	headers = {'Content-Type': 'application/json', 'Authorization': 'bearer %s' % token}
 	data = {
 		'filters': [
 			{
@@ -104,14 +105,14 @@ def search(card):
 	return productid
 
 
-def get_price(cards):
-	if 'tcgplayer_bearertoken' not in session:
-		login()
-	print('Fetching prices for %s cards' % len(cards))
+def get_price(cards, token=None):
+	if token is None:
+		token = login()
+	print('Fetching prices for {} cards.'.format(len(cards)))
 	if len(cards) == 0:
 		print('Ignoring 0 length')
 		return {}
-	headers = {'Authorization': 'bearer %s' % session['tcgplayer_bearertoken']}
+	headers = {'Authorization': 'bearer %s' % token}
 	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([cards[cardid] for cardid in cards]), headers=headers)
 	resp = json.loads(resp.text)
 	prices = {cardid: {'normal': None, 'foil': None} for cardid, productid in cards.items()}
