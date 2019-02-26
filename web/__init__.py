@@ -315,7 +315,7 @@ def fetch_prices(cards, tcgplayer_token):
 	print('Updated prices for {} cards.'.format(len(updates)))
 
 
-@app.route('/update_rates', methods=['GET'])
+@app.route('/update_rates', methods=['POST'])
 @check_celery_running
 def update_rates():
 	fetch_rates.delay()
