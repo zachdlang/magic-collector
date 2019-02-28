@@ -37,7 +37,7 @@ if not app.debug:
 
 @app.errorhandler(500)
 def internal_error(e):
-	return handle_exception
+	return handle_exception()
 
 
 @app.teardown_appcontext
