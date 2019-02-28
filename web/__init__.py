@@ -23,10 +23,6 @@ app = BetterExceptionFlask(__name__)
 app.config.from_pyfile('site_config.cfg')
 app.secret_key = app.config['SECRETKEY']
 
-gunicorn_logger = logging.getLogger('gunicorn.error')
-app.logger.handlers = gunicorn_logger.handlers
-app.logger.setLevel(logging.DEBUG)
-
 celery = setup_celery(app)
 
 app.jinja_env.globals.update(is_logged_in=is_logged_in)
