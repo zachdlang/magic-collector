@@ -53,6 +53,7 @@ main {
 
 .modal.bottom-sheet {
 	max-height: none;
+	overflow: visible;
 }
 
 .form-row {

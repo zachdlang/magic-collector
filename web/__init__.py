@@ -86,7 +86,9 @@ def home():
 @app.route('/get_sets', methods=['GET'])
 @login_required
 def get_sets():
-	sets = fetch_query("SELECT id, name, iconurl FROM card_set ORDER BY released DESC")
+	sets = fetch_query("SELECT id, name, code FROM card_set ORDER BY released DESC")
+	for s in sets:
+		s['iconurl'] = scryfall.get_set_icon(s['code'])
 
 	return jsonify(sets=sets)
 
@@ -164,16 +166,14 @@ def search():
 
 	if params.get('query'):
 		search = '%' + params['query'] + '%'
-		qry = """SELECT c.id, c.name, s.code, s.name AS setname, s.iconurl
+		qry = """SELECT c.id, c.name, s.code, s.name AS setname
 				FROM card c
 				LEFT JOIN card_set s ON (c.card_setid=s.id)
 				WHERE c.name ILIKE %s
 				ORDER BY c.name ASC, s.released DESC LIMIT 50"""
 		results = fetch_query(qry, (search,))
 		for r in results:
-			if r['iconurl'] is None:
-				r['iconurl'] = scryfall.get_set(r['code'])['icon_svg_uri']
-				mutate_query("UPDATE card_set SET iconurl = %s WHERE id = %s", (r['iconurl'], r['card_setid'],))
+			r['iconurl'] = scryfall.get_set_icon(r['code'])
 
 	return jsonify(results=results)
 
@@ -334,11 +334,6 @@ def fetch_rates():
 @app.route('/check_images', methods=['GET'])
 @check_celery_running
 def check_images():
-	sets = fetch_query("SELECT id, name, code, iconurl FROM card_set ORDER BY name ASC")
-
-	for s in sets:
-		check_set_icon.delay(s)
-
 	qry = """SELECT
 				id, name, collectornumber, imageurl, arturl,
 				(SELECT code FROM card_set WHERE id = card_setid)
@@ -352,25 +347,6 @@ def check_images():
 		check_card_art.delay(c)
 
 	return jsonify()
-
-
-@celery.task()
-def check_set_icon(s):
-	print('Checking set icon for {}.'.format(s['name']))
-	if s['iconurl'] is not None:
-		# Check for bad icon URLs
-		if check_image_exists(s['iconurl']) is False:
-			print('Set icon URL could not be found for {}.'.format(s['name']))
-			mutate_query("""UPDATE card_set SET iconurl = NULL WHERE id = %s""", (s['id'],))
-			# Null out local copy for refreshing image below
-			s['iconurl'] = None
-
-	if s['iconurl'] is None:
-		# Fetch icon URLs for anything without one
-		s['iconurl'] = scryfall.get_set(s['code'])['icon_svg_uri']
-		if s['iconurl'] is not None:
-			print('Found new set icon URL for {}.'.format(s['name']))
-			mutate_query("""UPDATE card_set SET iconurl = %s WHERE id = %s""", (s['iconurl'], s['id'],))
 
 
 @celery.task()

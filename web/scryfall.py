@@ -1,6 +1,15 @@
 # Standard library imports
 import requests
 import json
+import os
+
+# Third party imports
+from flask import url_for
+
+# Local imports
+from sitetools.utility import (
+	get_static_file, fetch_image
+)
 
 
 def send_request(endpoint, params=None, data=None, post=False):
@@ -26,6 +35,14 @@ def get_set(code):
 	endpoint = '/sets/%s' % code if code is not None else '/sets'
 	resp = send_request(endpoint)
 	return resp
+
+
+def get_set_icon(code):
+	filename = '/images/set_icon_{}.svg'.format(code)
+	if not os.path.exists(get_static_file(filename)):
+		url = get_set(code)['icon_svg_uri']
+		fetch_image(filename, url)
+	return url_for('static', filename='images/set_icon_{}.svg'.format(code))
 
 
 def get(code, collectornumber):
