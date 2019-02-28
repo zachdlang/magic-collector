@@ -2,10 +2,7 @@
 from flask import session
 
 # Local imports
-from web import scryfall
-from sitetools.utility import (
-	fetch_query, mutate_query
-)
+from sitetools.utility import fetch_query
 
 
 def get_all(deleted):
