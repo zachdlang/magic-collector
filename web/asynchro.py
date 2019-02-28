@@ -10,7 +10,7 @@ from sitetools.utility import (
 celery = setup_celery(app)
 
 
-@celery.task()
+@celery.task(queue='collector')
 def get_set_icon(code):
 	filename = '/images/set_icon_{}.svg'.format(code)
 	if not os.path.exists(get_static_file(filename)):
@@ -18,7 +18,7 @@ def get_set_icon(code):
 		fetch_image(filename, url)
 
 
-@celery.task()
+@celery.task(queue='collector')
 def get_card_art(cardid, code, collectornumber):
 	filename = '/images/card_art_{}.jpg'.format(cardid)
 	if not os.path.exists(get_static_file(filename)):
@@ -26,7 +26,7 @@ def get_card_art(cardid, code, collectornumber):
 		fetch_image(filename, url)
 
 
-@celery.task()
+@celery.task(queue='collector')
 def get_card_image(cardid, code, collectornumber):
 	filename = '/images/card_image_{}.jpg'.format(cardid)
 	if not os.path.exists(get_static_file(filename)):
@@ -34,7 +34,7 @@ def get_card_image(cardid, code, collectornumber):
 		fetch_image(filename, url)
 
 
-@celery.task()
+@celery.task(queue='collector')
 def fetch_prices(cards, tcgplayer_token):
 	for c in cards:
 		if c['productid'] is None:
@@ -59,7 +59,7 @@ def fetch_prices(cards, tcgplayer_token):
 	print('Updated prices for {} cards.'.format(len(updates)))
 
 
-@celery.task()
+@celery.task(queue='collector')
 def fetch_rates():
 	print('Fetching exchange rates')
 	rates = openexchangerates.get()
