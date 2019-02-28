@@ -10,12 +10,14 @@ from flask import (
 )
 
 # Local imports
-from web import collection, deck, scryfall, tcgplayer, openexchangerates
+from web import (
+	collection, deck, scryfall, tcgplayer
+)
 from sitetools.utility import (
 	BetterExceptionFlask, is_logged_in, params_to_dict,
-	login_required, check_image_exists, check_login, fetch_query,
+	login_required, check_login, fetch_query,
 	mutate_query, disconnect_database, handle_exception,
-	setup_celery, check_celery_running
+	check_celery_running
 )
 
 app = BetterExceptionFlask(__name__)
@@ -23,9 +25,10 @@ app = BetterExceptionFlask(__name__)
 app.config.from_pyfile('site_config.cfg')
 app.secret_key = app.config['SECRETKEY']
 
-celery = setup_celery(app)
-
 app.jinja_env.globals.update(is_logged_in=is_logged_in)
+
+# Import below app initialisation
+from web import asynchro
 
 if not app.debug:
 	ADMINISTRATORS = [app.config['TO_EMAIL']]
@@ -88,7 +91,8 @@ def home():
 def get_sets():
 	sets = fetch_query("SELECT id, name, code FROM card_set ORDER BY released DESC")
 	for s in sets:
-		s['iconurl'] = scryfall.get_set_icon(s['code'])
+		asynchro.get_set_icon.delay(s['code'])
+		s['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(s['code']))
 
 	return jsonify(sets=sets)
 
@@ -98,6 +102,13 @@ def get_sets():
 def get_collection():
 	params = params_to_dict(request.args)
 	resp = collection.get(params)
+	for c in resp['cards']:
+		asynchro.get_set_icon.delay(c['code'])
+		asynchro.get_card_art.delay(c['id'], c['code'], c['collectornumber'])
+		asynchro.get_card_image.delay(c['id'], c['code'], c['collectornumber'])
+		del c['id']
+		del c['code']
+		del c['collectornumber']
 
 	return jsonify(**resp)
 
@@ -285,106 +296,16 @@ def update_prices():
 
 	tcgplayer_token = tcgplayer.login()
 
-	fetch_prices.delay(cards, tcgplayer_token)
+	asynchro.fetch_prices.delay(cards, tcgplayer_token)
 
 	return jsonify()
-
-
-@celery.task()
-def fetch_prices(cards, tcgplayer_token):
-	for c in cards:
-		if c['productid'] is None:
-			print('Searching for TCGPlayer ID for {} ({}).'.format(c['name'], c['set_name']))
-			c['productid'] = tcgplayer.search(c, token=tcgplayer_token)
-			if c['productid'] is not None:
-				mutate_query("UPDATE card SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
-
-	# Filter out cards without tcgplayerid to save requests
-	cards = [c for c in cards if c['productid'] is not None]
-	bulk_lots = ([cards[i:i + 250] for i in range(0, len(cards), 250)])
-	prices = {}
-	for lot in bulk_lots:
-		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}, token=tcgplayer_token))
-
-	updates = []
-	for cardid, price in prices.items():
-		# Only update if we received have prices
-		if price['normal'] is not None or price['foil'] is not None:
-			updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
-	mutate_query("UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)
-	print('Updated prices for {} cards.'.format(len(updates)))
 
 
 @app.route('/update_rates', methods=['POST'])
 @check_celery_running
 def update_rates():
-	fetch_rates.delay()
+	asynchro.fetch_rates.delay()
 	return jsonify()
-
-
-@celery.task()
-def fetch_rates():
-	print('Fetching exchange rates')
-	rates = openexchangerates.get()
-	updates = [{'code': code, 'rate': rate} for code, rate in rates.items()]
-	mutate_query("SELECT update_rates(%(code)s, %(rate)s)", updates, executemany=True)
-	print('Updated exchange rates')
-
-
-@app.route('/check_images', methods=['GET'])
-@check_celery_running
-def check_images():
-	qry = """SELECT
-				id, name, collectornumber, imageurl, arturl,
-				(SELECT code FROM card_set WHERE id = card_setid)
-			FROM card
-			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=card.id)
-			ORDER BY name ASC"""
-	cards = fetch_query(qry)
-
-	for c in cards:
-		check_card_image.delay(c)
-		check_card_art.delay(c)
-
-	return jsonify()
-
-
-@celery.task()
-def check_card_image(c):
-	print('Checking card image for {}.'.format(c['name']))
-	if c['imageurl'] is not None:
-		# Check for bad image URLs
-		if check_image_exists(c['imageurl']) is False:
-			print('Card image URL for could not be found for {}.'.format(c['name']))
-			mutate_query("""UPDATE card SET imageurl = NULL WHERE id = %s""", (c['id'],))
-			# Null out local copy for refreshing image below
-			c['imageurl'] = None
-
-	if c['imageurl'] is None:
-		# Fetch image URLs for anything without one
-		c['imageurl'] = scryfall.get(c['code'], c['collectornumber'])['imageurl']
-		if c['imageurl'] is not None:
-			print('Found new card image URL for {}.'.format(c['name']))
-			mutate_query("""UPDATE card SET imageurl = %s WHERE id = %s""", (c['imageurl'], c['id'],))
-
-
-@celery.task()
-def check_card_art(c):
-	print('Checking card art for {}.'.format(c['name']))
-	if c['arturl'] is not None:
-		# Check for bad image URLs
-		if check_image_exists(c['arturl']) is False:
-			print('Card art URL for could not be found for {}.'.format(c['name']))
-			mutate_query("""UPDATE card SET arturl = NULL WHERE id = %s""", (c['id'],))
-			# Null out local copy for refreshing image below
-			c['arturl'] = None
-
-	if c['arturl'] is None:
-		# Fetch image URLs for anything without one
-		c['arturl'] = scryfall.get(c['code'], c['collectornumber'])['arturl']
-		if c['arturl'] is not None:
-			print('Found new card art URL for {}.'.format(c['name']))
-			mutate_query("""UPDATE card SET arturl = %s WHERE id = %s""", (c['arturl'], c['id'],))
 
 
 @app.route('/decks', methods=['GET'])
@@ -398,6 +319,13 @@ def decks():
 def decks_get_all():
 	params = params_to_dict(request.args, bool_keys=['deleted'])
 	results = deck.get_all(params['deleted'])
+	for r in results:
+		asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
+		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardartid']))
+		del r['cardid']
+		del r['code']
+		del r['collectornumber']
+
 	return jsonify(results=results)
 
 
@@ -409,6 +337,25 @@ def decks_get():
 	resp['deck'] = deck.get(params['deckid'])
 	resp['cards'] = deck.get_cards(params['deckid'])
 	resp['formats'] = deck.get_formats()
+
+	asynchro.get_card_art.delay(
+		resp['deck']['cardid'],
+		resp['deck']['code'],
+		resp['deck']['collectornumber']
+	)
+	resp['deck']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['deck']['cardartid']))
+	del resp['deck']['cardid']
+	del resp['deck']['code']
+	del resp['deck']['collectornumber']
+
+	for r in resp['cards']:
+		asynchro.get_card_art.delay(
+			r['cardid'],
+			r['code'],
+			r['collectornumber']
+		)
+		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardid']))
+
 	return jsonify(**resp)
 
 

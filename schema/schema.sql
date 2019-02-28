@@ -29,9 +29,7 @@ CREATE TABLE IF NOT EXISTS card (
 	multifaced BOOLEAN NOT NULL DEFAULT FALSE,
 	price MONEY,
 	foilprice MONEY,
-	tcgplayer_productid TEXT,
-	imageurl TEXT,
-	arturl TEXT
+	tcgplayer_productid TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (

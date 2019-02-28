@@ -1,8 +1,7 @@
 # Third party imports
-from flask import session
+from flask import session, url_for
 
 # Local imports
-from web import scryfall
 from sitetools.utility import (
 	pagecount, fetch_query, mutate_query
 )
@@ -56,7 +55,7 @@ def get(params):
 				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				c.collectornumber, c.imageurl, c.arturl, c.card_setid
+				c.collectornumber, c.card_setid
 			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
@@ -77,18 +76,11 @@ def get(params):
 	qargs += (limit, offset,)
 	resp['cards'] = fetch_query(qry, qargs)
 	for c in resp['cards']:
-		if c['imageurl'] is None or c['arturl'] is None:
-			print('Fetching images for %s' % c['name'])
-			image_resp = scryfall.get(c['code'], c['collectornumber'])
-			c['imageurl'] = image_resp['imageurl']
-			c['arturl'] = image_resp['arturl']
-			mutate_query("UPDATE card SET imageurl = %s, arturl = %s WHERE id = %s", (c['imageurl'], c['arturl'], c['id'],))
-		c['iconurl'] = scryfall.get_set_icon(c['code'])
+		c['imageurl'] = url_for('static', filename='images/card_image_{}.jpg'.format(c['id']))
+		c['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(c['id']))
+		c['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(c['code']))
 
 		# Remove keys unnecessary in response
-		del c['id']
-		del c['code']
-		del c['collectornumber']
 		del c['card_setid']
 
 	return resp

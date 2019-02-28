@@ -9,35 +9,33 @@ from sitetools.utility import (
 
 
 def get_all(deleted):
-	qry = """SELECT id, name, get_format(formatid) AS formatname,
-				(SELECT arturl FROM card WHERE id = cardartid)
-			FROM deck WHERE deleted = %s AND userid = %s
-			ORDER BY formatid, name"""
+	qry = """SELECT d.id, d.name, get_format(d.formatid) AS formatname,
+				d.cardartid, c.id AS cardid, c.collectornumber,
+				(SELECT code FROM card_set WHERE id = c.card_setid)
+			FROM deck d
+			LEFT JOIN card c ON (c.id = d.cardartid)
+			WHERE d.deleted = %s AND d.userid = %s
+			ORDER BY d.formatid, d.name"""
 	qargs = (deleted, session['userid'],)
 	decks = fetch_query(qry, qargs)
 	return decks
 
 
 def get(deckid):
-	qry = """SELECT id, name, formatid, deleted,
-				(SELECT arturl FROM card WHERE id = cardartid)
-			FROM deck WHERE userid = %s AND id = %s"""
+	qry = """SELECT d.id, d.name, d.formatid, d.deleted,
+				d.cardartid, c.id AS cardid, c.collectornumber,
+				(SELECT code FROM card_SET WHERE id = c.card_setid)
+			FROM deck d
+			LEFT JOIN card c ON (c.id = d.cardartid)
+			WHERE d.userid = %s AND d.id = %s"""
 	qargs = (session['userid'], deckid,)
 	result = fetch_query(qry, qargs, single_row=True)
 	return result
 
 
-def get_image(deckid):
-	qry = """SELECT collectornumber, (SELECT code FROM card_set WHERE id = card_setid)
-			FROM card
-			WHERE id = (SELECT cardid FROM deck_card WHERE deckid = %s ORDER BY id LIMIT 1)"""
-	imgcard = fetch_query(qry, (deckid,), single_row=True)
-	return scryfall.get(imgcard['code'], imgcard['collectornumber'])['arturl']
-
-
 def get_cards(deckid):
 	qry = """SELECT dc.cardid, dc.quantity, dc.section,
-				c.name, c.arturl, c.collectornumber,
+				c.name, c.collectornumber,
 				(SELECT code FROM card_set WHERE id = card_setid),
 				has_deck_card(%s, dc.cardid) AS has_quantity
 			FROM deck_card dc
@@ -46,14 +44,6 @@ def get_cards(deckid):
 			AND (SELECT userid FROM deck WHERE id = dc.deckid) = %s"""
 	qargs = (session['userid'], deckid, session['userid'],)
 	cards = fetch_query(qry, qargs)
-
-	for c in cards:
-		if c['arturl'] is None:
-			print('Fetching images for %s' % c['name'])
-			c['arturl'] = scryfall.get(c['code'], c['collectornumber'])['arturl']
-			mutate_query("UPDATE card SET arturl = %s WHERE id = %s", (c['arturl'], c['cardid'],))
-
-		del c['collectornumber']
 
 	return cards
 

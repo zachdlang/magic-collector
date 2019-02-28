@@ -37,14 +37,6 @@ def get_set(code):
 	return resp
 
 
-def get_set_icon(code):
-	filename = '/images/set_icon_{}.svg'.format(code)
-	if not os.path.exists(get_static_file(filename)):
-		url = get_set(code)['icon_svg_uri']
-		fetch_image(filename, url)
-	return url_for('static', filename='images/set_icon_{}.svg'.format(code))
-
-
 def get(code, collectornumber):
 	resp = send_request('/cards/%s/%s' % (code.lower(), collectornumber))
 	return simplify(resp)
