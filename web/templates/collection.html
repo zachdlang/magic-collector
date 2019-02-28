@@ -307,7 +307,9 @@
 				});
 
 				$('#collection_list .name').on('click', function() {
-					M.Materialbox.getInstance($('#view_box')).open();
+					// Only show hover for mobile due to glitchy-ness
+					if (is_mobile()) $(this).hover();
+					else M.Materialbox.getInstance($('#view_box')).open();
 				});
 
 				$('.edit-card').on('click', function() {
