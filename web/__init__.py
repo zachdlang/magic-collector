@@ -184,7 +184,8 @@ def search():
 				ORDER BY c.name ASC, s.released DESC LIMIT 50"""
 		results = fetch_query(qry, (search,))
 		for r in results:
-			r['iconurl'] = scryfall.get_set_icon(r['code'])
+			asynchro.get_set_icon.delay(r['code'])
+			r['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(r['code']))
 
 	return jsonify(results=results)
 
