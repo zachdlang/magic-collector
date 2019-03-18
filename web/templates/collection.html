@@ -427,6 +427,7 @@
 				var success_str = cardname + " (x" + quantity + ")";
 				if (foil === 1) success_str = "Foil " + success_str;
 				M.toast({html: "Added " + success_str + " successfully."});
+				$('#search-row-search').val($('#add-row-search').val());
 				get_collection();
 			}
 		}).fail(ajax_failed);
