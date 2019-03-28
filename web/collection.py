@@ -10,7 +10,7 @@ from sitetools.utility import (
 def get(params):
 	resp = {}
 
-	limit = 50
+	limit = 20
 	page = 1
 	if params.get('page'):
 		page = int(params.get('page'))
@@ -36,7 +36,11 @@ def get(params):
 		'rarity': params.get('filter_rarity')
 	}
 
-	qry = "SELECT count(*) AS count, sum(quantity) AS sum FROM user_card WHERE userid = %s"
+	qry = """SELECT count(*) AS count,
+				sum(quantity) AS sum,
+				sum(quantity * get_price(id)) AS sumprice
+			FROM user_card
+			WHERE userid = %s"""
 	qargs = (session['userid'],)
 	if filters['search']:
 		qry += " AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"
@@ -50,6 +54,7 @@ def get(params):
 	aggregate = fetch_query(qry, qargs, single_row=True)
 	resp['count'] = pagecount(aggregate['count'], limit)
 	resp['total'] = aggregate['sum']
+	resp['totalprice'] = aggregate['sumprice']
 
 	qry = """SELECT
 				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code,

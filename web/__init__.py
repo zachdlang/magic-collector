@@ -91,7 +91,8 @@ def home():
 def get_sets():
 	sets = fetch_query("SELECT id, name, code FROM card_set ORDER BY released DESC")
 	for s in sets:
-		asynchro.get_set_icon.delay(s['code'])
+		if not os.path.exists(asynchro.set_icon_filename(s['code'])):
+			asynchro.get_set_icon.delay(s['code'])
 		s['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(s['code']))
 
 	return jsonify(sets=sets)
@@ -103,9 +104,10 @@ def get_collection():
 	params = params_to_dict(request.args)
 	resp = collection.get(params)
 	for c in resp['cards']:
-		asynchro.get_set_icon.delay(c['code'])
-		asynchro.get_card_art.delay(c['id'], c['code'], c['collectornumber'])
-		asynchro.get_card_image.delay(c['id'], c['code'], c['collectornumber'])
+		if not os.path.exists(asynchro.card_art_filename(c['id'])):
+			asynchro.get_card_art.delay(c['id'], c['code'], c['collectornumber'])
+		if not os.path.exists(asynchro.card_image_filename(c['id'])):
+			asynchro.get_card_image.delay(c['id'], c['code'], c['collectornumber'])
 		del c['id']
 		del c['code']
 		del c['collectornumber']
@@ -184,7 +186,8 @@ def search():
 				ORDER BY c.name ASC, s.released DESC LIMIT 50"""
 		results = fetch_query(qry, (search,))
 		for r in results:
-			asynchro.get_set_icon.delay(r['code'])
+			if not os.path.exists(asynchro.set_icon_filename(r['code'])):
+				asynchro.get_set_icon.delay(r['code'])
 			r['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(r['code']))
 
 	return jsonify(results=results)
@@ -321,7 +324,8 @@ def decks_get_all():
 	params = params_to_dict(request.args, bool_keys=['deleted'])
 	results = deck.get_all(params['deleted'])
 	for r in results:
-		asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
+		if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
+			asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
 		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardartid']))
 		del r['cardid']
 		del r['code']
@@ -339,22 +343,24 @@ def decks_get():
 	resp['cards'] = deck.get_cards(params['deckid'])
 	resp['formats'] = deck.get_formats()
 
-	asynchro.get_card_art.delay(
-		resp['deck']['cardid'],
-		resp['deck']['code'],
-		resp['deck']['collectornumber']
-	)
+	if not os.path.exists(asynchro.card_art_filename(resp['deck']['cardid'])):
+		asynchro.get_card_art.delay(
+			resp['deck']['cardid'],
+			resp['deck']['code'],
+			resp['deck']['collectornumber']
+		)
 	resp['deck']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['deck']['cardartid']))
 	del resp['deck']['cardid']
 	del resp['deck']['code']
 	del resp['deck']['collectornumber']
 
 	for r in resp['cards']:
-		asynchro.get_card_art.delay(
-			r['cardid'],
-			r['code'],
-			r['collectornumber']
-		)
+		if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
+			asynchro.get_card_art.delay(
+				r['cardid'],
+				r['code'],
+				r['collectornumber']
+			)
 		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardid']))
 
 	return jsonify(**resp)

@@ -10,26 +10,38 @@ from sitetools.utility import (
 celery = setup_celery(app)
 
 
+def set_icon_filename(code):
+	return get_static_file('/images/set_icon_{}.svg'.format(code))
+
+
 @celery.task(queue='collector')
 def get_set_icon(code):
-	filename = '/images/set_icon_{}.svg'.format(code)
-	if not os.path.exists(get_static_file(filename)):
+	filename = set_icon_filename(code)
+	if not os.path.exists(filename):
 		url = scryfall.get_set(code)['icon_svg_uri']
 		fetch_image(filename, url)
 
 
+def card_art_filename(cardid):
+	return get_static_file('/images/card_art_{}.jpg'.format(cardid))
+
+
 @celery.task(queue='collector')
 def get_card_art(cardid, code, collectornumber):
-	filename = '/images/card_art_{}.jpg'.format(cardid)
-	if not os.path.exists(get_static_file(filename)):
+	filename = card_art_filename(cardid)
+	if not os.path.exists(filename):
 		url = scryfall.get(code, collectornumber)['arturl']
 		fetch_image(filename, url)
 
 
+def card_image_filename(cardid):
+	return get_static_file('/images/card_image_{}.jpg'.format(cardid))
+
+
 @celery.task(queue='collector')
 def get_card_image(cardid, code, collectornumber):
-	filename = '/images/card_image_{}.jpg'.format(cardid)
-	if not os.path.exists(get_static_file(filename)):
+	filename = card_image_filename(cardid)
+	if not os.path.exists(filename):
 		url = scryfall.get(code, collectornumber)['imageurl']
 		fetch_image(filename, url)
 
