@@ -57,7 +57,7 @@ def get(params):
 	resp['totalprice'] = aggregate['sumprice']
 
 	qry = """SELECT
-				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code,
+				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
 				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
 				c.collectornumber, c.card_setid
@@ -83,7 +83,6 @@ def get(params):
 	for c in resp['cards']:
 		c['imageurl'] = url_for('static', filename='images/card_image_{}.jpg'.format(c['id']))
 		c['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(c['id']))
-		c['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(c['code']))
 
 		# Remove keys unnecessary in response
 		del c['card_setid']

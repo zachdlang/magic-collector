@@ -105,11 +105,10 @@ def get_collection():
 	resp = collection.get(params)
 	for c in resp['cards']:
 		if not os.path.exists(asynchro.card_art_filename(c['id'])):
-			asynchro.get_card_art.delay(c['id'], c['code'], c['collectornumber'])
+			asynchro.get_card_art.delay(c['id'], c['setcode'], c['collectornumber'])
 		if not os.path.exists(asynchro.card_image_filename(c['id'])):
-			asynchro.get_card_image.delay(c['id'], c['code'], c['collectornumber'])
+			asynchro.get_card_image.delay(c['id'], c['setcode'], c['collectornumber'])
 		del c['id']
-		del c['code']
 		del c['collectornumber']
 
 	return jsonify(**resp)

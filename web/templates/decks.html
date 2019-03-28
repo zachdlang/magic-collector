@@ -1,55 +1,5 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="decks-page container">
-	<div class="section">
-		<div id="list-row" class="row">
-			<div class="show-deleted col s6 m3 offset-s4 offset-m7">
-				<label>
-					<input type="checkbox" id="deleted">
-					<span>Show Deleted</span>
-				</label>
-			</div>
-			<div class="col s2">
-				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
-			</div>
-		</div>
-
-		<div id="upload_modal" class="modal bottom-sheet">
-			<div class="modal-content">
-				<h4>Upload CSV</h4>
-				<div id="upload_loading"></div>
-
-				<div class="file-field input-field">
-					<div class="btn bg-secondary">
-						<span>File</span>
-						<form enctype="multipart/form-data" method="post" name="upload_form">
-							<input type="file" accept="text/csv" name="upload">
-						</form>
-					</div>
-					<div class="file-path-wrapper">
-						<input class="file-path validate" type="text">
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<a class="btn-flat bg-secondary" id="upload_btn">Submit</a>
-			</div>
-		</div>
-
-		<div id="deck-menu" class="row">
-		</div>
-
-		<div id="deck-details" class="hide">
-			<div class="row deck-info"></div>
-			<div class="row deck-contents"></div>
-		</div>
-	</div>
-
-	<br><br>
-</div>
-{% endblock %}
-
 {% block handlebars %}
 	{% raw -%}
 	<script id="deck-template" type="text/x-handlebars-template">
@@ -125,6 +75,56 @@
 		</div>
 	</script>
 	{%- endraw %}
+{% endblock %}
+
+{% block content %}
+<div class="decks-page container">
+	<div class="section">
+		<div id="list-row" class="row">
+			<div class="show-deleted col s6 m3 offset-s4 offset-m7">
+				<label>
+					<input type="checkbox" id="deleted">
+					<span>Show Deleted</span>
+				</label>
+			</div>
+			<div class="col s2">
+				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
+			</div>
+		</div>
+
+		<div id="upload_modal" class="modal bottom-sheet">
+			<div class="modal-content">
+				<h4>Upload CSV</h4>
+				<div id="upload_loading"></div>
+
+				<div class="file-field input-field">
+					<div class="btn bg-secondary">
+						<span>File</span>
+						<form enctype="multipart/form-data" method="post" name="upload_form">
+							<input type="file" accept="text/csv" name="upload">
+						</form>
+					</div>
+					<div class="file-path-wrapper">
+						<input class="file-path validate" type="text">
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a class="btn-flat bg-secondary" id="upload_btn">Submit</a>
+			</div>
+		</div>
+
+		<div id="deck-menu" class="row">
+		</div>
+
+		<div id="deck-details" class="hide">
+			<div class="row deck-info"></div>
+			<div class="row deck-contents"></div>
+		</div>
+	</div>
+
+	<br><br>
+</div>
 {% endblock %}
 
 {% block script %}

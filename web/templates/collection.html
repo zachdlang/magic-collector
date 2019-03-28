@@ -1,5 +1,89 @@
 {% extends 'base.html' %}
 
+{% block handlebars %}
+	{% raw %}
+	<script id="filtersets-template" type="text/x-handlebars-template">
+		<option value="" disabled selected>Filter by Set</option>
+		{{#each sets}}
+		<option value="{{id}}" data-icon="{{iconurl}}">{{name}}</option>
+		{{/each}}
+	</script>
+
+	<script id="collection-template" type="text/x-handlebars-template">
+		{{#each cards}}
+		<tr data-image="{{imageurl}}" data-art="{{arturl}}" data-usercard_id="{{user_cardid}}" {{#if foil}}data-foil="1"{{/if}}>
+			<td class="name">
+				{{name}}
+				<span class="card-hover-img"></span>
+			</td>
+			<td class="hide-on-med-and-up">{{setcode}}</td>
+			<td class="valign-wrapper hide-on-small-only">{{setname}}</td>
+			<td class="hide-on-med-and-up">{{substring rarity 1}}</td>
+			<td class="hide-on-small-only">{{rarity}}</td>
+			<td class="quantity">{{quantity}}</td>
+			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
+			<td>{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}</td>
+			<td><a class="btn edit-card"><i class="material-icons">edit</i></a></td>
+		<tr>
+		{{/each}}
+	</script>
+
+	<script id="hover-template" type="text/x-handlebars-template">
+		<div class="card-panel card-hover" style="top: {{vert_pos}}px; left: {{horiz_pos}}px;">
+			<img class="responsive-img" src="{{image_url}}">
+		</div>
+	</script>
+
+	<script id="pagination-template" type="text/x-handlebars-template">
+		<ul id="extra-pages-before" class="dropdown-content">
+			{{#each extras_before}}
+			<li><a class="{{class}}">{{label}}</a></li>
+			{{/each}}
+		</ul>
+		<ul id="extra-pages-after" class="dropdown-content">
+			{{#each extras_after}}
+			<li><a class="{{class}}">{{label}}</a></li>
+			{{/each}}
+		</ul>
+		<ul class="pagination">
+			{{#each pages}}
+			<li {{#if active}}class="active bg-tertiary"{{/if}}><a class="{{class}}" {{#if target}}data-target="{{target}}"{{/if}}>
+				{{#if label}}
+				{{label}}
+				{{else}} 
+				<i class="material-icons">{{icon}}</i>
+				{{/if}}
+			</a></li>
+			{{/each}}
+		</ul>
+	</script>
+
+	<script id="collectiontotal-template" type="text/x-handlebars-template">
+		<span class="badge new bg-tertiary" data-badge-caption="">{{totalprice}} | {{total}} cards</span>
+	</script>
+
+	<script id="search-template" type="text/x-handlebars-template">
+		{{#each results}}
+		<tr>
+			<td><a class="btn bg-secondary search-results-add" data-cardid="{{id}}"><i class="material-icons">add</i></a></td>
+			<td class="cardname">{{name}}</td>
+			<td class="blue-grey-text text-lighten-3">{{setname}}</td>
+			<td class="valign-wrapper"><img class="set-icon" src="{{iconurl}}"></td>
+		</tr>
+		{{/each}}
+	</script>
+
+	<script id="filterchip-template" type="text/x-handlebars-template">
+		{{#each filters}}
+		<div class="chip">
+			<input id="{{key}}_value" data-orig="#{{key}}" value="{{value}}" hidden>
+			<img class="{{#isEqual key 'filter_set'}}set-icon{{/isEqual}}" src="{{icon}}">{{label}}<i class="close material-icons filter-remove">close</i>
+		</div>
+		{{/each}}
+	</script>
+	{% endraw %}
+{% endblock %}
+
 {% block content %}
 <div class="collection-page container">
 	<div class="section">
@@ -155,92 +239,6 @@
 
 	<br><br>
 </div>
-{% endblock %}
-
-{% block handlebars %}
-	{% raw %}
-	<script id="filtersets-template" type="text/x-handlebars-template">
-		<option value="" disabled selected>Filter by Set</option>
-		{{#each sets}}
-		<option value="{{id}}" data-icon="{{iconurl}}">{{name}}</option>
-		{{/each}}
-	</script>
-
-	<script id="collection-template" type="text/x-handlebars-template">
-		{{#each cards}}
-		<tr data-image="{{imageurl}}" data-art="{{arturl}}" data-usercard_id="{{user_cardid}}" {{#if foil}}data-foil="1"{{/if}}>
-			<td class="name">
-				{{name}}
-				<span class="card-hover-img"></span>
-			</td>
-			<td class="valign-wrapper">
-				<img class="set-icon" src="{{iconurl}}">
-				<span class="hide-on-small-only">{{setname}}</span>
-			</td>
-			<td class="hide-on-med-and-up">{{substring rarity 1}}</td>
-			<td class="hide-on-small-only">{{rarity}}</td>
-			<td class="quantity">{{quantity}}</td>
-			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
-			<td>{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}</td>
-			<td><a class="btn edit-card"><i class="material-icons">edit</i></a></td>
-		<tr>
-		{{/each}}
-	</script>
-
-	<script id="hover-template" type="text/x-handlebars-template">
-		<div class="card-panel card-hover" style="top: {{vert_pos}}px; left: {{horiz_pos}}px;">
-			<img class="responsive-img" src="{{image_url}}">
-		</div>
-	</script>
-
-	<script id="pagination-template" type="text/x-handlebars-template">
-		<ul id="extra-pages-before" class="dropdown-content">
-			{{#each extras_before}}
-			<li><a class="{{class}}">{{label}}</a></li>
-			{{/each}}
-		</ul>
-		<ul id="extra-pages-after" class="dropdown-content">
-			{{#each extras_after}}
-			<li><a class="{{class}}">{{label}}</a></li>
-			{{/each}}
-		</ul>
-		<ul class="pagination">
-			{{#each pages}}
-			<li {{#if active}}class="active bg-tertiary"{{/if}}><a class="{{class}}" {{#if target}}data-target="{{target}}"{{/if}}>
-				{{#if label}}
-				{{label}}
-				{{else}} 
-				<i class="material-icons">{{icon}}</i>
-				{{/if}}
-			</a></li>
-			{{/each}}
-		</ul>
-	</script>
-
-	<script id="collectiontotal-template" type="text/x-handlebars-template">
-		<span class="badge new bg-tertiary" data-badge-caption="">{{totalprice}} | {{total}} cards</span>
-	</script>
-
-	<script id="search-template" type="text/x-handlebars-template">
-		{{#each results}}
-		<tr>
-			<td><a class="btn bg-secondary search-results-add" data-cardid="{{id}}"><i class="material-icons">add</i></a></td>
-			<td class="cardname">{{name}}</td>
-			<td class="blue-grey-text text-lighten-3">{{setname}}</td>
-			<td class="valign-wrapper"><img class="set-icon" src="{{iconurl}}"></td>
-		</tr>
-		{{/each}}
-	</script>
-
-	<script id="filterchip-template" type="text/x-handlebars-template">
-		{{#each filters}}
-		<div class="chip">
-			<input id="{{key}}_value" data-orig="#{{key}}" value="{{value}}" hidden>
-			<img class="{{#isEqual key 'filter_set'}}set-icon{{/isEqual}}" src="{{icon}}">{{label}}<i class="close material-icons filter-remove">close</i>
-		</div>
-		{{/each}}
-	</script>
-	{% endraw %}
 {% endblock %}
 
 {% block script %}
