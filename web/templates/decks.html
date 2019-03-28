@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block handlebars %}
+	{{ super() }}
+
 	{% raw -%}
 	<script id="deck-template" type="text/x-handlebars-template">
 		{{#each results}}
