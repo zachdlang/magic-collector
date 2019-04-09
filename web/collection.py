@@ -102,3 +102,19 @@ def add(cardid, foil, quantity):
 				WHERE NOT EXISTS (SELECT 1 FROM user_card WHERE cardid = %s AND foil = %s AND userid = %s)"""
 		qargs = (cardid, session['userid'], foil, quantity, cardid, foil, session['userid'],)
 	mutate_query(qry, qargs)
+
+
+def remove(cardid, foil, quantity):
+	qry = "SELECT id, quantity FROM user_card WHERE cardid = %s AND foil = %s AND userid = %s AND quantity >= %s"
+	qargs = (cardid, foil, session['userid'], quantity,)
+	existing = fetch_query(qry, qargs, single_row=True)
+	if existing:
+		if (existing['quantity'] - quantity) <= 0:
+			qry = "DELETE FROM user_card WHERE id = %s"
+			qargs = (existing['id'],)
+		else:
+			qry = "UPDATE user_card SET quantity = quantity - %s WHERE id = %s"
+			qargs = (quantity, existing['id'],)
+		mutate_query(qry, qargs)
+	else:
+		raise Exception('Could not find card %s.' % cardid)
