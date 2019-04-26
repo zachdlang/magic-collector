@@ -143,6 +143,26 @@ function generate_pagination(elem, count) {
 	});
 }
 
+var add_search_req;
+var add_search_timer;
+function add_search() {
+	var query = $('#add-row-search').val()
+	if (query.length >= 3 || query.length == 0) {
+		clearTimeout(add_search_timer);
+		add_search_timer = setTimeout(function() {
+			if (add_search_req) add_search_req.abort();
+			add_search_req = $.ajax({
+				url: "/search",
+				method: "GET",
+				data: { 'query':query }
+			}).done(function(data) {
+				$('#search-results').removeClass('hide');
+				compile_handlebars('search-template', '#search-results-list', data);
+			}).fail(ajax_failed);
+	    }, 250);
+	}
+}
+
 function bind_events() {
 	$('#filter-row-button').on('click', function() {
 		if (!sets_loaded) get_sets();
@@ -214,23 +234,19 @@ function bind_events() {
 		$('#search-results-dismiss').click();
 	});
 
-	var add_search_req;
-	var add_search_timer;
-	$('#add-row-search').on('keyup', function() {
-		if ($(this).val().length >= 3 || $(this).val().length == 0) {
-			var query = $(this).val()
-			clearTimeout(add_search_timer);
-			add_search_timer = setTimeout(function() {
-				if (add_search_req) add_search_req.abort();
-				add_search_req = $.ajax({
-					url: "/search",
-					method: "GET",
-					data: { 'query':query }
-				}).done(function(data) {
-					$('#search-results').removeClass('hide');
-					compile_handlebars('search-template', '#search-results-list', data);
-				}).fail(ajax_failed);
-		    }, 250);
+	$('#add-row-search').on('keyup', add_search);
+
+	$('#add-row-refresh').on('click', function() {
+		if ($('#add-row-search').length > 0) {
+			var query = $('#add-row-search').val();
+			$.ajax({
+				url: "/refresh",
+				method: "POST",
+				data: { 'query':query }
+			}).done(function(data) {
+				M.toast({html: "Fetching cards from Scryfall."});
+				add_search();
+			}).fail(ajax_failed);
 		}
 	});
 

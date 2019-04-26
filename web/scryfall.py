@@ -27,6 +27,10 @@ def search(name):
 	simple_resp = []
 	if resp.get('code') != 'not_found':
 		for r in resp['data']:
+			# Ignore Scryfall's special star printings
+			if '\u2605' in r['name'] or '\u2605' in r['collector_number']:
+				print('Ignoring special print %s' % r['name'])
+				continue
 			simple_resp.append(simplify(r))
 	return simple_resp
 

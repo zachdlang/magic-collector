@@ -2,6 +2,7 @@
 from flask import session, url_for
 
 # Local imports
+from web import scryfall, tcgplayer
 from sitetools.utility import (
 	pagecount, fetch_query, mutate_query
 )
@@ -118,3 +119,62 @@ def remove(cardid, foil, quantity):
 		mutate_query(qry, qargs)
 	else:
 		raise Exception('Could not find card %s.' % cardid)
+
+
+def import_cards(cards):
+	sets = []
+	for c in cards:
+		if c['set'] not in [x['code'] for x in sets]:
+			sets.append({'code': c['set'], 'name': c['set_name']})
+
+	for s in sets:
+		# Check if already have a record of this set
+		existing = fetch_query("SELECT 1 FROM card_set WHERE LOWER(code) = LOWER(%s)", (s['code'],))
+		if not existing:
+			resp = scryfall.get_set(s['code'])
+			qry = """INSERT INTO card_set (name, code, released, tcgplayer_groupid) SELECT %s, %s, %s, %s
+					WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)"""
+			qargs = (resp['name'], s['code'], resp['released_at'], resp.get('tcgplayer_id'), s['code'],)
+			mutate_query(qry, qargs)
+
+	# more efficient than attempting inserts
+	multiverse_ids = [x['multiverseid'] for x in fetch_query("SELECT DISTINCT multiverseid FROM card WHERE multiverseid IS NOT NULL")]
+
+	new_cards = []
+	for c in cards:
+		if c['multiverseid'] in multiverse_ids:
+			print('Existing %s...' % c['multiverseid'])
+			continue
+		print('Inserting %s' % c['name'])
+		qry = """INSERT INTO card (
+				collectornumber, multiverseid, name, card_setid, colors,
+				rarity, multifaced) SELECT
+				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
+				%s, %s
+				WHERE NOT EXISTS (
+					SELECT 1 FROM card
+					WHERE collectornumber = %s
+					AND card_setid = (SELECT id FROM card_set WHERE code = %s))
+				RETURNING id"""
+		qargs = (
+			c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
+			c['rarity'], c['multifaced'],
+			c['collectornumber'], c['set'],
+		)
+		new = mutate_query(qry, qargs, returning=True)
+		if new:
+			c['id'] = new['id']
+			c['productid'] = tcgplayer.search(c)
+			if c['productid'] is not None:
+				mutate_query("UPDATE card SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
+				new_cards.append({'id': c['id'], 'productid': c['productid']})
+
+	bulk_lots = ([new_cards[i:i + 250] for i in range(0, len(new_cards), 250)])
+	prices = {}
+	for lot in bulk_lots:
+		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}))
+
+	updates = []
+	for cardid, price in prices.items():
+		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
+	mutate_query("UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)

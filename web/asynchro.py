@@ -2,7 +2,9 @@
 import os
 
 # Local imports
-from web import app, scryfall, tcgplayer, openexchangerates
+from web import (
+	app, scryfall, tcgplayer, openexchangerates, collection
+)
 from sitetools.utility import (
 	setup_celery, get_static_file, fetch_image, mutate_query
 )
@@ -78,3 +80,9 @@ def fetch_rates():
 	updates = [{'code': code, 'rate': rate} for code, rate in rates.items()]
 	mutate_query("SELECT update_rates(%(code)s, %(rate)s)", updates, executemany=True)
 	print('Updated exchange rates')
+
+
+@celery.task(queue='collector')
+def refresh_from_scryfall(query):
+	resp = scryfall.search(query)
+	collection.import_cards(resp)
