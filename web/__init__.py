@@ -244,7 +244,7 @@ def import_cards(cards):
 			mutate_query(qry, qargs)
 
 	# more efficient than attempting inserts
-	multiverse_ids = [x['multiverseid'] for x in fetch_query("SELECT multiverseid FROM card")]
+	multiverse_ids = [x['multiverseid'] for x in fetch_query("SELECT DISTINCT multiverseid FROM card WHERE multiverseid IS NOT NULL")]
 
 	new_cards = []
 	for c in cards:
