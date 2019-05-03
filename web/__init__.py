@@ -228,16 +228,21 @@ def csv_upload():
 
 
 @app.route('/update_prices', methods=['GET'])
+@app.route('/update_prices/<int:cardid>', methods=['GET'])
 @check_celery_running
-def update_prices():
+def update_prices(cardid=None):
 	qry = """SELECT c.id, c.collectornumber, c.name, c.rarity,
 				s.name AS set_name, s.tcgplayer_groupid AS groupid,
 				c.tcgplayer_productid AS productid
 			FROM card c
 			LEFT JOIN card_set s ON (s.id = c.card_setid)
-			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id)
-			ORDER BY c.name ASC"""
-	cards = fetch_query(qry)
+			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id)"""
+	qargs = ()
+	if cardid is not None:
+		qry += " AND c.id = %s"
+		qargs += (cardid,)
+	qry += " ORDER BY c.name ASC"
+	cards = fetch_query(qry, qargs)
 
 	tcgplayer_token = tcgplayer.login()
 
