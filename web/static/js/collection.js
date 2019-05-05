@@ -280,6 +280,19 @@ function bind_events() {
 		}).fail(ajax_failed);
 	});
 
+	$('#edit_modal .quantity-decrement').on('click', function() {
+		quantity_update(-1);
+	});
+
+	$('#edit_modal .quantity-increment').on('click', function() {
+		quantity_update(1);
+	});
+
+	function quantity_update(change) {
+		var prev = parseInt($('#edit_modal .quantity').val());
+		$('#edit_modal .quantity').val(prev + change);
+	}
+
 	$('#edit_btn').on('click', function() {
 		$.ajax({
 			url: "/collection/card/edit",
