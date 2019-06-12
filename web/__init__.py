@@ -197,14 +197,19 @@ def search():
 def csv_upload():
 	import csv
 
+	upload = request.files['upload']
 	filename = '/tmp/upload_%s_%s.csv' % (os.urandom(32), session['userid'])
-	request.files['upload'].save(filename)
+	upload.save(filename)
 	rows = []
 	multiverse_ids = []
 	with open(filename) as csvfile:
 		importreader = csv.DictReader(csvfile)
 		for row in importreader:
-			rows.append(row)
+			rows.append({
+				'multiverseid': row['MultiverseID'],
+				'foil': int(row['Foil quantity']) > 0,
+				'quantity': row['Quantity']
+			})
 			multiverse_ids.append(int(row['MultiverseID']))
 	os.remove(filename)
 
@@ -220,11 +225,50 @@ def csv_upload():
 		resp = scryfall.get_bulk(lot)
 		collection.import_cards(resp)
 
+	importid = mutate_query(
+		"""
+		INSERT INTO import (filename, userid)
+		VALUES (%s, %s)
+		RETURNING id
+		""",
+		(upload.filename, session['userid'],),
+		returning=True
+	)['id']
+
 	for row in rows:
-		cardid = fetch_query("SELECT id FROM card WHERE multiverseid = %s", (row['MultiverseID'],), single_row=True)['id']
-		collection.add(cardid, int(row['Foil quantity']) > 0, row['Quantity'])
+		row['cardid'] = fetch_query(
+			"SELECT id FROM card WHERE multiverseid = %s",
+			(row['multiverseid'],),
+			single_row=True
+		)['id']
+		# Doing this in loop instead of executemany due to needing RETURNING
+		row['import_rowid'] = mutate_query(
+			"""
+			INSERT INTO import_row (importid, cardid, foil, quantity)
+			VALUES (%s, %s, %s, %s)
+			RETURNING id
+			""",
+			(importid, row['cardid'], row['foil'], row['quantity'],),
+			returning=True
+		)['id']
+
+	complete_import(importid)
 
 	return jsonify(new)
+
+
+def complete_import(importid):
+	rows = fetch_query(
+		"SELECT * FROM import_row WHERE NOT complete AND importid = %s",
+		(importid,)
+	)
+	for row in rows:
+		collection.add(row['cardid'], row['foil'], row['quantity'])
+		# Mark import for this card as completed
+		mutate_query(
+			"UPDATE import_row SET complete = true WHERE id = %s",
+			(row['id'],)
+		)
 
 
 @app.route('/update_prices', methods=['GET'])
