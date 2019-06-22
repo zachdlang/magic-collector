@@ -24,10 +24,6 @@
 			Handlebars.registerHelper('substring', function(input, maxChars) {
 				return new Handlebars.SafeString(input.substring(0, maxChars));
 			});
-
-			$(document).ready(function(){
-				$('.sidenav').sidenav();
-			});
 		</script>
 
 		<script id="loading-template" type="text/x-handlebars-template">
@@ -48,6 +44,12 @@
 			</div>
 		</script>
 		{% endblock %}
+
+		<script type="text/javascript">
+			$(document).ready(function(){
+				$('.sidenav').sidenav();
+			});
+		</script>
 
 		{% block script %}
 		{% endblock %}
