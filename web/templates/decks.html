@@ -133,6 +133,29 @@
 <script>
 	$(document).ready(function() {
 		get_decks();
+
+		$('#deleted').on('change', get_decks);
+
+		$('#upload_btn').on('click', function() {
+			show_loading($('#upload_loading'));
+			var form = document.forms.namedItem('upload_form');
+			var formdata = new FormData(form);
+
+			var upload_req = new XMLHttpRequest();
+			upload_req.open("POST", "{{ url_for('decks_import') }}", true);
+			upload_req.onload = function(oEvent) {
+				$('#upload_loading').empty();
+				if (upload_req.status == 200) {
+					M.Modal.getInstance($('#upload_modal')).close();
+					M.toast({html: "Successfully Uploaded"});
+					get_decks();
+				} else {
+					M.toast({html: "An internal error occurred. Please try again later."});
+				}
+			};
+
+			upload_req.send(formdata);
+		});
 	});
 
 	function get_decks() {
@@ -214,28 +237,5 @@
 			}
 		}).fail(ajax_failed);
 	}
-
-	$('#deleted').on('change', get_decks);
-
-	$('#upload_btn').on('click', function() {
-		show_loading($('#upload_loading'));
-		var form = document.forms.namedItem('upload_form');
-		var formdata = new FormData(form);
-
-		var upload_req = new XMLHttpRequest();
-		upload_req.open("POST", "{{ url_for('decks_import') }}", true);
-		upload_req.onload = function(oEvent) {
-			$('#upload_loading').empty();
-			if (upload_req.status == 200) {
-				M.Modal.getInstance($('#upload_modal')).close();
-				M.toast({html: "Successfully Uploaded"});
-				get_decks();
-			} else {
-				M.toast({html: "An internal error occurred. Please try again later."});
-			}
-		};
-
-		upload_req.send(formdata);
-	});
 </script>
 {% endblock %}
