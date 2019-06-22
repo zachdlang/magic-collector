@@ -24,6 +24,10 @@
 			Handlebars.registerHelper('substring', function(input, maxChars) {
 				return new Handlebars.SafeString(input.substring(0, maxChars));
 			});
+
+			$(document).ready(function(){
+				$('.sidenav').sidenav();
+			});
 		</script>
 
 		<script id="loading-template" type="text/x-handlebars-template">
@@ -62,7 +66,7 @@
 
 		<header>
 			<nav class="bg-primary" role="navigation">
-				<div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Magic Collector</a>
+				<div class="nav-wrapper container"><a id="logo-container" href="{{ url_for('home') }}" class="brand-logo">Magic Collector</a>
 					<ul class="right hide-on-med-and-down">
 						{{ get_menu() }}
 					</ul>
