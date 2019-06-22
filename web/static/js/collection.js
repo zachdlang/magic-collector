@@ -195,18 +195,34 @@ function bind_events() {
 		else M.Materialbox.getInstance($('#view_box')).open();
 	});
 
-	$('#collection_list').on('click', '.edit-card', function() {
+	$('#collection_list').on('click', '.info-card', function() {
 		// Clear out to account for loading delays
-		$('#edit_modal .art').attr('src', '');
+		$('#info_modal .art').attr('src', '');
 
 		var row = $(this).closest('tr');
-		$('#edit_modal .art').attr('src', row.data().art);
-		$('#edit_modal .name').text(row.find('.name').text());
-		$('#edit_modal .quantity').val(row.find('.quantity').text());
-		$('#edit_modal .foil').prop('checked', row.data().foil === 1);
-		$('#edit_modal .user_cardid').val(row.data().usercard_id);
-		M.Modal.getInstance($('#edit_modal')).open();
+		populate_card(row.data().user_cardid);
 	});
+
+	function populate_card(user_cardid) {
+		$.ajax({
+			url: "/collection/card",
+			method: "GET",
+			data: {user_cardid: user_cardid}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				$('#info_modal .art').attr('src', data.card.arturl);
+				$('#info_modal .name').text(data.card.name);
+				$('#info_modal .card-set').text(data.card.setname);
+				$('#info_modal .rarity').text(data.card.rarity);
+				$('#info_modal .price').text(data.card.price + ' ' + data.card.currencycode);
+				$('#info_modal .quantity').val(data.card.quantity);
+				$('#info_modal .foil').prop('checked', data.card.foil === 1);
+				$('#info_modal .user_cardid').val(user_cardid);
+				M.Modal.getInstance($('#info_modal')).open();
+			}
+		}).fail(ajax_failed);
+	}
 
 	var search_timer;
 	$('#search-row-search').on('keyup', function() {
@@ -280,17 +296,17 @@ function bind_events() {
 		}).fail(ajax_failed);
 	});
 
-	$('#edit_modal .quantity-decrement').on('click', function() {
+	$('#info_modal .quantity-decrement').on('click', function() {
 		quantity_update(-1);
 	});
 
-	$('#edit_modal .quantity-increment').on('click', function() {
+	$('#info_modal .quantity-increment').on('click', function() {
 		quantity_update(1);
 	});
 
 	function quantity_update(change) {
-		var prev = parseInt($('#edit_modal .quantity').val());
-		$('#edit_modal .quantity').val(prev + change);
+		var prev = parseInt($('#info_modal .quantity').val());
+		$('#info_modal .quantity').val(prev + change);
 	}
 
 	$('#edit_btn').on('click', function() {
@@ -298,16 +314,16 @@ function bind_events() {
 			url: "/collection/card/edit",
 			method: "POST",
 			data: {
-				'user_cardid': $('#edit_modal .user_cardid').val(),
-				'quantity': $('#edit_modal .quantity').val(),
-				'foil': $('#edit_modal .foil').prop('checked')
+				'user_cardid': $('#info_modal .user_cardid').val(),
+				'quantity': $('#info_modal .quantity').val(),
+				'foil': $('#info_modal .foil').prop('checked')
 			}
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
 				M.toast({html: "Saved successfully."});
 				get_collection();
-				M.Modal.getInstance($('#edit_modal')).close();
+				M.Modal.getInstance($('#info_modal')).close();
 			}
 		}).fail(ajax_failed)
 	});

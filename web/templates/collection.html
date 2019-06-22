@@ -13,7 +13,7 @@
 
 	<script id="collection-template" type="text/x-handlebars-template">
 		{{#each cards}}
-		<tr data-image="{{imageurl}}" data-art="{{arturl}}" data-usercard_id="{{user_cardid}}" {{#if foil}}data-foil="1"{{/if}}>
+		<tr data-image="{{imageurl}}" data-user_cardid="{{user_cardid}}">
 			<td class="name">
 				{{name}}
 				<span class="card-hover-img"></span>
@@ -25,7 +25,7 @@
 			<td class="quantity">{{quantity}}</td>
 			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
 			<td>{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}</td>
-			<td><a class="btn edit-card"><i class="material-icons">edit</i></a></td>
+			<td><a class="btn info-card"><i class="material-icons">info</i></a></td>
 		<tr>
 		{{/each}}
 	</script>
@@ -187,26 +187,35 @@
 			</div>
 		</div>
 
-		<div id="edit_modal" class="modal bottom-sheet fade">
+		<div id="info_modal" class="modal fade">
 			<div class="modal-content">
-				<div class="row">
-					<div class="col s12 m4 l3">
-						<img class="responsive-img art">
+				<div class="row modal-header">
+					<div class="col s9 m10">
+						<h5 class="name"></h5>
+						<h6 class="extra-info blue-grey-text">
+							<span class="card-set"></span> |
+							<span class="rarity"></span> |
+							<span class="price"></span>
+						</h6>
 					</div>
 
-					<div class="col s12 m8 l9">
-						<h5 class="name"></h5>
+					<div class="col s3 m2 card-preview-small">
+						<img class="responsive-img art">
+					</div>
+				</div>
 
+				<div class="row">
+					<div class="col s12">
 						<div class="form-row">
-							<div class="col s12 l10">
+							<div class="col s12 l8">
 								<input class="quantity" type="number" placeholder="Quantity">
 							</div>
-							<div class="col s6 l1">
+							<div class="col s6 l2">
 								<a class="btn bg-secondary quantity-decrement">
 									<i class="material-icons">remove</i>
 								</a>
 							</div>
-							<div class="col s6 l1">
+							<div class="col s6 l2">
 								<a class="btn bg-secondary quantity-increment">
 									<i class="material-icons">add</i>
 								</a>
@@ -223,7 +232,9 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<a class="btn-flat bg-secondary" id="edit_btn">Save</a>
+				<div class="modal-footer-content">
+					<a class="btn-flat bg-secondary" id="edit_btn">Save</a>
+				</div>
 			</div>
 		</div>
 

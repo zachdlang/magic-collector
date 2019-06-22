@@ -114,6 +114,35 @@ def get_collection():
 	return jsonify(**resp)
 
 
+@app.route('/collection/card', methods=['GET'])
+@login_required
+def collection_card():
+	params = params_to_dict(request.args)
+	resp = {}
+
+	if params.get('user_cardid'):
+		resp['card'] = fetch_query(
+			"""
+			SELECT
+				c.id, c.name, cs.name AS setname, get_rarity(c.rarity) AS rarity,
+				uc.quantity, uc.foil, get_price(uc.id) AS price,
+				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode
+			FROM user_card uc
+			LEFT JOIN card c ON (uc.cardid = c.id)
+			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
+			WHERE uc.userid = %s
+			AND uc.id = %s
+			""",
+			(session['userid'], params['user_cardid'],),
+			single_row=True
+		)
+		resp['card']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['card']['id']))
+	else:
+		resp['error'] = 'No card selected.'
+
+	return jsonify(**resp)
+
+
 @app.route('/collection/card/add', methods=['POST'])
 @login_required
 def collection_card_add():

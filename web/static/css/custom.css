@@ -157,8 +157,29 @@ main {
 	padding-top: 4px;
 }
 
-.collection-page #edit_modal .row {
-	margin-bottom: 0px;
+.collection-page #info_modal .modal-header {
+	border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+.collection-page #info_modal .name {
+	margin-bottom: 5px;
+}
+
+.collection-page #info_modal .extra-info {
+	margin-top: 0px;
+}
+
+.collection-page #info_modal .card-preview-small {
+	padding: 0px;
+}
+
+.collection-page #info_modal .modal-footer {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+.collection-page #info_modal .modal-footer .modal-footer-content {
+	border-top: 1px solid rgba(0,0,0,0.12);
 }
 
 .decks-page .show-deleted {
