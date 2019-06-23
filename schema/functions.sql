@@ -68,11 +68,19 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-DROP FUNCTION IF EXISTS collector.has_deck_card(INTEGER, INTEGER);
-CREATE OR REPLACE FUNCTION collector.has_deck_card(_userid INTEGER, _cardid INTEGER) RETURNS INTEGER AS $$
+DROP FUNCTION IF EXISTS collector.card_printings(INTEGER);
+CREATE OR REPLACE FUNCTION collector.card_printings(_cardid INTEGER)
+RETURNS SETOF collector.card AS $$
+	SELECT card.* FROM card WHERE name = (SELECT name FROM card WHERE id = _cardid);
+$$ LANGUAGE 'sql';
+
+
+DROP FUNCTION IF EXISTS collector.total_printings_owned(INTEGER, INTEGER);
+CREATE OR REPLACE FUNCTION collector.total_printings_owned(_userid INTEGER, _cardid INTEGER)
+RETURNS INTEGER AS $$
 	SELECT COALESCE(
 		(SELECT SUM(quantity) FROM user_card uc WHERE uc.userid = _userid AND uc.cardid IN (
-			SELECT id FROM card WHERE name = (SELECT name FROM card WHERE id = _cardid)
+			SELECT id FROM collector.card_printings(_cardid)
 		)
 	), 0)::INTEGER; 
 $$ LANGUAGE 'sql';

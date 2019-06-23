@@ -118,7 +118,7 @@ def get_collection():
 @login_required
 def collection_card():
 	params = params_to_dict(request.args)
-	resp = {}
+	resp = {'card': None}
 
 	if params.get('user_cardid'):
 		resp['card'] = fetch_query(
@@ -126,7 +126,8 @@ def collection_card():
 			SELECT
 				c.id, c.name, cs.name AS setname, get_rarity(c.rarity) AS rarity,
 				uc.quantity, uc.foil, get_price(uc.id) AS price,
-				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode
+				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
+				total_printings_owned(uc.userid, uc.cardid) AS printingsowned
 			FROM user_card uc
 			LEFT JOIN card c ON (uc.cardid = c.id)
 			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
@@ -136,7 +137,27 @@ def collection_card():
 			(session['userid'], params['user_cardid'],),
 			single_row=True
 		)
+
+	if resp['card']:
 		resp['card']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['card']['id']))
+		resp['card']['decks'] = fetch_query(
+			"""
+			SELECT
+				d.name, get_format(d.formatid) AS formatname,
+				SUM(dc.quantity) AS quantity,
+				d.cardartid
+			FROM deck_card dc
+			LEFT JOIN deck d ON (d.id = dc.deckid)
+			WHERE d.deleted = false
+			AND d.userid = %s
+			AND dc.cardid IN (SELECT id FROM card_printings(%s))
+			GROUP BY d.id
+			ORDER BY d.formatid, d.name
+			""",
+			(session['userid'], resp['card']['id'],)
+		)
+		for d in resp['card']['decks']:
+			d['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(d['cardartid']))
 	else:
 		resp['error'] = 'No card selected.'
 

@@ -47,6 +47,11 @@ main {
 .bg-tertiary:not(.btn-flat) { background-color: #AF5990 !important; }
 .bg-tertiary.btn:hover { background-color: #E88EC6; }
 
+.modal:not(.bottom-sheet) {
+	top: 5%;
+	max-height: none;
+}
+
 .modal .modal-content {
 	padding: 20px;
 }
@@ -58,6 +63,10 @@ main {
 
 .form-row {
 	margin-bottom: 20px;
+}
+
+.checkbox-parent {
+	margin-top: 5px;
 }
 
 @media only screen and (max-width: 600px) {
@@ -171,6 +180,14 @@ main {
 
 .collection-page #info_modal .card-preview-small {
 	padding: 0px;
+}
+
+.collection-page #info_modal .collapsible .collapsible-body {
+	padding: 0px;
+}
+
+.collection-page #info_modal .collection .collection-item.avatar {
+	min-height: 60px;
 }
 
 .collection-page #info_modal .modal-footer {

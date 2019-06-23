@@ -170,7 +170,6 @@ function bind_events() {
 	});
 
 	$('.sort-head').on('click', function() {
-		console.log('here');
 		sort = $(this).data().sort_col;
 		if ($(this).hasClass('valign-wrapper')) {
 			if (sort_desc == 'asc') sort_desc = 'desc';
@@ -216,9 +215,25 @@ function bind_events() {
 				$('#info_modal .card-set').text(data.card.setname);
 				$('#info_modal .rarity').text(data.card.rarity);
 				$('#info_modal .price').text(data.card.price + ' ' + data.card.currencycode);
+				$('#info_modal .owned').text(data.card.printingsowned);
 				$('#info_modal .quantity').val(data.card.quantity);
 				$('#info_modal .foil').prop('checked', data.card.foil === 1);
 				$('#info_modal .user_cardid').val(user_cardid);
+				
+				compile_handlebars('decklist-template', '#info_modal #decklist', {'decks': data.card.decks});
+				$('#info_modal #decklist .collapsible').collapsible({
+					onOpenStart: function(elem) {
+						$(elem)
+							.find('.collapsible-header .material-icons')
+							.text('keyboard_arrow_up');
+					},
+					onCloseStart: function(elem) {
+						$(elem)
+							.find('.collapsible-header .material-icons')
+							.text('keyboard_arrow_down');
+					}
+				});
+
 				M.Modal.getInstance($('#info_modal')).open();
 			}
 		}).fail(ajax_failed);

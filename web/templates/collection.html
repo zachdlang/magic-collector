@@ -25,7 +25,7 @@
 			<td class="quantity">{{quantity}}</td>
 			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
 			<td>{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}</td>
-			<td><a class="btn info-card"><i class="material-icons">info</i></a></td>
+			<td><a class="btn info-card"><i class="material-icons">info_outline</i></a></td>
 		<tr>
 		{{/each}}
 	</script>
@@ -82,6 +82,29 @@
 			<img class="{{#isEqual key 'filter_set'}}set-icon{{/isEqual}}" src="{{icon}}">{{label}}<i class="close material-icons filter-remove">close</i>
 		</div>
 		{{/each}}
+	</script>
+
+	<script id="decklist-template" type="text/x-handlebars-template">
+		{{#if decks}}
+		<ul class="collapsible">
+			<li>
+				<div class="collapsible-header"><i class="material-icons">keyboard_arrow_down</i>Decks</div>
+				<div class="collapsible-body">
+					<ul class="collection">
+						{{#each decks}}
+						<li class="collection-item avatar valign-wrapper">
+							<img src="{{arturl}}" class="circle">
+							{{name}}
+						 	<span class="new badge" data-badge-caption="{{#isGreaterThan quantity 1}}copies{{else}}copy{{/isGreaterThan}}">
+								{{quantity}}
+							</span>
+						</li>
+						{{/each}}
+					</ul>
+				</div>
+			</li>
+		</ul>
+		{{/if}}	
 	</script>
 	{% endraw %}
 {% endblock %}
@@ -195,7 +218,8 @@
 						<h6 class="extra-info blue-grey-text">
 							<span class="card-set"></span> |
 							<span class="rarity"></span> |
-							<span class="price"></span>
+							<span class="price"></span> |
+							<span class="owned"></span> Copies
 						</h6>
 					</div>
 
@@ -207,27 +231,33 @@
 				<div class="row">
 					<div class="col s12">
 						<div class="form-row">
-							<div class="col s12 l8">
+							<div class="col s12 m6">
 								<input class="quantity" type="number" placeholder="Quantity">
 							</div>
-							<div class="col s6 l2">
+							<div class="col s4 m2">
 								<a class="btn bg-secondary quantity-decrement">
 									<i class="material-icons">remove</i>
 								</a>
 							</div>
-							<div class="col s6 l2">
+							<div class="col s4 m2">
 								<a class="btn bg-secondary quantity-increment">
 									<i class="material-icons">add</i>
 								</a>
 							</div>
-						</div>
-						<div class="form-row col s12">
-							<label>
-								<input class="foil" type="checkbox">
-								<span>Foil</span>
-							</label>
+							<div class="col s4 m2 checkbox-parent">
+								<label>
+									<input class="foil" type="checkbox">
+									<span>Foil</span>
+								</label>
+							</div>
 						</div>
 						<input class="user_cardid" type="hidden">
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col s12" id="decklist">
+						
 					</div>
 				</div>
 			</div>
