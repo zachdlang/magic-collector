@@ -88,14 +88,19 @@
 		{{#if decks}}
 		<ul class="collapsible">
 			<li>
-				<div class="collapsible-header"><i class="material-icons">keyboard_arrow_down</i>Decks</div>
+				<div class="collapsible-header">
+					<i class="material-icons">keyboard_arrow_down</i>Decks
+					<span class="new badge" data-badge-caption="{{#isGreaterThan total 1}}copies{{else}}copy{{/isGreaterThan}}">
+						{{total}}
+					</span>
+				</div>
 				<div class="collapsible-body">
 					<ul class="collection">
 						{{#each decks}}
 						<li class="collection-item avatar valign-wrapper">
-							<img src="{{arturl}}" class="circle">
+							<img src="{{arturl}}" class="circle hide-on-small-only">
 							{{name}}
-						 	<span class="new badge" data-badge-caption="{{#isGreaterThan quantity 1}}copies{{else}}copy{{/isGreaterThan}}">
+						 	<span class="badge" data-badge-caption="{{#isGreaterThan quantity 1}}copies{{else}}copy{{/isGreaterThan}}">
 								{{quantity}}
 							</span>
 						</li>
@@ -210,7 +215,7 @@
 			</div>
 		</div>
 
-		<div id="info_modal" class="modal fade">
+		<div id="info_modal" class="modal modal-fixed-footer fade">
 			<div class="modal-content">
 				<div class="row modal-header">
 					<div class="col s9 m10">
@@ -262,9 +267,7 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<div class="modal-footer-content">
-					<a class="btn-flat bg-secondary" id="edit_btn">Save</a>
-				</div>
+				<a class="btn-flat bg-secondary" id="edit_btn">Save</a>
 			</div>
 		</div>
 

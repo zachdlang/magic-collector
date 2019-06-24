@@ -219,8 +219,12 @@ function bind_events() {
 				$('#info_modal .quantity').val(data.card.quantity);
 				$('#info_modal .foil').prop('checked', data.card.foil === 1);
 				$('#info_modal .user_cardid').val(user_cardid);
+				var totalindecks = data.card.decks.reduce((a, b) => a + b.quantity, 0);
 				
-				compile_handlebars('decklist-template', '#info_modal #decklist', {'decks': data.card.decks});
+				compile_handlebars('decklist-template', '#info_modal #decklist', {
+					'decks': data.card.decks,
+					'total': totalindecks
+				});
 				$('#info_modal #decklist .collapsible').collapsible({
 					onOpenStart: function(elem) {
 						$(elem)
