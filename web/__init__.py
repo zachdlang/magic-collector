@@ -6,24 +6,30 @@ from logging.handlers import SMTPHandler
 # Third party imports
 from flask import (
 	request, session, jsonify, send_from_directory, flash, redirect, url_for,
-	render_template
+	render_template, Flask
 )
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 # Local imports
 from web import (
-	collection, deck, scryfall, tcgplayer
+	collection, deck, scryfall, tcgplayer, config
 )
 from sitetools.utility import (
-	BetterExceptionFlask, is_logged_in, params_to_dict,
+	is_logged_in, params_to_dict,
 	login_required, check_login, fetch_query,
 	mutate_query, disconnect_database, handle_exception,
 	check_celery_running
 )
 
-app = BetterExceptionFlask(__name__)
+sentry_sdk.init(
+	dsn=config.SENTRY_DSN,
+	integrations=[FlaskIntegration()]
+)
 
-app.config.from_pyfile('site_config.cfg')
-app.secret_key = app.config['SECRETKEY']
+app = Flask(__name__)
+
+app.secret_key = config.SECRETKEY
 
 app.jinja_env.globals.update(is_logged_in=is_logged_in)
 
@@ -31,9 +37,9 @@ app.jinja_env.globals.update(is_logged_in=is_logged_in)
 from web import asynchro
 
 if not app.debug:
-	ADMINISTRATORS = [app.config['TO_EMAIL']]
+	ADMINISTRATORS = [config.TO_EMAIL]
 	msg = 'Internal Error on collector'
-	mail_handler = SMTPHandler('127.0.0.1', app.config['FROM_EMAIL'], ADMINISTRATORS, msg)
+	mail_handler = SMTPHandler('127.0.0.1', config.FROM_EMAIL, ADMINISTRATORS, msg)
 	mail_handler.setLevel(logging.CRITICAL)
 	app.logger.addHandler(mail_handler)
 
