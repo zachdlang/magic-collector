@@ -10,6 +10,7 @@ from flask import (
 )
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 # Local imports
 from web import (
@@ -25,6 +26,11 @@ from sitetools.utility import (
 sentry_sdk.init(
 	dsn=config.SENTRY_DSN,
 	integrations=[FlaskIntegration()]
+)
+
+sentry_sdk.init(
+	dsn=config.CELERY_SENTRY_DSN,
+	integrations=[CeleryIntegration()]
 )
 
 app = Flask(__name__)
