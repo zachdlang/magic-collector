@@ -1,7 +1,5 @@
 # Standard library imports
 import os
-import logging
-from logging.handlers import SMTPHandler
 
 # Third party imports
 from flask import (
@@ -41,13 +39,6 @@ app.jinja_env.globals.update(is_logged_in=is_logged_in)
 
 # Import below app initialisation
 from web import asynchro
-
-if not app.debug:
-	ADMINISTRATORS = [config.TO_EMAIL]
-	msg = 'Internal Error on collector'
-	mail_handler = SMTPHandler('127.0.0.1', config.FROM_EMAIL, ADMINISTRATORS, msg)
-	mail_handler.setLevel(logging.CRITICAL)
-	app.logger.addHandler(mail_handler)
 
 
 @app.errorhandler(500)
