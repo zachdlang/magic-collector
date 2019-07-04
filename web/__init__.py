@@ -332,13 +332,12 @@ def update_prices(cardid=None):
 				s.name AS set_name, s.tcgplayer_groupid AS groupid,
 				c.tcgplayer_productid AS productid
 			FROM card c
-			LEFT JOIN card_set s ON (s.id = c.card_setid)
-			WHERE EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id)"""
+			LEFT JOIN card_set s ON (s.id = c.card_setid)"""
 	qargs = ()
 	if cardid is not None:
-		qry += " AND c.id = %s"
+		qry += " WHERE c.id = %s"
 		qargs += (cardid,)
-	qry += " ORDER BY c.name ASC"
+	qry += " ORDER BY EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id) DESC, c.name ASC"
 	cards = fetch_query(qry, qargs)
 
 	tcgplayer_token = tcgplayer.login()
