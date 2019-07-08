@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 	cardid INTEGER NOT NULL REFERENCES card(id) ON DELETE CASCADE,
 	price MONEY,
 	foilprice MONEY,
-	created TIMESTAMP NOT NULL DEFAULT now()
+	created DATE NOT NULL DEFAULT current_date
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS deck (
