@@ -54,6 +54,7 @@ def teardown(error):
 @app.route('/favicon.ico')
 @app.route('/robots.txt')
 @app.route('/sitemap.xml')
+@app.route('/search.xml')
 def static_from_root():
 	return send_from_directory(app.static_folder, request.path[1:])
 
@@ -86,7 +87,8 @@ def logout():
 @app.route('/', methods=['GET'])
 @login_required
 def home():
-	return render_template('collection.html', active='collection')
+	params = params_to_dict(request.args)
+	return render_template('collection.html', active='collection', search=params.get('search', ''))
 
 
 @app.route('/get_sets', methods=['GET'])
