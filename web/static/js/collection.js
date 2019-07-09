@@ -174,8 +174,10 @@ function bind_events() {
 		if ($(this).hasClass('valign-wrapper')) {
 			if (sort_desc == 'asc') sort_desc = 'desc';
 			else sort_desc = 'asc';
-		} else {
+		} else if (sort == 'name' || sort == 'setname') {
 			sort_desc = 'asc';
+		} else {
+			sort_desc = 'desc';
 		}
 
 		// Reset sort classes etc
