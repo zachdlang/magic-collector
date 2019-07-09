@@ -169,6 +169,59 @@ def collection_card():
 	return jsonify(**resp)
 
 
+@app.route('/collection/card/pricehistory', methods=['GET'])
+@login_required
+def collection_card_pricehistory():
+	params = params_to_dict(request.args)
+	resp = {}
+
+	cardid = None
+	if params.get('user_cardid'):
+		cardid = fetch_query(
+			"SELECT cardid FROM user_card WHERE id = %s",
+			(params['user_cardid'],),
+			single_row=True
+		)['cardid']
+
+	if cardid is not None:
+		history = fetch_query(
+			"""
+			SELECT
+				convert_price(price, %s)::NUMERIC AS price,
+				convert_price(foilprice, %s)::NUMERIC AS foilprice,
+				to_char(created, 'DD/MM/YY') AS created
+			FROM price_history
+			WHERE cardid = %s
+			ORDER BY created ASC
+			""",
+			(session['userid'], session['userid'], cardid,)
+		)
+
+		resp['dates'] = [h['created'] for h in history]
+		prices = {
+			'label': 'Price',
+			'backgroundColor': 'rgba(40, 181, 246, 0.2)',
+			'borderColor': 'rgba(40, 181, 246, 1)',
+			'data': [float(h['price']) for h in history if h['price'] is not None]
+		}
+		foilprices = {
+			'label': 'Foil Price',
+			'backgroundColor': 'rgba(175, 90, 144, 0.2)',
+			'borderColor': 'rgba(175, 90, 144, 1)',
+			'data': [float(h['foilprice']) for h in history if h['foilprice'] is not None]
+		}
+
+		resp['datasets'] = []
+		if len(prices['data']) > 0:
+			resp['datasets'].append(prices)
+		if len(foilprices['data']) > 0:
+			resp['datasets'].append(foilprices)
+	else:
+		resp['error'] = 'No card selected.'
+
+	return jsonify(**resp)
+
+
 @app.route('/collection/card/add', methods=['POST'])
 @login_required
 def collection_card_add():

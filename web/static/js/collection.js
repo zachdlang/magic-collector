@@ -159,7 +159,7 @@ function add_search() {
 				$('#search-results').removeClass('hide');
 				compile_handlebars('search-template', '#search-results-list', data);
 			}).fail(ajax_failed);
-	    }, 250);
+		}, 250);
 	}
 }
 
@@ -238,6 +238,8 @@ function bind_events() {
 					}
 				});
 
+				$('#info_modal .card-details, #pricehistory_btn').removeClass('hide');
+				$('#info_modal .card-pricehistory, #carddetails_btn').addClass('hide');
 				M.Modal.getInstance($('#info_modal')).open();
 			}
 		}).fail(ajax_failed);
@@ -345,6 +347,57 @@ function bind_events() {
 				M.Modal.getInstance($('#info_modal')).close();
 			}
 		}).fail(ajax_failed)
+	});
+
+	$('#carddetails_btn').on('click', function() {
+		$('#info_modal .card-details, #pricehistory_btn').removeClass('hide');
+		$('#info_modal .card-pricehistory, #carddetails_btn').addClass('hide');		
+	});
+
+	var pricehistoryChart;
+	$('#pricehistory_btn').on('click', function() {
+		$('#info_modal .card-details, #pricehistory_btn').addClass('hide');
+		$('#info_modal .card-pricehistory, #carddetails_btn').removeClass('hide');
+		if (pricehistoryChart) pricehistoryChart.destroy();
+
+		$.ajax({
+			url: "/collection/card/pricehistory",
+			method: "GET",
+			data: {user_cardid: $('#info_modal .user_cardid').val()}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				var ctx = document.getElementById('pricehistory-chart').getContext('2d');
+				pricehistoryChart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: data.dates,
+						datasets: data.datasets
+					},
+					options: {
+						scales: {
+							yAxes: [{
+								ticks: {
+									beginAtZero: true
+								}
+							}]
+						},
+						maintainAspectRatio: false,
+						tooltips: {
+							callbacks: {
+								label: function(tooltipItem, data) {
+									// Format the label to currency w/ 2 dp
+									var label = data.datasets[tooltipItem.datasetIndex].label || '';
+									if (label) label += ': ';
+									label += '$' + Math.round(tooltipItem.yLabel * 100) / 100;
+									return label;
+								}
+							}	
+						}
+					}
+				});
+			}
+		}).fail(ajax_failed);
 	});
 
 	$('#upload_btn').on('click', function() {

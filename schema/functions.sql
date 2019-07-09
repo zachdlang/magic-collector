@@ -8,13 +8,24 @@ CREATE OR REPLACE FUNCTION collector.get_collectornumber(_cardid INTEGER) RETURN
 	END FROM card WHERE id = _cardid;
 $$ LANGUAGE 'sql';
 
+
+CREATE OR REPLACE FUNCTION collector.convert_price(_amount MONEY, _userid INTEGER) RETURNS MONEY AS $$
+	SELECT _amount * COALESCE(
+		(SELECT exchangerate FROM currency WHERE code =
+			(SELECT currencycode FROM app.enduser WHERE id = _userid)
+		),
+		1
+	);
+$$ LANGUAGE 'sql';
+
+
 DROP FUNCTION IF EXISTS collector.get_price(INTEGER);
 CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MONEY AS $$
 	SELECT CASE WHEN foil = true THEN
-		foilprice
+		convert_price(foilprice, userid)
 	ELSE
-		price
-	END * COALESCE((SELECT exchangerate FROM currency WHERE code = (SELECT currencycode FROM app.enduser WHERE id = userid)), 1)
+		convert_price(price, userid)
+	END
 	FROM card, user_card WHERE cardid = card.id AND user_card.id = _user_cardid;
 $$ LANGUAGE 'sql';
 
