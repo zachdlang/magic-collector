@@ -21,7 +21,7 @@ def get(params):
 	cols = {
 		'name': 'c.name',
 		'setname': 'cs.released',
-		'rarity': 'c.rarity',
+		'rarity': "CASE c.rarity WHEN 'C' THEN 1 WHEN 'U' THEN 2 WHEN 'R' THEN 3 WHEN 'M' THEN 4 END",
 		'quantity': 'uc.quantity',
 		'foil': 'uc.foil',
 		'price': 'get_price(uc.id)'
