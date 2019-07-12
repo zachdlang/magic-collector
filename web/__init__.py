@@ -384,13 +384,14 @@ def complete_import(importid):
 @check_celery_running
 def update_prices(cardid=None):
 	qry = """SELECT c.id, c.collectornumber, c.name, c.rarity,
-				s.name AS set_name, s.tcgplayer_groupid AS groupid,
+				s.code AS set_code, s.name AS set_name, s.tcgplayer_groupid AS groupid,
 				c.tcgplayer_productid AS productid
 			FROM card c
-			LEFT JOIN card_set s ON (s.id = c.card_setid)"""
+			LEFT JOIN card_set s ON (s.id = c.card_setid)
+			WHERE c.name NOT IN ('Plains', 'Island', 'Swamp', 'Mountain', 'Forest')"""
 	qargs = ()
 	if cardid is not None:
-		qry += " WHERE c.id = %s"
+		qry += " AND c.id = %s"
 		qargs += (cardid,)
 	qry += " ORDER BY EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id) DESC, c.name ASC"
 	cards = fetch_query(qry, qargs)

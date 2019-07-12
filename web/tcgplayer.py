@@ -92,7 +92,7 @@ def search(card, token=None):
 			groups_found = []
 			for r in group_results:
 				for p in products_found:
-					if str(r['groupId']) == str(p['groupId']):
+					if str(r['groupId']) == str(p['groupId']) and r['abbreviation'] == card['set_code']:
 						groups_found.append(p)
 			if len(groups_found) == 1:
 				productid = groups_found[0]['productId']
