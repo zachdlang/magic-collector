@@ -30,6 +30,26 @@ CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MON
 $$ LANGUAGE 'sql';
 
 
+DROP FUNCTION IF EXISTS collector.set_price(INTEGER, MONEY, MONEY);
+CREATE OR REPLACE FUNCTION collector.set_price(
+	_cardid INTEGER,
+	_price MONEY,
+	_foilprice MONEY
+) RETURNS VOID AS $$
+BEGIN
+	UPDATE card SET price = _price, foilprice = _foilprice WHERE id = _cardid;
+
+	INSERT INTO price_history (cardid, price, foilprice)
+		SELECT _cardid, _price, _foilprice
+		WHERE NOT EXISTS (
+			SELECT 1 FROM price_history WHERE cardid = _cardid AND created = current_date
+		);
+
+	RETURN;
+END;
+$$ LANGUAGE 'plpgsql';
+
+
 DROP FUNCTION IF EXISTS collector.is_basic_land(INTEGER);
 CREATE OR REPLACE FUNCTION collector.is_basic_land(_cardid INTEGER) RETURNS BOOLEAN AS $$
 	SELECT LOWER(name) IN ('plains', 'island', 'swamp', 'mountain', 'forest')
