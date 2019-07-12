@@ -62,7 +62,7 @@
 				<div class="list-heading">Main</div>
 				{{#each cards}}
 					{{#isEqual section 'main'}}
-					{{name}} ({{has_quantity}}/{{quantity}})<br>
+					{{name}} (Own {{has_quantity}} of {{quantity}})<br>
 					{{/isEqual}}
 				{{/each}}
 			</div>
@@ -70,7 +70,7 @@
 				<div class="list-heading">Sideboard</div>
 				{{#each cards}}
 					{{#isEqual section 'sideboard'}}
-					{{name}} ({{has_quantity}}/{{quantity}})<br>
+					{{name}} ({{Own has_quantity}} of {{quantity}})<br>
 					{{/isEqual}}
 				{{/each}}
 			</div>
