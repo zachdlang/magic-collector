@@ -388,7 +388,7 @@ def update_prices(cardid=None):
 				c.tcgplayer_productid AS productid
 			FROM card c
 			LEFT JOIN card_set s ON (s.id = c.card_setid)
-			WHERE c.name NOT IN ('Plains', 'Island', 'Swamp', 'Mountain', 'Forest')"""
+			WHERE NOT is_basic_land(c.id)"""
 	qargs = ()
 	if cardid is not None:
 		qry += " AND c.id = %s"

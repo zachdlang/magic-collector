@@ -30,6 +30,13 @@ CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MON
 $$ LANGUAGE 'sql';
 
 
+DROP FUNCTION IF EXISTS collector.is_basic_land(INTEGER);
+CREATE OR REPLACE FUNCTION collector.is_basic_land(_cardid INTEGER) RETURNS BOOLEAN AS $$
+	SELECT LOWER(name) IN ('plains', 'island', 'swamp', 'mountain', 'forest')
+	FROM card WHERE id = _cardid; 
+$$ LANGUAGE 'sql';
+
+
 DROP FUNCTION IF EXISTS collector.get_rarity(TEXT);
 CREATE OR REPLACE FUNCTION collector.get_rarity(_initial TEXT) RETURNS TEXT AS $$
 	SELECT CASE
