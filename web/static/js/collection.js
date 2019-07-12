@@ -219,7 +219,7 @@ function bind_events() {
 				$('#info_modal .price').text(data.card.price + ' ' + data.card.currencycode);
 				$('#info_modal .owned').text(data.card.printingsowned);
 				$('#info_modal .quantity').val(data.card.quantity);
-				$('#info_modal .foil').prop('checked', data.card.foil === 1);
+				$('#info_modal .foil').prop('checked', data.card.foil);
 				$('#info_modal .user_cardid').val(user_cardid);
 				var totalindecks = data.card.decks.reduce((a, b) => a + b.quantity, 0);
 				
