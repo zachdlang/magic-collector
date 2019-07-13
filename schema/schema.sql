@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS card (
 	foilprice MONEY,
 	tcgplayer_productid TEXT,
 	cmc NUMERIC,
-	typeline TEXT
+	typeline TEXT,
+	manacost TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (

@@ -148,9 +148,9 @@ def import_cards(cards):
 		print('Inserting %s' % c['name'])
 		qry = """INSERT INTO card (
 				collectornumber, multiverseid, name, card_setid, colors,
-				rarity, multifaced, cmc, typeline) SELECT
+				rarity, multifaced, cmc, typeline, manacost) SELECT
 				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
-				%s, %s, %s, %s
+				%s, %s, %s, %s, %s
 				WHERE NOT EXISTS (
 					SELECT 1 FROM card
 					WHERE collectornumber = %s
@@ -158,7 +158,7 @@ def import_cards(cards):
 				RETURNING id"""
 		qargs = (
 			c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
-			c['rarity'], c['multifaced'], c['cmc'], c['typeline'],
+			c['rarity'], c['multifaced'], c['cmc'], c['typeline'], c['manacost'],
 			c['collectornumber'], c['set'],
 		)
 		new = mutate_query(qry, qargs, returning=True)

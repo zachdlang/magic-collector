@@ -77,6 +77,7 @@ def simplify(resp):
 		'multifaced': False,
 		'cmc': resp['cmc'],
 		'typeline': resp['type_line'],
+		'manacost': resp.get('mana_cost'),
 	}
 
 	if resp['multiverse_ids']:
@@ -99,5 +100,7 @@ def simplify(resp):
 		if 'imageurl' not in simple:
 			simple['imageurl'] = resp['image_uris']['normal']
 			simple['arturl'] = resp['image_uris']['art_crop']
+		if simple['manacost'] is None:
+			simple['manacost'] = resp.get('mana_cost')
 
 	return simple
