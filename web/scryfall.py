@@ -75,6 +75,8 @@ def simplify(resp):
 		'set_name': resp['set_name'],
 		'collectornumber': resp['collector_number'],
 		'multifaced': False,
+		'cmc': resp['cmc'],
+		'typeline': resp['type_line'],
 	}
 
 	if resp['multiverse_ids']:
