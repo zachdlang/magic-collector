@@ -7,14 +7,11 @@
 	<script id="deck-template" type="text/x-handlebars-template">
 		{{#each results}}
 		<div class="col s12 m4 l3">
-			<div class="card">
+			<div class="card deck-summary" data-viewurl="{{viewurl}}">
 				<div class="card-image">
 					<div class="card-image-container">
 						<img src="{{arturl}}">
 					</div>
-					<a class="btn-floating halfway-fab bg-tertiary edit-deck" data-deckid="{{id}}">
-						<i class="material-icons">edit</i>
-					</a>
 				</div>
 				<div class="card-content">
 					<div class="deck-name">{{name}}</div>
@@ -23,78 +20,6 @@
 			</div>
 		</div>
 		{{/each}}
-	</script>
-
-	<script id="editdeck-template" type="text/x-handlebars-template">
-		<div class="row">
-			<div class="col s3">
-				<img class="responsive-img" src="{{deck.arturl}}">
-			</div>
-			<div class="col s9">
-				<div class="row">
-					<div class="col s2">
-						<a class="btn bg-secondary" id="deck-back"><i class="material-icons">arrow_back</i></a>
-					</div>
-					<div class="col s2 offset-s6">
-						<a class="btn bg-secondary" id="deck-save"><i class="material-icons">save</i></a>
-					</div>
-					<div class="col s2">
-						<a class="btn bg-secondary hide" id="deck-delete"><i class="material-icons">delete</i></a>
-						<a class="btn bg-secondary hide" id="deck-restore"><i class="material-icons">refresh</i></a>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col s12 m6">
-						<input type="text" value="{{deck.name}}" id="edit-deck-name">
-					</div>
-					<div class="col s12 m6">
-						<select id="edit-deck-format">
-							{{#each formats}}
-							<option value="{{id}}" {{#isEqual id ../deck.formatid}}selected{{/isEqual}}>{{name}}</option>
-							{{/each}}
-						</select>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div id="list-main" class="col s12 m6">
-				<div class="list-heading">Main</div>
-				<ul class="collection">
-					{{#each cards}}
-					{{#isEqual section 'main'}}
-					<li class="collection-item avatar">
-						<img src="{{arturl}}" alt="" class="circle">
-						<span class="title">{{name}}</span>
-						<br>
-						<span>Own {{has_quantity}} {{#isGreaterThan has_quantity 1}}copies{{else}}copy{{/isGreaterThan}}</span>
-						<span class="badge">
-							{{quantity}}
-						</span>
-					</li>
-					{{/isEqual}}
-					{{/each}}
-				</ul>
-			</div>
-			<div id="list-sideboard" class="col s12 m6">
-				<div class="list-heading">Sideboard</div>
-				<ul class="collection">
-					{{#each cards}}
-					{{#isEqual section 'sideboard'}}
-					<li class="collection-item avatar">
-						<img src="{{arturl}}" alt="" class="circle">
-						<span class="title">{{name}}</span>
-						<br>
-						<span>Own {{has_quantity}} {{#isGreaterThan has_quantity 1}}copies{{else}}copy{{/isGreaterThan}}</span>
-						<span class="badge">
-							{{quantity}}
-						</span>
-					</li>
-					{{/isEqual}}
-					{{/each}}
-				</ul>
-			</div>
-		</div>
 	</script>
 	{%- endraw %}
 {% endblock %}
@@ -137,11 +62,6 @@
 		</div>
 
 		<div id="deck-menu" class="row"></div>
-
-		<div id="deck-details" class="hide">
-			<div class="row deck-info"></div>
-			<div class="row deck-contents"></div>
-		</div>
 	</div>
 
 	<br><br>
@@ -190,68 +110,8 @@
 				$('#list-row, #deck-menu').removeClass('hide');
 				compile_handlebars('deck-template', '#deck-menu', data);
 
-				$('.edit-deck').on('click', function() {
-					show_details($(this).data().deckid);
-				});
-			}
-		}).fail(ajax_failed);
-	}
-
-	function show_details(deckid) {
-		show_loading($('#deck-details .deck-info'));
-		$('#list-row, #deck-menu').addClass('hide');
-		$('#deck-details').removeClass('hide');
-
-		$.ajax({
-			url: "{{ url_for('decks_get') }}",
-			method: "GET",
-			data: {'deckid': deckid}
-		}).done(function(data) {
-			if (data.error) M.toast({html: data.error});
-			else {
-				compile_handlebars('editdeck-template', '#deck-details .deck-info', data);
-				
-				$('#deck-details .deck-info #edit-deck-format').formSelect();
-				if (data.deck.deleted) $('#deck-restore').removeClass('hide');
-				else $('#deck-delete').removeClass('hide');
-
-				$('#deck-back').on('click', get_decks);
-
-				$('#deck-save').on('click', function() {
-					$.ajax({
-						url: "{{ url_for('decks_save') }}",
-						method: "POST",
-						data: {
-							'deckid': deckid,
-							'name': $('#edit-deck-name').val(),
-							'formatid': $('#edit-deck-format').val()
-						}
-					}).done(function(data) {
-						if (data.error) M.toast({html: data.error});
-						else M.toast({html: 'Saved successfully.'});
-					}).fail(ajax_failed);
-				});
-
-				$('#deck-delete').on('click', function() {
-					$.ajax({
-						url: "{{ url_for('decks_delete') }}",
-						method: "POST",
-						data: {'deckid': deckid}
-					}).done(function(data) {
-						if (data.error) M.toast({html: data.error});
-						else get_decks();
-					}).fail(ajax_failed);
-				});
-
-				$('#deck-restore').on('click', function() {
-					$.ajax({
-						url: "{{ url_for('decks_restore') }}",
-						method: "POST",
-						data: {'deckid': deckid}
-					}).done(function(data) {
-						if (data.error) M.toast({html: data.error});
-						else get_decks();
-					}).fail(ajax_failed);
+				$('.deck-summary').on('click', function() {
+					window.location.href = $(this).data().viewurl;
 				});
 			}
 		}).fail(ajax_failed);

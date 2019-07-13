@@ -90,7 +90,7 @@
 			<li>
 				<div class="collapsible-header">
 					<i class="material-icons">keyboard_arrow_down</i>Decks
-					<span class="new badge" data-badge-caption="{{#isGreaterThan total 1}}copies{{else}}copy{{/isGreaterThan}}">
+					<span class="new badge" data-badge-caption="{{#isEqual total 1}}copy{{else}}copies{{/isEqual}}">
 						{{total}}
 					</span>
 				</div>
@@ -100,7 +100,7 @@
 						<li class="collection-item avatar valign-wrapper">
 							<img src="{{arturl}}" class="circle hide-on-small-only">
 							{{name}}
-						 	<span class="badge" data-badge-caption="{{#isGreaterThan quantity 1}}copies{{else}}copy{{/isGreaterThan}}">
+						 	<span class="badge" data-badge-caption="{{#isEqual quantity 1}}copy{{else}}copies{{/isEqual}}">
 								{{quantity}}
 							</span>
 						</li>

@@ -424,6 +424,13 @@ def decks():
 	return render_template('decks.html', active='decks')
 
 
+@app.route('/decks/<int:deckid>', methods=['GET'])
+@login_required
+def decklist(deckid):
+	formats = deck.get_formats()
+	return render_template('decklist.html', deckid=deckid, formats=formats)
+
+
 @app.route('/decks/get/all', methods=['GET'])
 @login_required
 def decks_get_all():
@@ -433,6 +440,7 @@ def decks_get_all():
 		if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
 			asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
 		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardartid']))
+		r['viewurl'] = url_for('decklist', deckid=r['id'])
 		del r['cardid']
 		del r['code']
 		del r['collectornumber']
@@ -447,7 +455,6 @@ def decks_get():
 	resp = {}
 	resp['deck'] = deck.get(params['deckid'])
 	resp['cards'] = deck.get_cards(params['deckid'])
-	resp['formats'] = deck.get_formats()
 
 	if not os.path.exists(asynchro.card_art_filename(resp['deck']['cardid'])):
 		asynchro.get_card_art.delay(

@@ -243,6 +243,10 @@ for this trick to center the overflow image
 	font-style: italic;
 }
 
+.decks-page #deck-menu .deck-summary {
+	cursor: pointer;
+}
+
 .decks-page #deck-details a {
 	cursor: pointer;
 }

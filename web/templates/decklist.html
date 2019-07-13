@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block handlebars %}
+	{{ super() }}
+
+	{% raw -%}
+	<script id="editdeck-template" type="text/x-handlebars-template">
+		<div id="list-main" class="col s12 m6">
+			<div class="list-heading">Main</div>
+			<ul class="collection">
+				{{#each cards}}
+				{{#isEqual section 'main'}}
+				<li class="collection-item avatar">
+					<img src="{{arturl}}" alt="" class="circle">
+					<span class="title">{{name}}</span>
+					<br>
+					<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
+					<span class="badge">
+						{{quantity}}
+					</span>
+				</li>
+				{{/isEqual}}
+				{{/each}}
+			</ul>
+		</div>
+		<div id="list-sideboard" class="col s12 m6">
+			<div class="list-heading">Sideboard</div>
+			<ul class="collection">
+				{{#each cards}}
+				{{#isEqual section 'sideboard'}}
+				<li class="collection-item avatar">
+					<img src="{{arturl}}" alt="" class="circle">
+					<span class="title">{{name}}</span>
+					<br>
+					<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
+					<span class="badge">
+						{{quantity}}
+					</span>
+				</li>
+				{{/isEqual}}
+				{{/each}}
+			</ul>
+		</div>
+	</script>
+	{%- endraw %}
+{%- endblock %}
+
+{% block script %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/decklist.js') }}"></script>
+{% endblock %}
+
+{% block content -%}
+<div class="decks-page container">
+	<div class="section">
+		<div id="deck-details">
+			<input id="deckid" value="{{ deckid }}" hidden>
+			<div class="row deck-info">
+				<div class="col s3">
+					<img class="responsive-img" id="edit-deck-art">
+				</div>
+				<div class="col s9">
+					<div class="row">
+						<div class="col s2">
+							<a class="btn bg-secondary" id="deck-back"><i class="material-icons">arrow_back</i></a>
+						</div>
+						<div class="col s2 offset-s6">
+							<a class="btn bg-secondary" id="deck-save"><i class="material-icons">save</i></a>
+						</div>
+						<div class="col s2">
+							<a class="btn bg-secondary hide" id="deck-delete"><i class="material-icons">delete</i></a>
+							<a class="btn bg-secondary hide" id="deck-restore"><i class="material-icons">refresh</i></a>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12 m6">
+							<input type="text" id="edit-deck-name">
+						</div>
+						<div class="col s12 m6">
+							<select id="edit-deck-format">
+								{% for f in formats -%}
+								<option value="{{ f.id }}">{{ f.name }}</option>
+								{%- endfor %}
+							</select>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row deck-list"></div>
+		</div>
+	</div>
+
+	<br><br>
+</div>
+{%- endblock %}
