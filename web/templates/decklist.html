@@ -4,46 +4,34 @@
 	{{ super() }}
 
 	{% raw -%}
+	<script id="cardlist-partial" type="text/x-handlebars-template">
+		<ul class="collection">
+			{{#each cards}}
+			{{#isEqual section ../listsection}}
+			<li class="collection-item avatar">
+				<img src="{{arturl}}" alt="" class="circle">
+				<span class="title">{{name}}</span>
+				{{#unless basic_land}}
+				<br>
+				<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
+				{{/unless}}
+				<span class="badge">
+					{{quantity}}
+				</span>
+			</li>
+			{{/isEqual}}
+			{{/each}}
+		</ul>
+	</script>
+
 	<script id="editdeck-template" type="text/x-handlebars-template">
 		<div id="list-main" class="col s12 m6">
 			<div class="list-heading">Main</div>
-			<ul class="collection">
-				{{#each cards}}
-				{{#isEqual section 'main'}}
-				<li class="collection-item avatar">
-					<img src="{{arturl}}" alt="" class="circle">
-					<span class="title">{{name}}</span>
-					<br>
-					{{#unless basic_land}}
-					<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
-					{{/unless}}
-					<span class="badge">
-						{{quantity}}
-					</span>
-				</li>
-				{{/isEqual}}
-				{{/each}}
-			</ul>
+			{{>cardlist cards=cards listsection='main'}}
 		</div>
 		<div id="list-sideboard" class="col s12 m6">
 			<div class="list-heading">Sideboard</div>
-			<ul class="collection">
-				{{#each cards}}
-				{{#isEqual section 'sideboard'}}
-				<li class="collection-item avatar">
-					<img src="{{arturl}}" alt="" class="circle">
-					<span class="title">{{name}}</span>
-					<br>
-					{{#unless basic_land}}
-					<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
-					{{/unless}}
-					<span class="badge">
-						{{quantity}}
-					</span>
-				</li>
-				{{/isEqual}}
-				{{/each}}
-			</ul>
+			{{>cardlist cards=cards listsection='sideboard'}}
 		</div>
 	</script>
 	{%- endraw %}

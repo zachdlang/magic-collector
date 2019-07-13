@@ -20,11 +20,18 @@ function show_details() {
 			$('#edit-deck-art').attr('src', data.deck.arturl);
 			$('#edit-deck-name').val(data.deck.name);
 			$('#edit-deck-format').val(data.deck.formatid);
+			Handlebars.registerPartial('cardlist', $('#cardlist-partial').html());
 			compile_handlebars('editdeck-template', '#deck-details .deck-list', data);
 			
 			$('#deck-details .deck-info #edit-deck-format').formSelect();
 			if (data.deck.deleted) $('#deck-restore').removeClass('hide');
 			else $('#deck-delete').removeClass('hide');
+
+			// Hide sideboard if not applicable
+			if (!$('#list-sideboard .collection-item').length) {
+				$('#list-main').removeClass('m6');
+				$('#list-sideboard').addClass('hide');
+			}
 		}
 	}).fail(ajax_failed);
 }
