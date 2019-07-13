@@ -14,7 +14,9 @@
 					<img src="{{arturl}}" alt="" class="circle">
 					<span class="title">{{name}}</span>
 					<br>
+					{{#unless basic_land}}
 					<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
+					{{/unless}}
 					<span class="badge">
 						{{quantity}}
 					</span>
@@ -32,7 +34,9 @@
 					<img src="{{arturl}}" alt="" class="circle">
 					<span class="title">{{name}}</span>
 					<br>
+					{{#unless basic_land}}
 					<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
+					{{/unless}}
 					<span class="badge">
 						{{quantity}}
 					</span>

@@ -34,12 +34,14 @@ def get_cards(deckid):
 	qry = """SELECT dc.cardid, dc.quantity, dc.section,
 				c.name, c.collectornumber,
 				(SELECT code FROM card_set WHERE id = card_setid),
-				total_printings_owned(d.userid, dc.cardid) AS has_quantity
+				total_printings_owned(d.userid, dc.cardid) AS has_quantity,
+				is_basic_land(c.id) AS basic_land
 			FROM deck_card dc
 			LEFT JOIN deck d ON (d.id = dc.deckid)
 			LEFT JOIN card c ON (c.id = dc.cardid)
 			WHERE d.id = %s
-			AND d.userid = %s"""
+			AND d.userid = %s
+			ORDER BY CASE WHEN NOT is_basic_land(c.id) THEN 1 ELSE 2 END"""
 	qargs = (deckid, session['userid'],)
 	cards = fetch_query(qry, qargs)
 
