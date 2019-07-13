@@ -35,7 +35,7 @@ def get_cards(deckid):
 				c.name, c.collectornumber,
 				(SELECT code FROM card_set WHERE id = card_setid),
 				total_printings_owned(d.userid, dc.cardid) AS has_quantity,
-				is_basic_land(c.id) AS basic_land
+				c.typeline, c.manacost
 			FROM deck_card dc
 			LEFT JOIN deck d ON (d.id = dc.deckid)
 			LEFT JOIN card c ON (c.id = dc.cardid)

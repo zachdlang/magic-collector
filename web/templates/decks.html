@@ -106,7 +106,6 @@
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});
 			else {
-				$('#deck-details').addClass('hide');
 				$('#list-row, #deck-menu').removeClass('hide');
 				compile_handlebars('deck-template', '#deck-menu', data);
 

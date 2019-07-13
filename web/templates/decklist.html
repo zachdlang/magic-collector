@@ -5,32 +5,37 @@
 
 	{% raw -%}
 	<script id="cardlist-partial" type="text/x-handlebars-template">
-		<ul class="collection">
-			{{#each cards}}
-			{{#isEqual section ../listsection}}
-			<li class="collection-item avatar">
-				<img src="{{arturl}}" alt="" class="circle">
-				<span class="title">{{name}}</span>
-				{{#unless basic_land}}
-				<br>
-				<span>Own {{has_quantity}} {{#isEqual has_quantity 1}}copy{{else}}copies{{/isEqual}}</span>
-				{{/unless}}
-				<span class="badge">
-					{{quantity}}
-				</span>
-			</li>
-			{{/isEqual}}
-			{{/each}}
-		</ul>
+		<table class="highlight">
+			<thead>
+				<tr>
+					<th>Quantity</td>
+					<th>Card</td>
+					<th>Type</td>
+					<th>Cost</td>
+				</tr>
+			</thead>
+			<tbody>
+				{{#each cards}}
+				{{#isEqual section ../listsection}}
+				<tr>
+					<td>{{quantity}}</td>
+					<td>{{name}}</td>
+					<td>{{typeline}}</td>
+					<td>{{manacost}}</td>
+				</tr>
+				{{/isEqual}}
+				{{/each}}
+			</tbody>
+		</table>
 	</script>
 
 	<script id="editdeck-template" type="text/x-handlebars-template">
-		<div id="list-main" class="col s12 m6">
-			<div class="list-heading">Main</div>
+		<div id="list-main" class="col s12">
+			<h4>Main</h4>
 			{{>cardlist cards=cards listsection='main'}}
 		</div>
-		<div id="list-sideboard" class="col s12 m6">
-			<div class="list-heading">Sideboard</div>
+		<div id="list-sideboard" class="col s12">
+			<h4>Sideboard</h4>
 			{{>cardlist cards=cards listsection='sideboard'}}
 		</div>
 	</script>
@@ -42,7 +47,7 @@
 {% endblock %}
 
 {% block content -%}
-<div class="decks-page container">
+<div class="decklist-page container">
 	<div class="section">
 		<div id="deck-details">
 			<input id="deckid" value="{{ deckid }}" hidden>

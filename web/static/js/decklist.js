@@ -7,8 +7,6 @@ $(document).ready(function() {
 
 function show_details() {
 	show_loading($('#deck-details .deck-list'));
-	$('#list-row, #deck-menu').addClass('hide');
-	$('#deck-details').removeClass('hide');
 
 	$.ajax({
 		url: "/decks/get",
@@ -28,8 +26,7 @@ function show_details() {
 			else $('#deck-delete').removeClass('hide');
 
 			// Hide sideboard if not applicable
-			if (!$('#list-sideboard .collection-item').length) {
-				$('#list-main').removeClass('m6');
+			if (!$('#list-sideboard tbody tr').length) {
 				$('#list-sideboard').addClass('hide');
 			}
 		}

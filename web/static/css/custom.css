@@ -233,8 +233,7 @@ for this trick to center the overflow image
 	height: 120px;
 }
 
-.decks-page #deck-menu .card .deck-name,
-.decks-page #deck-details .list-heading {
+.decks-page #deck-menu .card .deck-name\ {
 	font-size: 16px;
 	font-weight: bold;
 }
@@ -247,6 +246,10 @@ for this trick to center the overflow image
 	cursor: pointer;
 }
 
-.decks-page #deck-details a {
+.decklist-page #deck-details a {
 	cursor: pointer;
+}
+
+.decklist-page .deck-list table td {
+	padding: 5px 5px;
 }
