@@ -60,19 +60,39 @@
 		<div class="row">
 			<div id="list-main" class="col s12 m6">
 				<div class="list-heading">Main</div>
-				{{#each cards}}
+				<ul class="collection">
+					{{#each cards}}
 					{{#isEqual section 'main'}}
-					{{name}} (Own {{has_quantity}} of {{quantity}})<br>
+					<li class="collection-item avatar">
+						<img src="{{arturl}}" alt="" class="circle">
+						<span class="title">{{name}}</span>
+						<br>
+						<span>Own {{has_quantity}} {{#isGreaterThan has_quantity 1}}copies{{else}}copy{{/isGreaterThan}}</span>
+						<span class="badge">
+							{{quantity}}
+						</span>
+					</li>
 					{{/isEqual}}
-				{{/each}}
+					{{/each}}
+				</ul>
 			</div>
 			<div id="list-sideboard" class="col s12 m6">
 				<div class="list-heading">Sideboard</div>
-				{{#each cards}}
+				<ul class="collection">
+					{{#each cards}}
 					{{#isEqual section 'sideboard'}}
-					{{name}} (Own {{has_quantity}} of {{quantity}})<br>
+					<li class="collection-item avatar">
+						<img src="{{arturl}}" alt="" class="circle">
+						<span class="title">{{name}}</span>
+						<br>
+						<span>Own {{has_quantity}} {{#isGreaterThan has_quantity 1}}copies{{else}}copy{{/isGreaterThan}}</span>
+						<span class="badge">
+							{{quantity}}
+						</span>
+					</li>
 					{{/isEqual}}
-				{{/each}}
+					{{/each}}
+				</ul>
 			</div>
 		</div>
 	</script>
