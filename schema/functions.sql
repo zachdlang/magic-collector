@@ -52,8 +52,7 @@ $$ LANGUAGE 'plpgsql';
 
 DROP FUNCTION IF EXISTS collector.is_basic_land(INTEGER);
 CREATE OR REPLACE FUNCTION collector.is_basic_land(_cardid INTEGER) RETURNS BOOLEAN AS $$
-	SELECT LOWER(name) IN ('plains', 'island', 'swamp', 'mountain', 'forest')
-	FROM card WHERE id = _cardid; 
+	SELECT typeline ILIKE '%basic%land%' FROM card WHERE id = _cardid;
 $$ LANGUAGE 'sql';
 
 
