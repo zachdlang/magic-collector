@@ -21,7 +21,11 @@
 					<td>{{quantity}}</td>
 					<td>{{name}}</td>
 					<td>{{typeline}}</td>
-					<td>{{manacost}}</td>
+					<td class="center-align">
+						{{#each manacost}}
+						<img class="responsive-img mana-symbol" src="{{this}}">
+						{{/each}}
+					</td>
 				</tr>
 				{{/isEqual}}
 				{{/each}}

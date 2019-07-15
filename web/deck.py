@@ -1,5 +1,8 @@
+# Standard library imports
+import re
+
 # Third party imports
-from flask import session
+from flask import session, url_for
 
 # Local imports
 from sitetools.utility import fetch_query
@@ -45,9 +48,70 @@ def get_cards(deckid):
 	qargs = (deckid, session['userid'],)
 	cards = fetch_query(qry, qargs)
 
+	for c in cards:
+		manasymbols = []
+		if c['manacost'] is not None:
+			for sym in re.findall(r'{[A-Z0-9/]+}', c['manacost']):
+				if sym in MANASYMBOL_IMG:
+					filename = 'symbols/{}'.format(MANASYMBOL_IMG[sym])
+					manasymbols.append(url_for('static', filename=filename))
+				else:
+					manasymbols.append(sym)
+		c['manacost'] = manasymbols
+
 	return cards
 
 
 def get_formats():
 	formats = fetch_query("SELECT id, name FROM format ORDER BY id")
 	return formats
+
+
+MANASYMBOL_IMG = {
+	'{X}': 'X.svg',
+	'{0}': '0.svg',
+	'{1}': '1.svg',
+	'{2}': '2.svg',
+	'{3}': '3.svg',
+	'{4}': '4.svg',
+	'{5}': '5.svg',
+	'{6}': '6.svg',
+	'{7}': '7.svg',
+	'{8}': '8.svg',
+	'{9}': '9.svg',
+	'{10}': '10.svg',
+	'{11}': '11.svg',
+	'{12}': '12.svg',
+	'{13}': '13.svg',
+	'{14}': '14.svg',
+	'{15}': '15.svg',
+	'{16}': '16.svg',
+	'{W/U}': 'WU.svg',
+	'{W/B}': 'WB.svg',
+	'{B/R}': 'BR.svg',
+	'{B/G}': 'BG.svg',
+	'{U/B}': 'UB.svg',
+	'{U/R}': 'UR.svg',
+	'{R/G}': 'RG.svg',
+	'{R/W}': 'RW.svg',
+	'{G/W}': 'GW.svg',
+	'{G/U}': 'GU.svg',
+	'{2/W}': '2W.svg',
+	'{2/U}': '2U.svg',
+	'{2/B}': '2B.svg',
+	'{2/R}': '2R.svg',
+	'{2/G}': '2G.svg',
+	'{P}': 'P.svg',
+	'{W/P}': 'WP.svg',
+	'{U/P}': 'UP.svg',
+	'{B/P}': 'BP.svg',
+	'{R/P}': 'RP.svg',
+	'{G/P}': 'GP.svg',
+	'{W}': 'W.svg',
+	'{U}': 'U.svg',
+	'{B}': 'B.svg',
+	'{R}': 'R.svg',
+	'{G}': 'G.svg',
+	'{C}': 'C.svg',
+	'{S}': 'S.svg'
+}

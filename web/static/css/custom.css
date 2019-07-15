@@ -73,6 +73,14 @@ main {
 	margin-top: 5px;
 }
 
+.mana-symbol {
+	width: 15px;
+}
+
+.mana-symbol + .mana-symbol {
+	margin-left: -2px;
+}
+
 @media only screen and (max-width: 600px) {
 	.collection-page #view_box {
 		position: absolute;
