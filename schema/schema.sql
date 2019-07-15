@@ -18,6 +18,11 @@ CREATE TABLE IF NOT EXISTS card_set (
 	tcgplayer_groupid INTEGER
 )WITH OIDS;
 
+CREATE TABLE IF NOT EXISTS card_type (
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL
+)WITH OIDS;
+
 CREATE TABLE IF NOT EXISTS card (
 	id SERIAL PRIMARY KEY,
 	collectornumber TEXT NOT NULL,
@@ -32,7 +37,8 @@ CREATE TABLE IF NOT EXISTS card (
 	tcgplayer_productid TEXT,
 	cmc NUMERIC,
 	typeline TEXT,
-	manacost TEXT
+	manacost TEXT,
+	card_typeid INTEGER REFERENCES card_type(id) ON DELETE SET NULL
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (

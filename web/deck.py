@@ -38,16 +38,19 @@ def get_cards(deckid):
 				c.name, c.collectornumber,
 				(SELECT code FROM card_set WHERE id = card_setid),
 				total_printings_owned(d.userid, dc.cardid) AS has_quantity,
-				c.typeline, c.manacost
+				c.typeline, c.manacost, COALESCE(t.name, 'Other') AS cardtype,
+				is_basic_land(c.id) AS basic_land
 			FROM deck_card dc
 			LEFT JOIN deck d ON (d.id = dc.deckid)
 			LEFT JOIN card c ON (c.id = dc.cardid)
+			LEFT JOIN card_type t ON (t.id = c.card_typeid)
 			WHERE d.id = %s
 			AND d.userid = %s
-			ORDER BY CASE WHEN NOT is_basic_land(c.id) THEN 1 ELSE 2 END"""
+			ORDER BY card_typeid, is_basic_land(c.id), c.name"""
 	qargs = (deckid, session['userid'],)
 	cards = fetch_query(qry, qargs)
 
+	main, sideboard = [], []
 	for c in cards:
 		manasymbols = []
 		if c['manacost'] is not None:
@@ -59,12 +62,35 @@ def get_cards(deckid):
 					manasymbols.append(sym)
 		c['manacost'] = manasymbols
 
-	return cards
+		c['insufficient_quantity'] = c['has_quantity'] < c['quantity']
+		if c['basic_land']:
+			c['has_quantity'] = None
+			c['insufficient_quantity'] = False
+
+		if c['section'] == 'main':
+			main.append(c)
+		elif c['section'] == 'sideboard':
+			sideboard.append(c)
+
+	return main, sideboard
 
 
 def get_formats():
 	formats = fetch_query("SELECT id, name FROM format ORDER BY id")
 	return formats
+
+
+def parse_types(cards):
+	prev_type = None
+	new_rows = []
+	for c in cards:
+		if c['cardtype'] != prev_type:
+			prev_type = c['cardtype']
+			count = sum([x['quantity'] for x in cards if x.get('cardtype') == prev_type])
+			new_rows.append({'is_type': True, 'label': prev_type, 'count': count})
+		new_rows.append(c)
+
+	return new_rows
 
 
 MANASYMBOL_IMG = {

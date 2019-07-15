@@ -8,17 +8,24 @@
 		<table class="highlight">
 			<thead>
 				<tr>
-					<th>Qty</td>
+					<th colspan="2">Qty</td>
 					<th>Card</td>
 					<th>Type</td>
-					<th>Cost</td>
+					<th class="center-align">Cost</td>
 				</tr>
 			</thead>
 			<tbody>
 				{{#each cards}}
-				{{#isEqual section ../listsection}}
 				<tr>
-					<td>{{quantity}}</td>
+					{{#if is_type}}
+					<td class="grouped" colspan="5">{{label}} ({{count}})</td>
+					{{else}}
+					{{#if insufficient_quantity}}
+					<td class="small-col insufficient">{{has_quantity}}</td>
+					<td class="small-col">{{quantity}}</td>
+					{{else}}
+					<td class="center-align sufficient" colspan="2">{{quantity}}</td>
+					{{/if}}
 					<td>{{name}}</td>
 					<td>{{typeline}}</td>
 					<td class="center-align">
@@ -26,8 +33,8 @@
 						<img class="responsive-img mana-symbol" src="{{this}}">
 						{{/each}}
 					</td>
+					{{/if}}
 				</tr>
-				{{/isEqual}}
 				{{/each}}
 			</tbody>
 		</table>
@@ -36,11 +43,11 @@
 	<script id="editdeck-template" type="text/x-handlebars-template">
 		<div id="list-main" class="col s12">
 			<h4>Main</h4>
-			{{>cardlist cards=cards listsection='main'}}
+			{{>cardlist cards=main}}
 		</div>
 		<div id="list-sideboard" class="col s12">
 			<h4>Sideboard</h4>
-			{{>cardlist cards=cards listsection='sideboard'}}
+			{{>cardlist cards=sideboard}}
 		</div>
 	</script>
 	{%- endraw %}

@@ -28,6 +28,11 @@
 				else return options.inverse(this);
 			});
 
+			Handlebars.registerHelper('isLessThan', function(x, y, options) {
+				if(x < y) return options.fn(this);
+				else return options.inverse(this);
+			});
+
 			Handlebars.registerHelper('substring', function(input, maxChars) {
 				return new Handlebars.SafeString(input.substring(0, maxChars));
 			});

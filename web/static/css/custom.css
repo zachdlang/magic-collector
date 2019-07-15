@@ -261,3 +261,20 @@ for this trick to center the overflow image
 .decklist-page .deck-list table td {
 	padding: 5px 5px;
 }
+
+.decklist-page .deck-list table td.small-col {
+	width: 20px;
+}
+
+.decklist-page .deck-list .grouped {
+	font-weight: bold;
+}
+
+.decklist-page .deck-list .sufficient {
+	background-color: #66BB6A;
+}
+
+.decklist-page .deck-list .insufficient {
+	background-color: #EF5350;
+	font-weight: bold;
+}

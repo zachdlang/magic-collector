@@ -454,7 +454,7 @@ def decks_get():
 	params = params_to_dict(request.args)
 	resp = {}
 	resp['deck'] = deck.get(params['deckid'])
-	resp['cards'] = deck.get_cards(params['deckid'])
+	resp['main'], resp['sideboard'] = deck.get_cards(params['deckid'])
 
 	if not os.path.exists(asynchro.card_art_filename(resp['deck']['cardid'])):
 		asynchro.get_card_art.delay(
@@ -467,7 +467,7 @@ def decks_get():
 	del resp['deck']['code']
 	del resp['deck']['collectornumber']
 
-	for r in resp['cards']:
+	for r in resp['main'] + resp['sideboard']:
 		if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
 			asynchro.get_card_art.delay(
 				r['cardid'],
@@ -475,6 +475,9 @@ def decks_get():
 				r['collectornumber']
 			)
 		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardid']))
+
+	resp['main'] = deck.parse_types(resp['main'])
+	resp['sideboard'] = deck.parse_types(resp['sideboard'])
 
 	return jsonify(**resp)
 
