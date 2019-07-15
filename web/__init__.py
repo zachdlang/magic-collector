@@ -527,8 +527,8 @@ def decks_import():
 	for row in rows:
 		print(row)
 		qry = """INSERT INTO deck_card (deckid, cardid, quantity, section)
-				VALUES (%s, deck_card_match(%s), %s, %s)"""
-		qargs = (deckid, row['Name'], row['Count'], row['Section'],)
+				VALUES (%s, deck_card_match(%s, %s), %s, %s)"""
+		qargs = (deckid, row['Name'], session['userid'], row['Count'], row['Section'],)
 		mutate_query(qry, qargs)
 
 	qry = """UPDATE deck SET cardartid = (

@@ -80,8 +80,8 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-DROP FUNCTION IF EXISTS collector.deck_card_match(TEXT);
-CREATE OR REPLACE FUNCTION collector.deck_card_match(_name TEXT) RETURNS INTEGER AS $$
+DROP FUNCTION IF EXISTS collector.deck_card_match(TEXT, INTEGER);
+CREATE OR REPLACE FUNCTION collector.deck_card_match(_name TEXT, _userid INTEGER) RETURNS INTEGER AS $$
 DECLARE
 	cardid INTEGER;
 BEGIN
@@ -89,7 +89,7 @@ BEGIN
 		FROM card c
 		LEFT JOIN card_set s ON (c.card_setid = s.id)
 		WHERE LOWER(c.name) = LOWER(_name)
-		ORDER BY s.released DESC LIMIT 1;
+		ORDER BY card_owned(_userid, c.id) DESC, s.released DESC LIMIT 1;
 
 	-- If no matches, ILIKE for multifaced cards
 	IF cardid IS NULL THEN
@@ -97,7 +97,7 @@ BEGIN
 			FROM card c
 			LEFT JOIN card_set s ON (c.card_setid = s.id)
 			WHERE c.multifaced AND c.name ILIKE concat('%', _name, '%')
-			ORDER BY s.released DESC LIMIT 1;
+			ORDER BY card_owned(_userid, c.id) DESC, s.released DESC LIMIT 1;
 	END IF;
 
 	RETURN cardid;
@@ -109,6 +109,13 @@ DROP FUNCTION IF EXISTS collector.card_printings(INTEGER);
 CREATE OR REPLACE FUNCTION collector.card_printings(_cardid INTEGER)
 RETURNS SETOF collector.card AS $$
 	SELECT card.* FROM card WHERE name = (SELECT name FROM card WHERE id = _cardid);
+$$ LANGUAGE 'sql';
+
+
+DROP FUNCTION IF EXISTS collector.card_owned(INTEGER, INTEGER);
+CREATE OR REPLACE FUNCTION collector.card_owned(_userid INTEGER, _cardid INTEGER)
+RETURNS BOOLEAN AS $$
+	SELECT EXISTS (SELECT 1 FROM user_card WHERE userid = _userid AND cardid = _cardid);
 $$ LANGUAGE 'sql';
 
 
