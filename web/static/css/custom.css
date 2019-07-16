@@ -51,6 +51,8 @@ main {
 .bg-secondary.btn:hover { background-color: #9BAEBC; }
 .bg-tertiary:not(.btn-flat) { background-color: #AF5990 !important; }
 .bg-tertiary.btn:hover { background-color: #E88EC6; }
+.bg-green:not(.btn-flat) { background-color: #388E3C; }
+.bg-red:not(.btn-flat) { background-color: #D32F2F; }
 
 .modal:not(.bottom-sheet) {
 	max-height: 90%; max-width:90%;
