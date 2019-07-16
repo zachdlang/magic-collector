@@ -508,6 +508,17 @@ def decks_restore():
 	return jsonify()
 
 
+@app.route('/decks/cardart', methods=['POST'])
+@login_required
+def decks_set_cardart():
+	params = params_to_dict(request.form)
+	mutate_query(
+		"UPDATE deck SET cardartid = %s WHERE id = %s AND userid = %s",
+		(params['cardid'], params['deckid'], session['userid'],)
+	)
+	return jsonify()
+
+
 @app.route('/decks/import', methods=['POST'])
 @login_required
 def decks_import():

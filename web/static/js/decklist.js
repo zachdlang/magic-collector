@@ -32,7 +32,26 @@ function show_details() {
 			if (!$('#list-sideboard tbody tr').length) {
 				$('#list-sideboard').addClass('hide');
 			}
+
+			$('#deck-details .deck-list tbody tr').on('click', function() {
+				var cardid = $(this).data().cardid;
+				if (cardid) set_arturl(cardid);
+			});
 		}
+	}).fail(ajax_failed);
+}
+
+function set_arturl(cardid) {
+	$.ajax({
+		url: "/decks/cardart",
+		method: "POST",
+		data: {
+			'deckid': $('#deckid').val(),
+			'cardid': cardid
+		}
+	}).done(function(data) {
+		if (data.error) M.toast({html: data.error});
+		else window.location.reload();
 	}).fail(ajax_failed);
 }
 

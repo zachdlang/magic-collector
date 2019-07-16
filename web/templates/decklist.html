@@ -16,7 +16,7 @@
 			</thead>
 			<tbody>
 				{{#each cards}}
-				<tr>
+				<tr data-cardid="{{cardid}}">
 					{{#if is_type}}
 					<td class="grouped" colspan="5">{{label}} ({{count}})</td>
 					{{else}}
