@@ -16,6 +16,9 @@ function show_details() {
 		if (data.error) M.toast({html: data.error});
 		else {
 			$('#edit-deck-art').attr('src', data.deck.arturl);
+			var elems = document.querySelectorAll('.parallax');
+			M.Parallax.init(elems, {});
+
 			$('#edit-deck-name').val(data.deck.name);
 			$('#edit-deck-format').val(data.deck.formatid);
 			Handlebars.registerPartial('cardlist', $('#cardlist-partial').html());
