@@ -34,7 +34,7 @@ def get(deckid):
 
 
 def get_cards(deckid):
-	qry = """SELECT dc.cardid, dc.quantity, dc.section,
+	qry = """SELECT dc.id, dc.cardid, dc.quantity, dc.section,
 				c.name, c.collectornumber,
 				(SELECT code FROM card_set WHERE id = card_setid),
 				total_printings_owned(d.userid, dc.cardid) AS has_quantity,

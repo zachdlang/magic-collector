@@ -56,6 +56,19 @@ function set_arturl(cardid) {
 }
 
 
+function delete_card(deckcardid) {
+	if (!confirm('Are you sure?')) return;
+	$.ajax({
+		url: "/decks/cards/delete",
+		method: "POST",
+		data: { 'deck_cardid': deckcardid }
+	}).done(function(data) {
+		if (data.error) M.toast({html: data.error});
+		else $('#deck-details .deck-list [data-deckcardid='+deckcardid+']').remove();
+	}).fail(ajax_failed);
+}
+
+
 function bind_events() {
 	$('#deck-save').on('click', function() {
 		$.ajax({

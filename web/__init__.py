@@ -519,6 +519,21 @@ def decks_set_cardart():
 	return jsonify()
 
 
+@app.route('/decks/cards/delete', methods=['POST'])
+@login_required
+def decks_cards_delete():
+	params = params_to_dict(request.form)
+	mutate_query(
+		"""
+		DELETE FROM deck_card
+		WHERE id = %s
+		AND (SELECT userid FROM deck WHERE deck.id = deckid) = %s
+		""",
+		(params['deck_cardid'], session['userid'],)
+	)
+	return jsonify()
+
+
 @app.route('/decks/import', methods=['POST'])
 @login_required
 def decks_import():

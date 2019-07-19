@@ -10,31 +10,36 @@
 				<tr>
 					<th colspan="2">Qty</td>
 					<th>Card</td>
-					<th>Type</td>
+					<th class="hide-on-small-only">Type</td>
 					<th class="center-align">Cost</td>
+					<th colspan="2"></td>
 				</tr>
 			</thead>
 			<tbody>
 				{{#each cards}}
-				<tr data-cardid="{{cardid}}">
-					{{#if is_type}}
-					<td class="grouped" colspan="5">{{label}} ({{count}})</td>
-					{{else}}
+				{{#if is_type}}
+				<tr class="grouped">
+					<td colspan="7">{{label}} ({{count}})</td>
+				</tr>
+				{{else}}
+				<tr data-cardid="{{cardid}}" data-deckcardid="{{id}}">
 					{{#if insufficient_quantity}}
 					<td class="small-col insufficient">{{has_quantity}}</td>
-					<td class="small-col">{{quantity}}</td>
+					<td class="small-col quantity">{{quantity}}</td>
 					{{else}}
-					<td class="center-align sufficient" colspan="2">{{quantity}}</td>
+					<td class="center-align sufficient quantity" colspan="2">{{quantity}}</td>
 					{{/if}}
-					<td>{{name}}</td>
-					<td>{{typeline}}</td>
+					<td class="name">{{name}}</td>
+					<td class="hide-on-small-only">{{typeline}}</td>
 					<td class="center-align">
 						{{#each manacost}}
 						<img class="responsive-img mana-symbol" src="{{this}}">
 						{{/each}}
 					</td>
-					{{/if}}
+					<td><a class="btn bg-primary btn-flat edit-card"><i class="material-icons">edit</i></a></td>
+					<td><a class="btn bg-red btn-flat delete-card"><i class="material-icons">delete</i></a></td>
 				</tr>
+				{{/if}}
 				{{/each}}
 			</tbody>
 		</table>
