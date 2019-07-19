@@ -47,11 +47,11 @@
 
 	<script id="editdeck-template" type="text/x-handlebars-template">
 		<div id="list-main" class="col s12">
-			<h4>Main</h4>
+			<h4>Main (<span id="total-main"></span>)</h4>
 			{{>cardlist cards=main}}
 		</div>
 		<div id="list-sideboard" class="col s12">
-			<h4>Sideboard</h4>
+			<h4>Sideboard (<span id="total-side"></span>)</h4>
 			{{>cardlist cards=sideboard}}
 		</div>
 	</script>

@@ -33,12 +33,34 @@ function show_details() {
 				$('#list-sideboard').addClass('hide');
 			}
 
-			$('#deck-details .deck-list tbody tr').on('click', function() {
-				var cardid = $(this).data().cardid;
+			display_totals();
+
+			$('#deck-details .deck-list .name').on('click', function() {
+				var cardid = $(this).closest('tr').data().cardid;
 				if (cardid) set_arturl(cardid);
+			});
+
+			$('#deck-details .deck-list .delete-card').on('click', function() {
+				var deckcardid = $(this).closest('tr').data().deckcardid;
+				if (deckcardid) delete_card(deckcardid);
 			});
 		}
 	}).fail(ajax_failed);
+}
+
+function display_totals() {
+	var main_length = calculate_total($('#list-main tbody tr:not(.grouped) .quantity'));
+	$('#total-main').text(main_length);
+	var side_length = calculate_total($('#list-sideboard tbody tr:not(.grouped) .quantity'));
+	$('#total-side').text(side_length);
+}
+
+function calculate_total(selector) {
+	if (selector.length <= 0) return '';
+	return selector
+		.toArray()
+		.map((x) => parseInt($(x).text()))
+		.reduce((x, y) => x + y);
 }
 
 function set_arturl(cardid) {
