@@ -46,13 +46,20 @@ main {
 	width: 100%;
 }
 
-.bg-primary:not(.btn-flat) { background-color: #29B6F6; }
-.bg-secondary:not(.btn-flat) { background-color: #384955; }
-.bg-secondary.btn:hover { background-color: #9BAEBC; }
-.bg-tertiary:not(.btn-flat) { background-color: #AF5990 !important; }
-.bg-tertiary.btn:hover { background-color: #E88EC6; }
+.bg-primary:not(.btn-flat) { background-color: #247BA0; }
+.bg-primary.btn:hover { background-color: #4B93B1; }
+
+.bg-secondary:not(.btn-flat) { background-color: #70C1B3; }
+.bg-secondary.btn:hover { background-color: #A4D7CE; }
+
+.bg-tertiary:not(.btn-flat) { background-color: #FF1654; }
+.bg-tertiary.btn:hover { background-color: #FF6A92; }
+
 .bg-green:not(.btn-flat) { background-color: #388E3C; }
+.bg-green.btn:hover { background-color: #81C784; }
+
 .bg-red:not(.btn-flat) { background-color: #D32F2F; }
+.bg-red.btn:hover { background-color: #E57373; }
 
 .modal:not(.bottom-sheet) {
 	max-height: 90%; max-width:90%;
@@ -273,6 +280,7 @@ for this trick to center the overflow image
 }
 
 .decklist-page .deck-list .grouped {
+	background-color: rgba(242,242,242,0.5);
 	font-weight: bold;
 }
 
