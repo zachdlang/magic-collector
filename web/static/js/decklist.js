@@ -86,7 +86,10 @@ function delete_card(deckcardid) {
 		data: { 'deck_cardid': deckcardid }
 	}).done(function(data) {
 		if (data.error) M.toast({html: data.error});
-		else $('#deck-details .deck-list [data-deckcardid='+deckcardid+']').remove();
+		else {
+			$('#deck-details .deck-list [data-deckcardid='+deckcardid+']').remove();
+			display_totals();
+		}
 	}).fail(ajax_failed);
 }
 
