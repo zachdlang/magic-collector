@@ -37,20 +37,21 @@ def get(params):
 		'rarity': params.get('filter_rarity')
 	}
 
-	qry = """SELECT count(*) AS count,
-				sum(quantity) AS sum,
-				sum(quantity * get_price(id)) AS sumprice
-			FROM user_card
-			WHERE userid = %s"""
+	qry = """SELECT count(1) AS count,
+				sum(uc.quantity) AS sum,
+				sum(uc.quantity * get_price(uc.id)) AS sumprice
+			FROM user_card uc
+			LEFT JOIN printing p ON (p.id = uc.printingid)
+			WHERE uc.userid = %s"""
 	qargs = (session['userid'],)
 	if filters['search']:
-		qry += " AND (SELECT name FROM card WHERE id = cardid) ILIKE %s"
+		qry += " AND (SELECT name FROM card WHERE id = p.cardid) ILIKE %s"
 		qargs += (filters['search'],)
 	if filters['set']:
-		qry += " AND (SELECT card_setid FROM card WHERE id = cardid) = %s"
+		qry += " AND p.card_setid = %s"
 		qargs += (filters['set'],)
 	if filters['rarity']:
-		qry += " AND (SELECT rarity FROM card WHERE id = cardid) = %s"
+		qry += " AND p.rarity = %s"
 		qargs += (filters['rarity'],)
 	aggregate = fetch_query(qry, qargs, single_row=True)
 	resp['count'] = pagecount(aggregate['count'], limit)
@@ -58,13 +59,14 @@ def get(params):
 	resp['totalprice'] = aggregate['sumprice']
 
 	qry = """SELECT
-				c.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
-				get_rarity(c.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
+				p.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
+				get_rarity(p.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				c.collectornumber, c.card_setid
+				p.collectornumber, p.card_setid
 			FROM user_card uc
-			LEFT JOIN card c ON (uc.cardid = c.id)
-			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
+			LEFT JOIN printing p ON (uc.printingid = p.id)
+			LEFT JOIN card c ON (p.cardid = c.id)
+			LEFT JOIN card_set cs ON (p.card_setid = cs.id)
 			WHERE uc.userid = %s"""
 	qargs = (session['userid'],)
 
@@ -72,13 +74,13 @@ def get(params):
 		qry += " AND c.name ILIKE %s"
 		qargs += ('%' + filters['search'] + '%',)
 	if filters['set']:
-		qry += " AND c.card_setid = %s"
+		qry += " AND p.card_setid = %s"
 		qargs += (filters['set'],)
 	if filters['rarity']:
-		qry += " AND c.rarity = %s"
+		qry += " AND p.rarity = %s"
 		qargs += (filters['rarity'],)
 
-	qry += " ORDER BY %s %s, cs.code, c.collectornumber LIMIT %%s OFFSET %%s" % (sort, sort_desc)
+	qry += " ORDER BY %s %s, cs.code, p.collectornumber LIMIT %%s OFFSET %%s" % (sort, sort_desc)
 	qargs += (limit, offset,)
 	resp['cards'] = fetch_query(qry, qargs)
 	for c in resp['cards']:
@@ -91,23 +93,23 @@ def get(params):
 	return resp
 
 
-def add(cardid, foil, quantity):
-	qry = "SELECT id FROM user_card WHERE cardid = %s AND foil = %s AND userid = %s"
-	qargs = (cardid, foil, session['userid'],)
+def add(printingid, foil, quantity):
+	qry = "SELECT id FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s"
+	qargs = (printingid, foil, session['userid'],)
 	existing = fetch_query(qry, qargs, single_row=True)
 	if existing:
 		qry = "UPDATE user_card SET quantity = quantity + %s WHERE id = %s"
 		qargs = (quantity, existing['id'],)
 	else:
-		qry = """INSERT INTO user_card (cardid, userid, foil, quantity) SELECT %s, %s, %s, %s
-				WHERE NOT EXISTS (SELECT 1 FROM user_card WHERE cardid = %s AND foil = %s AND userid = %s)"""
-		qargs = (cardid, session['userid'], foil, quantity, cardid, foil, session['userid'],)
+		qry = """INSERT INTO user_card (printingid, userid, foil, quantity) SELECT %s, %s, %s, %s
+				WHERE NOT EXISTS (SELECT 1 FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s)"""
+		qargs = (printingid, session['userid'], foil, quantity, printingid, foil, session['userid'],)
 	mutate_query(qry, qargs)
 
 
-def remove(cardid, foil, quantity):
-	qry = "SELECT id, quantity FROM user_card WHERE cardid = %s AND foil = %s AND userid = %s AND quantity >= %s"
-	qargs = (cardid, foil, session['userid'], quantity,)
+def remove(printingid, foil, quantity):
+	qry = "SELECT id, quantity FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s AND quantity >= %s"
+	qargs = (printingid, foil, session['userid'], quantity,)
 	existing = fetch_query(qry, qargs, single_row=True)
 	if existing:
 		if (existing['quantity'] - quantity) <= 0:
@@ -118,7 +120,7 @@ def remove(cardid, foil, quantity):
 			qargs = (quantity, existing['id'],)
 		mutate_query(qry, qargs)
 	else:
-		raise Exception('Could not find card %s.' % cardid)
+		raise Exception('Could not find card %s.' % printingid)
 
 
 def import_cards(cards):
@@ -138,35 +140,70 @@ def import_cards(cards):
 			mutate_query(qry, qargs)
 
 	# more efficient than attempting inserts
-	multiverse_ids = [x['multiverseid'] for x in fetch_query("SELECT DISTINCT multiverseid FROM card WHERE multiverseid IS NOT NULL")]
+	multiverse_ids = [x['multiverseid'] for x in fetch_query("SELECT DISTINCT multiverseid FROM printing WHERE multiverseid IS NOT NULL")]
 
 	new_cards = []
 	for c in cards:
 		if c['multiverseid'] in multiverse_ids:
 			print('Existing %s...' % c['multiverseid'])
 			continue
-		print('Inserting %s' % c['name'])
-		qry = """INSERT INTO card (
-				collectornumber, multiverseid, name, card_setid, colors,
-				rarity, multifaced, cmc, typeline, manacost) SELECT
-				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s), %s,
-				%s, %s, %s, %s, %s
-				WHERE NOT EXISTS (
-					SELECT 1 FROM card
-					WHERE collectornumber = %s
-					AND card_setid = (SELECT id FROM card_set WHERE code = %s))
-				RETURNING id"""
-		qargs = (
-			c['collectornumber'], c['multiverseid'], c['name'], c['set'], c['colors'],
-			c['rarity'], c['multifaced'], c['cmc'], c['typeline'], c['manacost'],
-			c['collectornumber'], c['set'],
+
+		existing = fetch_query(
+			"SELECT id FROM card WHERE LOWER(name) = LOWER(%s)",
+			(c['name'],),
+			single_row=True
 		)
-		new = mutate_query(qry, qargs, returning=True)
+		if existing:
+			cardid = existing['id']
+		else:
+			print('Inserting card %s' % c['name'])
+			new = mutate_query(
+				"""
+				INSERT INTO card (
+					name, colors, multifaced, cmc, typeline, manacost
+				) SELECT
+					%s, %s, %s, %s, %s, %s
+				WHERE NOT EXISTS (
+					SELECT 1 FROM card WHERE LOWER(name) = LOWER(%s)
+				) RETURNING id
+				""",
+				(
+					c['name'], c['colors'], c['multifaced'], c['cmc'],
+					c['typeline'], c['manacost'],
+					c['name'],
+				),
+				returning=True
+			)
+			cardid = new['id']
+
+		new = mutate_query(
+			"""
+			INSERT INTO printing (
+				cardid, collectornumber, multiverseid, card_setid,
+				rarity
+			) SELECT
+				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s),
+				%s
+			WHERE NOT EXISTS (
+				SELECT 1 FROM printing
+				WHERE cardid = %s
+				AND collectornumber = %s
+				AND card_setid = (SELECT id FROM card_set WHERE code = %s)
+			) RETURNING id
+			""",
+			(
+				cardid, c['collectornumber'], c['multiverseid'], c['set'],
+				c['rarity'],
+				cardid, c['collectornumber'], c['set'],
+			),
+			returning=True
+		)
 		if new:
+			print('Inserted printing %s' % c['name'])
 			c['id'] = new['id']
 			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
-				mutate_query("UPDATE card SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
+				mutate_query("UPDATE printing SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
 				new_cards.append({'id': c['id'], 'productid': c['productid']})
 
 	bulk_lots = ([new_cards[i:i + 250] for i in range(0, len(new_cards), 250)])
@@ -175,6 +212,6 @@ def import_cards(cards):
 		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}))
 
 	updates = []
-	for cardid, price in prices.items():
-		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
-	mutate_query("UPDATE card SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)
+	for printingid, price in prices.items():
+		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': printingid})
+	mutate_query("UPDATE printing SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)

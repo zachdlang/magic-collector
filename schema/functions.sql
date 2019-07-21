@@ -1,11 +1,11 @@
 
 DROP FUNCTION IF EXISTS collector.get_collectornumber(INTEGER);
-CREATE OR REPLACE FUNCTION collector.get_collectornumber(_cardid INTEGER) RETURNS TEXT AS $$
-	SELECT CASE WHEN multifaced = true THEN
-		concat(collectornumber, 'a')
+CREATE OR REPLACE FUNCTION collector.get_collectornumber(_printingid INTEGER) RETURNS TEXT AS $$
+	SELECT CASE WHEN c.multifaced = true THEN
+		concat(p.collectornumber, 'a')
 	ELSE
-		collectornumber
-	END FROM card WHERE id = _cardid;
+		p.collectornumber
+	END FROM printing p LEFT JOIN card c ON (c.id = p.cardid) WHERE p.id = _printingid;
 $$ LANGUAGE 'sql';
 
 
@@ -26,23 +26,23 @@ CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MON
 	ELSE
 		convert_price(price, userid)
 	END
-	FROM card, user_card WHERE cardid = card.id AND user_card.id = _user_cardid;
+	FROM printing, user_card WHERE printingid = printing.id AND user_card.id = _user_cardid;
 $$ LANGUAGE 'sql';
 
 
 DROP FUNCTION IF EXISTS collector.set_price(INTEGER, MONEY, MONEY);
 CREATE OR REPLACE FUNCTION collector.set_price(
-	_cardid INTEGER,
+	_printingid INTEGER,
 	_price MONEY,
 	_foilprice MONEY
 ) RETURNS VOID AS $$
 BEGIN
-	UPDATE card SET price = _price, foilprice = _foilprice WHERE id = _cardid;
+	UPDATE printing SET price = _price, foilprice = _foilprice WHERE id = _printingid;
 
-	INSERT INTO price_history (cardid, price, foilprice)
-		SELECT _cardid, _price, _foilprice
+	INSERT INTO price_history (printingid, price, foilprice)
+		SELECT _printingid, _price, _foilprice
 		WHERE NOT EXISTS (
-			SELECT 1 FROM price_history WHERE cardid = _cardid AND created = current_date
+			SELECT 1 FROM price_history WHERE printingid = _printingid AND created = current_date
 		);
 
 	RETURN;
@@ -85,19 +85,13 @@ CREATE OR REPLACE FUNCTION collector.deck_card_match(_name TEXT, _userid INTEGER
 DECLARE
 	cardid INTEGER;
 BEGIN
-	SELECT c.id INTO cardid
-		FROM card c
-		LEFT JOIN card_set s ON (c.card_setid = s.id)
-		WHERE LOWER(c.name) = LOWER(_name)
-		ORDER BY card_owned(_userid, c.id) DESC, s.released DESC LIMIT 1;
+	SELECT c.id INTO cardid FROM card c WHERE LOWER(c.name) = LOWER(_name);
 
 	-- If no matches, ILIKE for multifaced cards
 	IF cardid IS NULL THEN
 		SELECT c.id INTO cardid
 			FROM card c
-			LEFT JOIN card_set s ON (c.card_setid = s.id)
-			WHERE c.multifaced AND c.name ILIKE concat('%', _name, '%')
-			ORDER BY card_owned(_userid, c.id) DESC, s.released DESC LIMIT 1;
+			WHERE c.multifaced AND c.name ILIKE concat('%', _name, '%');
 	END IF;
 
 	RETURN cardid;
@@ -105,17 +99,10 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-DROP FUNCTION IF EXISTS collector.card_printings(INTEGER);
-CREATE OR REPLACE FUNCTION collector.card_printings(_cardid INTEGER)
-RETURNS SETOF collector.card AS $$
-	SELECT card.* FROM card WHERE name = (SELECT name FROM card WHERE id = _cardid);
-$$ LANGUAGE 'sql';
-
-
 DROP FUNCTION IF EXISTS collector.card_owned(INTEGER, INTEGER);
-CREATE OR REPLACE FUNCTION collector.card_owned(_userid INTEGER, _cardid INTEGER)
+CREATE OR REPLACE FUNCTION collector.card_owned(_userid INTEGER, _printing INTEGER)
 RETURNS BOOLEAN AS $$
-	SELECT EXISTS (SELECT 1 FROM user_card WHERE userid = _userid AND cardid = _cardid);
+	SELECT EXISTS (SELECT 1 FROM user_card WHERE userid = _userid AND printingid = _printing);
 $$ LANGUAGE 'sql';
 
 
@@ -123,8 +110,8 @@ DROP FUNCTION IF EXISTS collector.total_printings_owned(INTEGER, INTEGER);
 CREATE OR REPLACE FUNCTION collector.total_printings_owned(_userid INTEGER, _cardid INTEGER)
 RETURNS INTEGER AS $$
 	SELECT COALESCE(
-		(SELECT SUM(quantity) FROM user_card uc WHERE uc.userid = _userid AND uc.cardid IN (
-			SELECT id FROM collector.card_printings(_cardid)
+		(SELECT SUM(quantity) FROM user_card uc WHERE uc.userid = _userid AND uc.printingid IN (
+			SELECT id FROM printing WHERE cardid = _cardid
 		)
 	), 0)::INTEGER; 
 $$ LANGUAGE 'sql';

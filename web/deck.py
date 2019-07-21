@@ -9,34 +9,62 @@ from sitetools.utility import fetch_query
 
 
 def get_all(deleted):
-	qry = """SELECT d.id, d.name, get_format(d.formatid) AS formatname,
-				d.cardartid, c.id AS cardid, c.collectornumber,
-				(SELECT code FROM card_set WHERE id = c.card_setid)
+	qry = """SELECT
+				d.id, d.name, get_format(d.formatid) AS formatname,
+				d.cardartid, d.cardartid AS cardid
 			FROM deck d
-			LEFT JOIN card c ON (c.id = d.cardartid)
 			WHERE d.deleted = %s AND d.userid = %s
 			ORDER BY d.formatid, d.name"""
 	qargs = (deleted, session['userid'],)
 	decks = fetch_query(qry, qargs)
+	for d in decks:
+		# Temporary until I can incorporate this into the first query
+		card = fetch_query(
+			"""
+			SELECT
+				p.collectornumber, cs.code
+			FROM printing p
+			LEFT JOIN card_set cs ON (cs.id = p.card_setid)
+			WHERE p.cardid = %s
+			ORDER BY cs.released DESC LIMIT 1
+			""",
+			(d['cardid'],),
+			single_row=True
+		)
+		if card:
+			d['collectornumber'] = card['collectornumber']
+			d['code'] = card['code']
 	return decks
 
 
 def get(deckid):
 	qry = """SELECT d.id, d.name, d.formatid, d.deleted,
-				d.cardartid, c.id AS cardid, c.collectornumber,
-				(SELECT code FROM card_SET WHERE id = c.card_setid)
+				d.cardartid, d.cardartid AS cardid
 			FROM deck d
-			LEFT JOIN card c ON (c.id = d.cardartid)
 			WHERE d.userid = %s AND d.id = %s"""
 	qargs = (session['userid'], deckid,)
 	result = fetch_query(qry, qargs, single_row=True)
+	# Temporary until I can incorporate this into the first query
+	card = fetch_query(
+		"""
+		SELECT
+			p.collectornumber, cs.code
+		FROM printing p
+		LEFT JOIN card_set cs ON (cs.id = p.card_setid)
+		WHERE p.cardid = %s
+		ORDER BY cs.released DESC LIMIT 1
+		""",
+		(result['cardid'],),
+		single_row=True
+	)
+	result['collectornumber'] = card['collectornumber']
+	result['code'] = card['code']
 	return result
 
 
 def get_cards(deckid):
 	qry = """SELECT dc.id, dc.cardid, dc.quantity, dc.section,
-				c.name, c.collectornumber,
-				(SELECT code FROM card_set WHERE id = card_setid),
+				c.name,
 				total_printings_owned(d.userid, dc.cardid) AS has_quantity,
 				c.typeline, c.manacost, COALESCE(t.name, 'Other') AS cardtype,
 				is_basic_land(c.id) AS basic_land

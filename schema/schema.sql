@@ -25,25 +25,30 @@ CREATE TABLE IF NOT EXISTS card_type (
 
 CREATE TABLE IF NOT EXISTS card (
 	id SERIAL PRIMARY KEY,
-	collectornumber TEXT NOT NULL,
-	multiverseid INTEGER,
 	name TEXT NOT NULL,
-	card_setid INTEGER NOT NULL REFERENCES card_set(id) ON DELETE CASCADE,
 	colors TEXT,
-	rarity CHARACTER,
 	multifaced BOOLEAN NOT NULL DEFAULT FALSE,
-	price MONEY,
-	foilprice MONEY,
-	tcgplayer_productid TEXT,
 	cmc NUMERIC,
 	typeline TEXT,
 	manacost TEXT,
 	card_typeid INTEGER REFERENCES card_type(id) ON DELETE SET NULL
 )WITH OIDS;
 
-CREATE TABLE IF NOT EXISTS user_card (
+CREATE TABLE IF NOT EXISTS printing (
 	id SERIAL PRIMARY KEY,
 	cardid INTEGER NOT NULL REFERENCES card(id) ON DELETE CASCADE,
+	collectornumber TEXT NOT NULL,
+	card_setid INTEGER NOT NULL REFERENCES card_set(id) ON DELETE CASCADE,
+	multiverseid INTEGER,
+	price MONEY,
+	foilprice MONEY,
+	tcgplayer_productid TEXT,
+	rarity CHARACTER
+)WITH OIDS;
+
+CREATE TABLE IF NOT EXISTS user_card (
+	id SERIAL PRIMARY KEY,
+	printingid INTEGER NOT NULL REFERENCES printing(id) ON DELETE CASCADE,
 	userid INTEGER NOT NULL REFERENCES app.enduser(id) ON DELETE CASCADE,
 	quantity INTEGER NOT NULL,
 	foil BOOLEAN NOT NULL DEFAULT false
@@ -57,7 +62,7 @@ CREATE TABLE IF NOT EXISTS currency (
 
 CREATE TABLE IF NOT EXISTS price_history (
 	id SERIAL PRIMARY KEY,
-	cardid INTEGER NOT NULL REFERENCES card(id) ON DELETE CASCADE,
+	printingid INTEGER NOT NULL REFERENCES printing(id) ON DELETE CASCADE,
 	price MONEY,
 	foilprice MONEY,
 	created DATE NOT NULL DEFAULT current_date
@@ -95,7 +100,7 @@ CREATE TABLE IF NOT EXISTS import (
 CREATE TABLE IF NOT EXISTS import_row (
 	id SERIAL PRIMARY KEY,
 	importid INTEGER NOT NULL REFERENCES import(id) ON DELETE CASCADE,
-	cardid INTEGER NOT NULL REFERENCES card(id) ON DELETE CASCADE,
+	printingid INTEGER NOT NULL REFERENCES printing(id) ON DELETE CASCADE,
 	quantity INTEGER NOT NULL,
 	foil BOOLEAN NOT NULL DEFAULT false,
 	complete BOOLEAN NOT NULL DEFAULT false

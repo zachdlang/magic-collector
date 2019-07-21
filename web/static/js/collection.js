@@ -296,14 +296,14 @@ function bind_events() {
 
 	$('#search-results-list').on('click', '.search-results-add', function() {
 		var cardname = $(this).closest('tr').find('.cardname').text();
-		var cardid = $(this).data().cardid;
+		var printingid = $(this).data().printingid;
 		var foil = false;
 		var quantity = 1;
 		$.ajax({
 			url: "/collection/card/add",
 			method: "POST",
 			data: {
-				'cardid': cardid,
+				'printingid': printingid,
 				'foil': foil,
 				'quantity': quantity
 			}

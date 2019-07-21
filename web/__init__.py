@@ -129,13 +129,14 @@ def collection_card():
 		resp['card'] = fetch_query(
 			"""
 			SELECT
-				c.id, c.name, cs.name AS setname, get_rarity(c.rarity) AS rarity,
+				p.id, c.name, cs.name AS setname, get_rarity(p.rarity) AS rarity,
 				uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				total_printings_owned(uc.userid, uc.cardid) AS printingsowned
+				total_printings_owned(uc.userid, p.cardid) AS printingsowned
 			FROM user_card uc
-			LEFT JOIN card c ON (uc.cardid = c.id)
-			LEFT JOIN card_set cs ON (c.card_setid = cs.id)
+			LEFT JOIN printing p ON (uc.printingid = p.id)
+			LEFT JOIN card c ON (p.cardid = c.id)
+			LEFT JOIN card_set cs ON (p.card_setid = cs.id)
 			WHERE uc.userid = %s
 			AND uc.id = %s
 			""",
@@ -155,7 +156,7 @@ def collection_card():
 			LEFT JOIN deck d ON (d.id = dc.deckid)
 			WHERE d.deleted = false
 			AND d.userid = %s
-			AND dc.cardid IN (SELECT id FROM card_printings(%s))
+			AND dc.cardid IN (SELECT cardid FROM printing WHERE id = %s)
 			GROUP BY d.id
 			ORDER BY d.formatid, d.name
 			""",
@@ -175,15 +176,15 @@ def collection_card_pricehistory():
 	params = params_to_dict(request.args)
 	resp = {}
 
-	cardid = None
+	printingid = None
 	if params.get('user_cardid'):
-		cardid = fetch_query(
-			"SELECT cardid FROM user_card WHERE id = %s",
+		printingid = fetch_query(
+			"SELECT printingid FROM user_card WHERE id = %s",
 			(params['user_cardid'],),
 			single_row=True
-		)['cardid']
+		)['printingid']
 
-	if cardid is not None:
+	if printingid is not None:
 		history = fetch_query(
 			"""
 			SELECT
@@ -191,10 +192,10 @@ def collection_card_pricehistory():
 				convert_price(foilprice, %s)::NUMERIC AS foilprice,
 				to_char(created, 'DD/MM/YY') AS created
 			FROM price_history
-			WHERE cardid = %s
+			WHERE printingid = %s
 			ORDER BY created ASC
 			""",
-			(session['userid'], session['userid'], cardid,)
+			(session['userid'], session['userid'], printingid,)
 		)
 
 		resp['dates'] = [h['created'] for h in history]
@@ -228,8 +229,8 @@ def collection_card_add():
 	params = params_to_dict(request.form, bool_keys=['foil'])
 	resp = {}
 
-	if params.get('cardid'):
-		collection.add(params['cardid'], params['foil'], params['quantity'])
+	if params.get('printingid'):
+		collection.add(params['printingid'], params['foil'], params['quantity'])
 	else:
 		resp['error'] = 'No card selected.'
 
@@ -286,9 +287,10 @@ def search():
 
 	if params.get('query'):
 		search = '%' + params['query'] + '%'
-		qry = """SELECT c.id, c.name, s.code, s.name AS setname
-				FROM card c
-				LEFT JOIN card_set s ON (c.card_setid=s.id)
+		qry = """SELECT p.id, c.name, s.code, s.name AS setname
+				FROM printing p
+				LEFT JOIN card c ON (p.cardid = c.id)
+				LEFT JOIN card_set s ON (p.card_setid = s.id)
 				WHERE c.name ILIKE %s
 				ORDER BY c.name ASC, s.released DESC LIMIT 50"""
 		results = fetch_query(qry, (search,))
@@ -344,19 +346,19 @@ def csv_upload():
 	)['id']
 
 	for row in rows:
-		row['cardid'] = fetch_query(
-			"SELECT id FROM card WHERE multiverseid = %s",
+		row['printingid'] = fetch_query(
+			"SELECT id FROM printing WHERE multiverseid = %s",
 			(row['multiverseid'],),
 			single_row=True
 		)['id']
 		# Doing this in loop instead of executemany due to needing RETURNING
 		row['import_rowid'] = mutate_query(
 			"""
-			INSERT INTO import_row (importid, cardid, foil, quantity)
+			INSERT INTO import_row (importid, printingid, foil, quantity)
 			VALUES (%s, %s, %s, %s)
 			RETURNING id
 			""",
-			(importid, row['cardid'], row['foil'], row['quantity'],),
+			(importid, row['printingid'], row['foil'], row['quantity'],),
 			returning=True
 		)['id']
 
@@ -371,7 +373,7 @@ def complete_import(importid):
 		(importid,)
 	)
 	for row in rows:
-		collection.add(row['cardid'], row['foil'], row['quantity'])
+		collection.add(row['printingid'], row['foil'], row['quantity'])
 		# Mark import for this card as completed
 		mutate_query(
 			"UPDATE import_row SET complete = true WHERE id = %s",
@@ -380,20 +382,21 @@ def complete_import(importid):
 
 
 @app.route('/update_prices', methods=['GET'])
-@app.route('/update_prices/<int:cardid>', methods=['GET'])
+@app.route('/update_prices/<int:printingid>', methods=['GET'])
 @check_celery_running
-def update_prices(cardid=None):
-	qry = """SELECT c.id, c.collectornumber, c.name, c.rarity,
+def update_prices(printingid=None):
+	qry = """SELECT p.id, p.collectornumber, c.name, p.rarity,
 				s.code AS set_code, s.name AS set_name, s.tcgplayer_groupid AS groupid,
-				c.tcgplayer_productid AS productid
-			FROM card c
-			LEFT JOIN card_set s ON (s.id = c.card_setid)
+				p.tcgplayer_productid AS productid
+			FROM printing p
+			LEFT JOIN card_set s ON (s.id = p.card_setid)
+			LEFT JOIN card c ON (c.id = p.cardid)
 			WHERE NOT is_basic_land(c.id)"""
 	qargs = ()
-	if cardid is not None:
+	if printingid is not None:
 		qry += " AND c.id = %s"
-		qargs += (cardid,)
-	qry += " ORDER BY EXISTS(SELECT 1 FROM user_card WHERE cardid=c.id) DESC, c.name ASC"
+		qargs += (printingid,)
+	qry += " ORDER BY EXISTS(SELECT 1 FROM user_card WHERE printingid=c.id) DESC, c.name ASC"
 	cards = fetch_query(qry, qargs)
 
 	tcgplayer_token = tcgplayer.login()
@@ -437,13 +440,15 @@ def decks_get_all():
 	params = params_to_dict(request.args, bool_keys=['deleted'])
 	results = deck.get_all(params['deleted'])
 	for r in results:
-		if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
-			asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
-		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardartid']))
+		if r['cardid']:
+			if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
+				asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
+			r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardid']))
+			del r['code']
+			del r['collectornumber']
+
 		r['viewurl'] = url_for('decklist', deckid=r['id'])
 		del r['cardid']
-		del r['code']
-		del r['collectornumber']
 
 	return jsonify(results=results)
 
@@ -462,19 +467,10 @@ def decks_get():
 			resp['deck']['code'],
 			resp['deck']['collectornumber']
 		)
-	resp['deck']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['deck']['cardartid']))
+	resp['deck']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['deck']['cardid']))
 	del resp['deck']['cardid']
 	del resp['deck']['code']
 	del resp['deck']['collectornumber']
-
-	for r in resp['main'] + resp['sideboard']:
-		if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
-			asynchro.get_card_art.delay(
-				r['cardid'],
-				r['code'],
-				r['collectornumber']
-			)
-		r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardid']))
 
 	resp['main'] = deck.parse_types(resp['main'])
 	resp['sideboard'] = deck.parse_types(resp['sideboard'])
