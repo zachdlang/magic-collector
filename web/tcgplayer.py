@@ -5,6 +5,7 @@ import json
 # Local imports
 from web import config
 
+
 def login():
 	headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 	data = {

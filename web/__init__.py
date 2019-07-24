@@ -12,7 +12,8 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 
 # Local imports
 from web import (
-	collection, deck, scryfall, tcgplayer, config
+	collection, deck, scryfall, tcgplayer, config,
+	functions
 )
 from sitetools.utility import (
 	is_logged_in, params_to_dict,
@@ -132,7 +133,8 @@ def collection_card():
 				p.id, c.name, cs.name AS setname, get_rarity(p.rarity) AS rarity,
 				uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				total_printings_owned(uc.userid, p.cardid) AS printingsowned
+				total_printings_owned(uc.userid, p.cardid) AS printingsowned,
+				(SELECT to_char(MAX(created), 'DD/MM/YY') FROM price_history WHERE printingid = p.id) AS price_lastupdated
 			FROM user_card uc
 			LEFT JOIN printing p ON (uc.printingid = p.id)
 			LEFT JOIN card c ON (p.cardid = c.id)
@@ -188,14 +190,17 @@ def collection_card_pricehistory():
 		history = fetch_query(
 			"""
 			SELECT
-				convert_price(price, %s)::NUMERIC AS price,
-				convert_price(foilprice, %s)::NUMERIC AS foilprice,
-				to_char(created, 'DD/MM/YY') AS created
-			FROM price_history
-			WHERE printingid = %s
-			ORDER BY created ASC
+				convert_price(ph.price, %s)::NUMERIC AS price,
+				convert_price(ph.foilprice, %s)::NUMERIC AS foilprice,
+				to_char(d.day, 'DD/MM/YY') AS created
+			FROM generate_series(
+				(SELECT MIN(created) FROM price_history WHERE printingid = %s),
+				(SELECT MAX(created) FROM price_history WHERE printingid = %s),
+				'1 day'::INTERVAL
+			) d(day)
+			LEFT JOIN price_history ph ON (ph.created = d.day AND ph.printingid = %s)
 			""",
-			(session['userid'], session['userid'], printingid,)
+			(session['userid'], session['userid'], printingid, printingid, printingid,)
 		)
 
 		resp['dates'] = [h['created'] for h in history]
@@ -203,13 +208,13 @@ def collection_card_pricehistory():
 			'label': 'Price',
 			'backgroundColor': 'rgba(40, 181, 246, 0.2)',
 			'borderColor': 'rgba(40, 181, 246, 1)',
-			'data': [float(h['price']) for h in history if h['price'] is not None]
+			'data': [functions.make_float(h['price']) for h in history]
 		}
 		foilprices = {
 			'label': 'Foil Price',
 			'backgroundColor': 'rgba(175, 90, 144, 0.2)',
 			'borderColor': 'rgba(175, 90, 144, 1)',
-			'data': [float(h['foilprice']) for h in history if h['foilprice'] is not None]
+			'data': [functions.make_float(h['foilprice']) for h in history]
 		}
 
 		resp['datasets'] = []

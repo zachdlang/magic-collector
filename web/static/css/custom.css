@@ -201,6 +201,12 @@ main {
 
 .collection-page #info_modal .extra-info {
 	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+.collection-page #info_modal .last-updated {
+	font-style: italic;
+	font-size: 12px;
 }
 
 .collection-page #info_modal .card-preview-small {

@@ -218,6 +218,7 @@ function bind_events() {
 				$('#info_modal .rarity').text(data.card.rarity);
 				$('#info_modal .price').text(data.card.price + ' ' + data.card.currencycode);
 				$('#info_modal .owned').text(data.card.printingsowned);
+				$('#info_modal .last-updated').text('Price Last Updated ' + data.card.price_lastupdated);
 				$('#info_modal .quantity').val(data.card.quantity);
 				$('#info_modal .foil').prop('checked', data.card.foil);
 				$('#info_modal .user_cardid').val(user_cardid);
@@ -384,6 +385,7 @@ function bind_events() {
 								}
 							}]
 						},
+						spanGaps: true,
 						maintainAspectRatio: false,
 						tooltips: {
 							callbacks: {
