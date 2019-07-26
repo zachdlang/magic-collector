@@ -16,6 +16,7 @@
 		<tr data-image="{{imageurl}}" data-user_cardid="{{user_cardid}}">
 			<td class="name">
 				{{name}}
+				{{#if language}}({{language}}){{/if}}
 				<span class="card-hover-img"></span>
 			</td>
 			<td class="hide-on-med-and-up">{{setcode}}</td>
@@ -68,7 +69,10 @@
 		{{#each results}}
 		<tr>
 			<td><a class="btn bg-secondary search-results-add" data-printingid="{{id}}"><i class="material-icons">add</i></a></td>
-			<td class="cardname">{{name}}</td>
+			<td class="cardname">
+				{{name}}
+				{{#if language}}({{language}}){{/if}}
+			</td>
 			<td class="blue-grey-text text-lighten-3">{{setname}}</td>
 			<td class="valign-wrapper"><img class="set-icon" src="{{iconurl}}"></td>
 		</tr>

@@ -115,14 +115,20 @@ def get_price(cards, token=None):
 	headers = {'Authorization': 'bearer %s' % token}
 	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([cards[cardid] for cardid in cards]), headers=headers)
 	resp = json.loads(resp.text)
-	prices = {cardid: {'normal': None, 'foil': None} for cardid, productid in cards.items()}
+	prices = {cardid: {'normal': None, 'foil': None, 'type': None} for cardid, productid in cards.items()}
 	for cardid, productid in cards.items():
 		for r in resp['results']:
 			if str(r['productId']) == productid:
+				# Fall back to market (recent sale) price if no mid (current sale) price
+				price_found = r['midPrice']
+				prices[cardid]['type'] = 'mid'
+				if price_found is None:
+					price_found = r['marketPrice']
+					prices[cardid]['type'] = 'market'
 				if r['subTypeName'] == 'Normal':
-					prices[cardid]['normal'] = r['midPrice']
+					prices[cardid]['normal'] = price_found
 				elif r['subTypeName'] == 'Foil':
-					prices[cardid]['foil'] = r['midPrice']
+					prices[cardid]['foil'] = price_found
 				else:
 					print('UNKNOWN SUBTYPE %s %s' % (cards, r['subTypeName']))
 	return prices

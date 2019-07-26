@@ -213,7 +213,9 @@ function bind_events() {
 			if (data.error) M.toast({html: data.error});
 			else {
 				$('#info_modal .art').attr('src', data.card.arturl);
-				$('#info_modal .name').text(data.card.name);
+				var cardname = data.card.name;
+				if (data.card.language) cardname += ' (' + data.card.language + ')';
+				$('#info_modal .name').text(cardname);
 				$('#info_modal .card-set').text(data.card.setname);
 				$('#info_modal .rarity').text(data.card.rarity);
 				$('#info_modal .price').text(data.card.price + ' ' + data.card.currencycode);

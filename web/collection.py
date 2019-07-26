@@ -63,7 +63,7 @@ def get(params):
 				p.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
 				get_rarity(p.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				p.collectornumber, p.card_setid
+				p.collectornumber, p.card_setid, CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
 			FROM user_card uc
 			LEFT JOIN printing p ON (uc.printingid = p.id)
 			LEFT JOIN card c ON (p.cardid = c.id)
@@ -181,10 +181,10 @@ def import_cards(cards):
 			"""
 			INSERT INTO printing (
 				cardid, collectornumber, multiverseid, card_setid,
-				rarity
+				rarity, language
 			) SELECT
 				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s),
-				%s
+				%s, %s
 			WHERE NOT EXISTS (
 				SELECT 1 FROM printing
 				WHERE cardid = %s
@@ -194,7 +194,7 @@ def import_cards(cards):
 			""",
 			(
 				cardid, c['collectornumber'], c['multiverseid'], c['set'],
-				c['rarity'],
+				c['rarity'], c['language'],
 				cardid, c['collectornumber'], c['set'],
 			),
 			returning=True

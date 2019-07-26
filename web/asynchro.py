@@ -68,9 +68,14 @@ def fetch_prices(cards, tcgplayer_token):
 	for cardid, price in prices.items():
 		# Only update if we received have prices
 		if price['normal'] is not None or price['foil'] is not None:
-			updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': cardid})
+			updates.append({
+				'price': price['normal'],
+				'foilprice': price['foil'],
+				'pricetype': price['type'],
+				'id': cardid
+			})
 	mutate_query(
-		"SELECT set_price(%(id)s, %(price)s::MONEY, %(foilprice)s::MONEY)",
+		"SELECT set_price(%(id)s, %(price)s::MONEY, %(foilprice)s::MONEY, %(pricetype)s)",
 		updates,
 		executemany=True
 	)

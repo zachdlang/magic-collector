@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS printing (
 	price MONEY,
 	foilprice MONEY,
 	tcgplayer_productid TEXT,
-	rarity CHARACTER
+	rarity CHARACTER,
+	language TEXT
 )WITH OIDS;
 
 CREATE TABLE IF NOT EXISTS user_card (
@@ -65,6 +66,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 	printingid INTEGER NOT NULL REFERENCES printing(id) ON DELETE CASCADE,
 	price MONEY,
 	foilprice MONEY,
+	pricetype TEXT,
 	created DATE NOT NULL DEFAULT current_date
 )WITH OIDS;
 

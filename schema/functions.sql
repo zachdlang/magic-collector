@@ -30,17 +30,18 @@ CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MON
 $$ LANGUAGE 'sql';
 
 
-DROP FUNCTION IF EXISTS collector.set_price(INTEGER, MONEY, MONEY);
+DROP FUNCTION IF EXISTS collector.set_price(INTEGER, MONEY, MONEY, TEXT);
 CREATE OR REPLACE FUNCTION collector.set_price(
 	_printingid INTEGER,
 	_price MONEY,
-	_foilprice MONEY
+	_foilprice MONEY,
+	_pricetype TEXT
 ) RETURNS VOID AS $$
 BEGIN
 	UPDATE printing SET price = _price, foilprice = _foilprice WHERE id = _printingid;
 
-	INSERT INTO price_history (printingid, price, foilprice)
-		SELECT _printingid, _price, _foilprice
+	INSERT INTO price_history (printingid, price, foilprice, pricetype)
+		SELECT _printingid, _price, _foilprice, _pricetype
 		WHERE NOT EXISTS (
 			SELECT 1 FROM price_history WHERE printingid = _printingid AND created = current_date
 		);

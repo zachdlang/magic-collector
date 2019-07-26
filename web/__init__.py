@@ -134,7 +134,8 @@ def collection_card():
 				uc.quantity, uc.foil, get_price(uc.id) AS price, p.tcgplayer_productid,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
 				total_printings_owned(uc.userid, p.cardid) AS printingsowned,
-				(SELECT to_char(MAX(created), 'DD/MM/YY') FROM price_history WHERE printingid = p.id) AS price_lastupdated
+				(SELECT to_char(MAX(created), 'DD/MM/YY') FROM price_history WHERE printingid = p.id) AS price_lastupdated,
+				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
 			FROM user_card uc
 			LEFT JOIN printing p ON (uc.printingid = p.id)
 			LEFT JOIN card c ON (p.cardid = c.id)
@@ -321,13 +322,19 @@ def search():
 
 	if params.get('query'):
 		search = '%' + params['query'] + '%'
-		qry = """SELECT p.id, c.name, s.code, s.name AS setname
-				FROM printing p
-				LEFT JOIN card c ON (p.cardid = c.id)
-				LEFT JOIN card_set s ON (p.card_setid = s.id)
-				WHERE c.name ILIKE %s
-				ORDER BY c.name ASC, s.released DESC LIMIT 50"""
-		results = fetch_query(qry, (search,))
+		results = fetch_query(
+			"""
+			SELECT
+				p.id, c.name, s.code, s.name AS setname,
+				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
+			FROM printing p
+			LEFT JOIN card c ON (p.cardid = c.id)
+			LEFT JOIN card_set s ON (p.card_setid = s.id)
+			WHERE c.name ILIKE %s
+			ORDER BY c.name ASC, s.released DESC LIMIT 50
+			""",
+			(search,)
+		)
 		for r in results:
 			if not os.path.exists(asynchro.set_icon_filename(r['code'])):
 				asynchro.get_set_icon.delay(r['code'])
