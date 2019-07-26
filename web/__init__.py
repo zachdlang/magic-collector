@@ -172,6 +172,25 @@ def collection_card():
 	return jsonify(**resp)
 
 
+@app.route('/collection/card/pricerefresh', methods=['GET'])
+@login_required
+def collection_card_pricerefresh():
+	params = params_to_dict(request.args)
+
+	printingid = None
+	if params.get('user_cardid'):
+		printingid = fetch_query(
+			"SELECT printingid FROM user_card WHERE id = %s",
+			(params['user_cardid'],),
+			single_row=True
+		)['printingid']
+
+	if printingid is not None:
+		return update_prices(printingid=printingid)
+
+	return jsonify(error='No card found.')
+
+
 @app.route('/collection/card/pricehistory', methods=['GET'])
 @login_required
 def collection_card_pricehistory():

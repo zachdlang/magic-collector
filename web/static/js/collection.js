@@ -352,6 +352,21 @@ function bind_events() {
 		}).fail(ajax_failed)
 	});
 
+	$('#pricerefresh_btn').on('click', function() {
+		$.ajax({
+			url: "/collection/card/pricerefresh",
+			method: "GET",
+			data: {user_cardid: $('#info_modal .user_cardid').val()}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				M.toast({html: "Refreshing price(s)."});
+				get_collection();
+				M.Modal.getInstance($('#info_modal')).close();
+			}
+		}).fail(ajax_failed)
+	});
+
 	$('#carddetails_btn').on('click', function() {
 		$('#info_modal .card-details, #pricehistory_btn').removeClass('hide');
 		$('#info_modal .card-pricehistory, #carddetails_btn').addClass('hide');		
