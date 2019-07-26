@@ -249,15 +249,15 @@ def collection_card_edit():
 
 	update_current = True
 	existing = fetch_query(
-		"SELECT * FROM user_card WHERE id = %s AND userid = %s",
+		"SELECT printingid, foil FROM user_card WHERE id = %s AND userid = %s",
 		(params['user_cardid'], session['userid'],),
 		single_row=True
 	)
 	if existing['foil'] != params['foil']:
 		# Foil has changed, need to check for opposite record
 		opposite = fetch_query(
-			"SELECT * FROM user_card WHERE cardid = %s AND userid = %s AND foil != %s",
-			(existing['cardid'], session['userid'], existing['foil'],),
+			"SELECT * FROM user_card WHERE printingid = %s AND userid = %s AND foil != %s",
+			(existing['printingid'], session['userid'], existing['foil'],),
 			single_row=True
 		)
 		if opposite:
