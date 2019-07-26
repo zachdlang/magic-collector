@@ -4,7 +4,8 @@ from flask import session, url_for
 # Local imports
 from web import scryfall, tcgplayer
 from sitetools.utility import (
-	pagecount, fetch_query, mutate_query
+	pagecount, fetch_query, mutate_query,
+	strip_unicode_characters
 )
 
 
@@ -169,7 +170,7 @@ def import_cards(cards):
 				""",
 				(
 					c['name'], c['colors'], c['multifaced'], c['cmc'],
-					c['typeline'], c['manacost'],
+					strip_unicode_characters(c['typeline']), c['manacost'],
 					c['name'],
 				),
 				returning=True
@@ -201,6 +202,7 @@ def import_cards(cards):
 		if new:
 			print('Inserted printing %s' % c['name'])
 			c['id'] = new['id']
+			c['set_code'] = c['set']  # Key needed for searching on tcgplayer
 			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
 				mutate_query("UPDATE printing SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
