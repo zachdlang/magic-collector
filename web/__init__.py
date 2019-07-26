@@ -399,7 +399,7 @@ def update_prices(printingid=None):
 			WHERE NOT is_basic_land(c.id)"""
 	qargs = ()
 	if printingid is not None:
-		qry += " AND c.id = %s"
+		qry += " AND p.id = %s"
 		qargs += (printingid,)
 	qry += " ORDER BY EXISTS(SELECT 1 FROM user_card WHERE printingid=c.id) DESC, c.name ASC"
 	cards = fetch_query(qry, qargs)
