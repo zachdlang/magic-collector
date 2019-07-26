@@ -330,7 +330,7 @@ def csv_upload():
 
 	new = []
 	for multiverseid in multiverse_ids:
-		qry = "SELECT 1 FROM printing WHERE multiverseid = %s"
+		qry = "SELECT 1 FROM printing WHERE multiverseid = %s::TEXT"
 		qargs = (multiverseid,)
 		if len(fetch_query(qry, qargs)) == 0:
 			new.append(multiverseid)
@@ -352,7 +352,7 @@ def csv_upload():
 
 	for row in rows:
 		row['printingid'] = fetch_query(
-			"SELECT id FROM printing WHERE multiverseid = %s",
+			"SELECT id FROM printing WHERE multiverseid = %s::TEXT",
 			(row['multiverseid'],),
 			single_row=True
 		)['id']
