@@ -222,6 +222,15 @@ function bind_events() {
 				$('#info_modal .quantity').val(data.card.quantity);
 				$('#info_modal .foil').prop('checked', data.card.foil);
 				$('#info_modal .user_cardid').val(user_cardid);
+
+				$('#info_modal .tcgplayer_productid')
+					.val('')
+					.closest('.row').removeClass('hide');
+				if (data.card.tcgplayer_productid) {
+					$('#info_modal .tcgplayer_productid')
+						.closest('.row').addClass('hide');
+				}
+
 				var totalindecks = data.card.decks.reduce((a, b) => a + b.quantity, 0);
 				
 				compile_handlebars('decklist-template', '#info_modal #decklist', {
@@ -340,7 +349,8 @@ function bind_events() {
 			data: {
 				'user_cardid': $('#info_modal .user_cardid').val(),
 				'quantity': $('#info_modal .quantity').val(),
-				'foil': $('#info_modal .foil').prop('checked')
+				'foil': $('#info_modal .foil').prop('checked'),
+				'tcgplayer_productid': $('#info_modal .tcgplayer_productid').val()
 			}
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});

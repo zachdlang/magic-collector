@@ -131,7 +131,7 @@ def collection_card():
 			"""
 			SELECT
 				p.id, c.name, cs.name AS setname, get_rarity(p.rarity) AS rarity,
-				uc.quantity, uc.foil, get_price(uc.id) AS price,
+				uc.quantity, uc.foil, get_price(uc.id) AS price, p.tcgplayer_productid,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
 				total_printings_owned(uc.userid, p.cardid) AS printingsowned,
 				(SELECT to_char(MAX(created), 'DD/MM/YY') FROM price_history WHERE printingid = p.id) AS price_lastupdated
@@ -272,6 +272,16 @@ def collection_card_edit():
 		(params['user_cardid'], session['userid'],),
 		single_row=True
 	)
+	if params.get('tcgplayer_productid'):
+		print('Updating TCGplayer ID')
+		mutate_query(
+			"""
+			UPDATE printing SET tcgplayer_productid = %s
+			WHERE id = %s
+			AND tcgplayer_productid IS NULL
+			""",
+			(params['tcgplayer_productid'], existing['printingid'],)
+		)
 	if existing['foil'] != params['foil']:
 		# Foil has changed, need to check for opposite record
 		opposite = fetch_query(
