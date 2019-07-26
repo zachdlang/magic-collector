@@ -330,7 +330,7 @@ def csv_upload():
 
 	new = []
 	for multiverseid in multiverse_ids:
-		qry = "SELECT * FROM card WHERE multiverseid = %s"
+		qry = "SELECT 1 FROM printing WHERE multiverseid = %s"
 		qargs = (multiverseid,)
 		if len(fetch_query(qry, qargs)) == 0:
 			new.append(multiverseid)
