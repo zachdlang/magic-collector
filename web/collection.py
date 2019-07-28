@@ -141,7 +141,8 @@ def import_cards(cards):
 			mutate_query(qry, qargs)
 
 	# more efficient than attempting inserts
-	multiverse_ids = [x['multiverseid'] for x in fetch_query("SELECT DISTINCT multiverseid FROM printing WHERE multiverseid IS NOT NULL")]
+	resp = fetch_query("SELECT DISTINCT multiverseid FROM printing WHERE multiverseid IS NOT NULL")
+	multiverse_ids = [x['multiverseid'] for x in resp]
 
 	new_cards = []
 	for c in cards:
@@ -216,4 +217,8 @@ def import_cards(cards):
 	updates = []
 	for printingid, price in prices.items():
 		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': printingid})
-	mutate_query("UPDATE printing SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s", updates, executemany=True)
+	mutate_query(
+		"UPDATE printing SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s",
+		updates,
+		executemany=True
+	)

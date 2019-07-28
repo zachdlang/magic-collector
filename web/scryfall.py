@@ -1,22 +1,18 @@
 # Standard library imports
 import requests
 import json
-import os
-
-# Third party imports
-from flask import url_for
-
-# Local imports
-from sitetools.utility import (
-	get_static_file, fetch_image
-)
 
 
 def send_request(endpoint, params=None, data=None, post=False):
 	func = requests.get
 	if post is True:
 		func = requests.post
-	r = func('https://api.scryfall.com%s' % endpoint, params=params, data=data, headers={'Content-Type': 'application/json'}).text
+	r = func(
+		'https://api.scryfall.com%s' % endpoint,
+		params=params,
+		data=data,
+		headers={'Content-Type': 'application/json'}
+	).text
 	resp = json.loads(r)
 	return resp
 

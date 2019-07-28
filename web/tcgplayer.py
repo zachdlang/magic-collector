@@ -13,7 +13,11 @@ def login():
 		'client_id': config.TCGPLAYER_PUBLICKEY,
 		'client_secret': config.TCGPLAYER_PRIVATEKEY
 	}
-	resp = requests.post('https://api.tcgplayer.com/token', data=data, headers=headers)
+	resp = requests.post(
+		'https://api.tcgplayer.com/token',
+		data=data,
+		headers=headers
+	)
 	resp = json.loads(resp.text)
 
 	return resp['access_token']
@@ -23,7 +27,10 @@ def search_categories(token=None):
 	if token is None:
 		token = login()
 	headers = {'Authorization': 'bearer %s' % token}
-	resp = requests.get('http://api.tcgplayer.com/catalog/categories/1/search/manifest', headers=headers)
+	resp = requests.get(
+		'http://api.tcgplayer.com/catalog/categories/1/search/manifest',
+		headers=headers
+	)
 	resp = json.loads(resp.text)
 	for r in resp['results'][0]['filters']:
 		if r['name'] == 'SetName':
@@ -59,13 +66,21 @@ def search(card, token=None):
 		]
 	}
 
-	resp = requests.post('http://api.tcgplayer.com/catalog/categories/1/search', data=json.dumps(data), headers=headers)
+	resp = requests.post(
+		'http://api.tcgplayer.com/catalog/categories/1/search',
+		data=json.dumps(data),
+		headers=headers
+	)
 	search_results = json.loads(resp.text)['results']
 	if len(search_results) == 1:
 		productid = search_results[0]
 	elif len(search_results) > 1:
 		# filter down from product details
-		resp = requests.get('http://api.tcgplayer.com/catalog/products/%s' % ','.join([str(r) for r in search_results]), params={'getExtendedFields': True}, headers=headers)
+		resp = requests.get(
+			'http://api.tcgplayer.com/catalog/products/%s' % ','.join([str(r) for r in search_results]),
+			params={'getExtendedFields': True},
+			headers=headers
+		)
 		product_results = json.loads(resp.text)['results']
 		products_found = []
 		for r in product_results:
@@ -88,7 +103,11 @@ def search(card, token=None):
 			print('Extra product search found result %s for %s %s' % (productid, card['name'], card['set_name']))
 		else:
 			# filter down from set details
-			resp = requests.get('http://api.tcgplayer.com/catalog/groups/%s' % ','.join([str(r['groupId']) for r in products_found]), headers=headers)
+			group_params = ','.join([str(r['groupId']) for r in products_found])
+			resp = requests.get(
+				'http://api.tcgplayer.com/catalog/groups/{}'.format(group_params),
+				headers=headers
+			)
 			group_results = json.loads(resp.text)['results']
 			groups_found = []
 			for r in group_results:
@@ -113,7 +132,11 @@ def get_price(cards, token=None):
 		print('Ignoring 0 length')
 		return {}
 	headers = {'Authorization': 'bearer %s' % token}
-	resp = requests.get('http://api.tcgplayer.com/pricing/product/%s' % ','.join([cards[cardid] for cardid in cards]), headers=headers)
+	card_params = ','.join([cards[cardid] for cardid in cards])
+	resp = requests.get(
+		'http://api.tcgplayer.com/pricing/product/%s' % card_params,
+		headers=headers
+	)
 	resp = json.loads(resp.text)
 	prices = {cardid: {'normal': None, 'foil': None, 'type': None} for cardid, productid in cards.items()}
 	for cardid, productid in cards.items():

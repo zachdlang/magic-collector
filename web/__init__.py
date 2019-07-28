@@ -585,10 +585,17 @@ def decks_import():
 			rows.append(row)
 	os.remove(filename)
 
-	qry = """INSERT INTO deck (name, userid, formatid)
-			VALUES (concat('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS')), %s, (SELECT id FROM format WHERE name = 'Other'))
-			RETURNING id"""
-	deckid = mutate_query(qry, (session['userid'],), returning=True)['id']
+	deckid = mutate_query(
+		"""
+		INSERT INTO deck (name, userid, formatid)
+		VALUES (
+			concat('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS')),
+			%s,
+			(SELECT id FROM format WHERE name = 'Other')
+		) RETURNING id
+		""",
+		(session['userid'],),
+		returning=True)['id']
 
 	for row in rows:
 		print(row)
