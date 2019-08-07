@@ -14,10 +14,10 @@ jobs:
             - "c2:8e:e2:2f:bb:94:e6:55:5b:79:16:60:b6:95:68:ce"
       - run:
           name: Deploy Over SSH
-          command: ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
+          command: ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
       - run:
           name: Testing SSH
-          command: ssh $SSH_USER@$SSH_HOST "touch /tmp/testfile"
+          command: ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "touch /tmp/testfile"
 
 workflows:
   version: 2
