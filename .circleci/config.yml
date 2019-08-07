@@ -11,7 +11,7 @@ jobs:
     steps:
       - add_ssh_keys:
           fingerprints:
-            - "$SSH_FINGERPRINT"
+            - "c2:8e:e2:2f:bb:94:e6:55:5b:79:16:60:b6:95:68:ce"
       - run:
           name: Deploy Over SSH
           command: ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
