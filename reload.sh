@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /var/www/collector && git pull
+cd /var/www/collector && sudo -u zach git pull
 cd
 
 echo 'Reloading collector...'
