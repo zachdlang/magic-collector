@@ -10,14 +10,14 @@ jobs:
       enabled: true
     steps:
       - add_ssh_keys:
-        fingerprints:
-          - "$SSH_FINGERPRINT"
+          fingerprints:
+            - "$SSH_FINGERPRINT"
       - run:
-        name: Deploy Over SSH
-        command: ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
+          name: Deploy Over SSH
+          command: ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
       - run:
-        name: Testing SSH
-        command ssh $SSH_USER@$SSH_HOST "touch /tmp/testfile"
+          name: Testing SSH
+          command ssh $SSH_USER@$SSH_HOST "touch /tmp/testfile"
 
 workflows:
   version: 2
