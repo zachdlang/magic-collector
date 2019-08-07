@@ -17,7 +17,7 @@ jobs:
           command: ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
       - run:
           name: Testing SSH
-          command ssh $SSH_USER@$SSH_HOST "touch /tmp/testfile"
+          command: ssh $SSH_USER@$SSH_HOST "touch /tmp/testfile"
 
 workflows:
   version: 2
