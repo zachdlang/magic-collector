@@ -12,8 +12,7 @@ jobs:
           - "$SSH_FINGERPRINT"
       - run:
         name: Deploy Over SSH
-        command:|
-          ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
+        command: ssh $SSH_USER@$SSH_HOST "sudo /var/www/collector/reload.sh"
 
 workflows:
   version: 2
