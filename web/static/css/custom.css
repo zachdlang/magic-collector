@@ -65,6 +65,10 @@ main {
 	max-height: 90%; max-width:90%;
 }
 
+.modal:not(.bottom-sheet) .modal-footer {
+	height: auto;
+}
+
 .modal .modal-content {
 	padding: 20px;
 }
