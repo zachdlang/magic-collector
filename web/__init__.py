@@ -52,6 +52,11 @@ def teardown(error):
 	disconnect_database()
 
 
+@app.route('/ping')
+def ping():
+	return jsonify(ping='pong')
+
+
 @app.route('/favicon.ico')
 @app.route('/robots.txt')
 @app.route('/sitemap.xml')
