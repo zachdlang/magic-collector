@@ -8,5 +8,7 @@ install:
 
 jobs:
   include:
+    - stage: build
+      script: ./.travis/install-sitetools.sh
     - stage: test
       script: pytest
