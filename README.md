@@ -1,6 +1,6 @@
 # magic-collector
 
-[![CircleCI](https://circleci.com/gh/zachdlang/magic-collector/tree/master.svg?style=svg)](https://circleci.com/gh/zachdlang/magic-collector/tree/master)
+[![Build Status](https://travis-ci.com/zachdlang/magic-collector.svg?branch=master)](https://travis-ci.com/zachdlang/magic-collector)
 
 ## Service Setup
 1. Copy the service files, so Gunicorn & Celery can be automatically started & reloaded.
