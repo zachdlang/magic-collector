@@ -13,5 +13,4 @@ jobs:
     - stage: build
       script: ./.travis/install-sitetools.sh
     - stage: test
-      script: ./.travis/create-test-config.sh
-      script: pytest
+      script: ./.travis/create-test-config.sh && pytest
