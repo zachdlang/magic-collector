@@ -3,9 +3,9 @@ python:
   - "3.6"
 
 cache:
-  pip
   directories:
-    - ../sitetools
+    - $HOME/.cache/pip
+    - $HOME/build/zachdlang/sitetools
 
 install:
   - pip install -r requirements.txt
