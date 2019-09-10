@@ -2,6 +2,8 @@ language: python
 python:
   - "3.6"
 
+cache: pip
+
 install:
   - pip install -r requirements.txt
   - pip install pytest
@@ -10,6 +12,6 @@ jobs:
   include:
     - stage: build
       script: ./.travis/install-sitetools.sh
-      script: ./.travis/create-test-config.sh
     - stage: test
+      script: ./.travis/create-test-config.sh
       script: pytest
