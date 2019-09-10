@@ -22,15 +22,16 @@ from sitetools.utility import (
 	check_celery_running
 )
 
-sentry_sdk.init(
-	dsn=config.SENTRY_DSN,
-	integrations=[FlaskIntegration()]
-)
+if not hasattr(config, 'TESTMODE'):
+	sentry_sdk.init(
+		dsn=config.SENTRY_DSN,
+		integrations=[FlaskIntegration()]
+	)
 
-sentry_sdk.init(
-	dsn=config.CELERY_SENTRY_DSN,
-	integrations=[CeleryIntegration()]
-)
+	sentry_sdk.init(
+		dsn=config.CELERY_SENTRY_DSN,
+		integrations=[CeleryIntegration()]
+	)
 
 app = Flask(__name__)
 
