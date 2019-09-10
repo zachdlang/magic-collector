@@ -10,5 +10,6 @@ jobs:
   include:
     - stage: build
       script: ./.travis/install-sitetools.sh
+      script: ./.travis/create-test-config.sh
     - stage: test
       script: pytest
