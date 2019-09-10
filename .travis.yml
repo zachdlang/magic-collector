@@ -5,7 +5,7 @@ python:
 cache:
   pip
   directories:
-    ../sitetools
+    - ../sitetools
 
 install:
   - pip install -r requirements.txt
