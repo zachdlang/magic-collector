@@ -7,13 +7,15 @@ def send_request(endpoint, params=None, data=None, post=False):
 	func = requests.get
 	if post is True:
 		func = requests.post
-	r = func(
+	response = func(
 		'https://api.scryfall.com%s' % endpoint,
 		params=params,
 		data=data,
 		headers={'Content-Type': 'application/json'}
-	).text
-	resp = json.loads(r)
+	)
+	print(response)
+	print(response.text)
+	resp = json.loads(response.text)
 	return resp
 
 
@@ -42,7 +44,7 @@ def get_bulk(multiverseids):
 	data = {'identifiers': [{'multiverse_id': x} for x in multiverseids]}
 	resp = send_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
-	if resp.get('not_found'):
+	if resp['not_found']:
 		raise Exception('Not found: %s' % resp['not_found'])
 	for r in resp['data']:
 		simple_resp.append(simplify(r))
