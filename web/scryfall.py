@@ -42,7 +42,7 @@ def get_bulk(multiverseids):
 	data = {'identifiers': [{'multiverse_id': x} for x in multiverseids]}
 	resp = send_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
-	if resp['not_found']:
+	if resp.get('not_found'):
 		raise Exception('Not found: %s' % resp['not_found'])
 	for r in resp['data']:
 		simple_resp.append(simplify(r))
