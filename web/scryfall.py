@@ -1,6 +1,7 @@
 # Standard library imports
 import requests
 import json
+import logging
 
 
 def send_request(endpoint, params=None, data=None, post=False):
@@ -13,8 +14,8 @@ def send_request(endpoint, params=None, data=None, post=False):
 		data=data,
 		headers={'Content-Type': 'application/json'}
 	)
-	print(response)
-	print(response.text)
+	logging.info(response)
+	logging.info(response.text)
 	resp = json.loads(response.text)
 	return resp
 
