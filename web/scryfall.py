@@ -14,8 +14,6 @@ def send_request(endpoint, params=None, data=None, post=False):
 		data=data,
 		headers={'Content-Type': 'application/json'}
 	)
-	logging.info(response)
-	logging.info(response.text)
 	resp = json.loads(response.text)
 	return resp
 
