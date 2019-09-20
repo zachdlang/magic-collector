@@ -21,6 +21,13 @@ function show_details() {
 
 			$('#edit-deck-name').val(data.deck.name);
 			$('#edit-deck-format').val(data.deck.formatid);
+
+			$('#edit-deck-notes').val(data.deck.notes);
+			if (data.deck.notes) {
+				M.textareaAutoResize($('#edit-deck-notes'));
+				$('label[for=edit-deck-notes]').addClass('active');
+			}
+
 			Handlebars.registerPartial('cardlist', $('#cardlist-partial').html());
 			compile_handlebars('editdeck-template', '#deck-details .deck-list', data);
 			
@@ -102,7 +109,8 @@ function bind_events() {
 			data: {
 				'deckid': $('#deckid').val(),
 				'name': $('#edit-deck-name').val(),
-				'formatid': $('#edit-deck-format').val()
+				'formatid': $('#edit-deck-format').val(),
+				'notes': $('#edit-deck-notes').val()
 			}
 		}).done(function(data) {
 			if (data.error) M.toast({html: data.error});

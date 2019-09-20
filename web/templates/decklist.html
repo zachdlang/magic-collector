@@ -84,6 +84,7 @@
 							<a class="btn bg-secondary" id="deck-save"><i class="material-icons">save</i></a>
 						</div>
 					</div>
+
 					<div class="row">
 						<div class="col s12 m6">
 							<input type="text" id="edit-deck-name">
@@ -94,6 +95,13 @@
 								<option value="{{ f.id }}">{{ f.name }}</option>
 								{%- endfor %}
 							</select>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="input-field col s12">
+							<textarea id="edit-deck-notes" class="materialize-textarea"></textarea>
+							<label for="edit-deck-notes">Notes</label>
 						</div>
 					</div>
 				</div>

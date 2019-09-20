@@ -529,8 +529,8 @@ def decks_get():
 @login_required
 def decks_save():
 	params = params_to_dict(request.form)
-	qry = "UPDATE deck SET name = %s, formatid = %s WHERE id = %s AND userid = %s"
-	qargs = (params['name'], params['formatid'], params['deckid'], session['userid'],)
+	qry = "UPDATE deck SET name = %s, formatid = %s, notes = %s WHERE id = %s AND userid = %s"
+	qargs = (params['name'], params['formatid'], params['notes'], params['deckid'], session['userid'],)
 	mutate_query(qry, qargs)
 	return jsonify()
 
