@@ -355,7 +355,7 @@ def csv_upload() -> Response:
 	import csv
 
 	upload = request.files['upload']
-	filename = '/tmp/upload_%s_%s.csv' % (os.urandom(32), session['userid'])
+	filename = '/tmp/upload_{}_{}.csv'.format(os.urandom(32), session['userid'])
 	upload.save(filename)
 	rows = []
 	multiverse_ids = []
@@ -583,7 +583,7 @@ def decks_import_csv() -> Response:
 	import csv
 
 	params = params_to_dict(request.form)
-	filename = '/tmp/upload_%s_%s.csv' % (os.urandom(32), session['userid'])
+	filename = '/tmp/upload_{}_{}.csv'.format(os.urandom(32), session['userid'])
 	request.files['upload'].save(filename)
 	rows = []
 	with open(filename) as csvfile:

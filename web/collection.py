@@ -113,7 +113,8 @@ def add(printingid: int, foil: bool, quantity: int) -> None:
 				printingid, userid, foil, quantity
 			) SELECT %s, %s, %s, %s
 			WHERE NOT EXISTS (
-				SELECT 1 FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s
+				SELECT 1 FROM user_card
+				WHERE printingid = %s AND foil = %s AND userid = %s
 			)
 			""",
 			(printingid, session['userid'], foil, quantity, printingid, foil, session['userid'],)
@@ -142,7 +143,7 @@ def remove(printingid: int, foil: bool, quantity: int) -> None:
 			qargs = (quantity, existing['id'],)
 		mutate_query(qry, qargs)
 	else:
-		raise Exception('Could not find card %s.' % printingid)
+		raise Exception('Could not find card {}.'.format(printingid))
 
 
 def import_cards(cards: list) -> None:
@@ -177,7 +178,7 @@ def import_cards(cards: list) -> None:
 	new_cards = []
 	for c in cards:
 		if c['multiverseid'] in multiverse_ids:
-			print('Existing %s...' % c['multiverseid'])
+			print('Existing {}...'.format(c['multiverseid']))
 			continue
 
 		existing = fetch_query(
@@ -188,7 +189,7 @@ def import_cards(cards: list) -> None:
 		if existing:
 			cardid = existing['id']
 		else:
-			print('Inserting card %s' % c['name'])
+			print('Inserting card {}'.format(c['name']))
 			new = mutate_query(
 				"""
 				INSERT INTO card (
@@ -231,7 +232,7 @@ def import_cards(cards: list) -> None:
 			returning=True
 		)
 		if new:
-			print('Inserted printing %s' % c['name'])
+			print('Inserted printing {}'.format(c['name']))
 			c['id'] = new['id']
 			c['set_code'] = c['set']  # Key needed for searching on tcgplayer
 			c['productid'] = tcgplayer.search(c)

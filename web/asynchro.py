@@ -55,7 +55,10 @@ def fetch_prices(cards: list, tcgplayer_token: str) -> None:
 			print('Searching for TCGPlayer ID for {} ({}).'.format(c['name'], c['set_name']))
 			c['productid'] = tcgplayer.search(c, token=tcgplayer_token)
 			if c['productid'] is not None:
-				mutate_query("UPDATE printing SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
+				mutate_query(
+					"UPDATE printing SET tcgplayer_productid = %s WHERE id = %s",
+					(c['productid'], c['id'],)
+				)
 
 	# Filter out cards without tcgplayerid to save requests
 	cards = [c for c in cards if c['productid'] is not None]

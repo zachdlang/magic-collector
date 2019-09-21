@@ -17,7 +17,7 @@ def _send_request(
 	if post is True:
 		func = requests.post
 	response = func(
-		'https://api.tcgplayer.com%s' % endpoint,
+		'https://api.tcgplayer.com{}'.format(endpoint),
 		params=params,
 		data=data,
 		headers=headers

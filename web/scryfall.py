@@ -13,7 +13,7 @@ def _send_request(
 	if post is True:
 		func = requests.post
 	response = func(
-		'https://api.scryfall.com%s' % endpoint,
+		'https://api.scryfall.com{}'.format(endpoint),
 		params=params,
 		data=data,
 		headers={'Content-Type': 'application/json'}
@@ -33,13 +33,15 @@ def search(name: str) -> list:
 
 
 def get_set(code: str) -> dict:
-	endpoint = '/sets/%s' % code if code is not None else '/sets'
+	endpoint = '/sets'
+	if code is not None:
+		endpoint += '/{}'.format(code)
 	resp = _send_request(endpoint)
 	return resp
 
 
 def get(code: str, collectornumber: str) -> list:
-	resp = _send_request('/cards/%s/%s' % (code.lower(), collectornumber))
+	resp = _send_request('/cards/{}/{}'.format(code.lower(), collectornumber))
 	return simplify(resp)
 
 
@@ -48,7 +50,7 @@ def get_bulk(multiverseids: list) -> list:
 	resp = _send_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
 	if resp['not_found']:
-		raise Exception('Not found: %s' % resp['not_found'])
+		raise Exception('Not found: {}'.format(resp['not_found']))
 	for r in resp['data']:
 		simple_resp.append(simplify(r))
 	return simple_resp
