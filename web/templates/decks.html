@@ -35,29 +35,75 @@
 				</label>
 			</div>
 			<div class="col s2">
-				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
+				<a class="btn bg-secondary dropdown-trigger" href="javascript:void(0);" data-target="add-deck-dropdown">
+					<i class="material-icons">add</i>
+				</a>
+
+				<ul id='add-deck-dropdown' class="dropdown-content">
+					<li>
+						<a class="modal-trigger" href="#arena_import_modal">
+							<i class="material-icons">content_paste</i> Arena Import
+						</a>
+					</li>
+					<li>
+						<a class="modal-trigger" href="#csv_upload_modal">
+							<i class="material-icons">file_upload</i> Upload CSV
+						</a>
+					</li>
+				</ul>
 			</div>
 		</div>
 
-		<div id="upload_modal" class="modal bottom-sheet">
+		<div id="csv_upload_modal" class="modal bottom-sheet">
 			<div class="modal-content">
-				<h4>Upload CSV</h4>
-				<div id="upload_loading"></div>
+				<h4><i class="material-icons">file_upload</i> Upload CSV</h4>
+				<div id="csv_upload_loading"></div>
 
-				<div class="file-field input-field">
-					<div class="btn bg-secondary">
-						<span>File</span>
-						<form enctype="multipart/form-data" method="post" name="upload_form">
-							<input type="file" accept="text/csv" name="upload">
-						</form>
+				<form enctype="multipart/form-data" method="post" name="csv_upload_form">
+					<div class="row">
+						<div class="input-field col s12">
+							<input id="csv_upload_name" name="name" type="text">
+							<label for="csv_upload_name">Name</label>
+						</div>
 					</div>
-					<div class="file-path-wrapper">
-						<input class="file-path validate" type="text">
+
+					<div class="file-field input-field">
+						<div class="btn bg-secondary">
+							<span>File</span>
+							<input type="file" accept="text/csv" name="upload">
+						</div>
+						<div class="file-path-wrapper">
+							<input class="file-path validate" type="text">
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<a class="btn-flat bg-secondary" id="csv_upload_btn">Submit</a>
+			</div>
+		</div>
+
+		<div id="arena_import_modal" class="modal bottom-sheet">
+			<div class="modal-content">
+				<h4><i class="material-icons">content_paste</i> Arena Import</h4>
+				<div id="arena_import_loading"></div>
+
+				<div class="row">
+					<div class="input-field col s12">
+						<input id="arena_import_name" type="text">
+						<label for="arena_import_name">Name</label>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="input-field col s12">
+						<textarea id="arena_import" class="materialize-textarea"></textarea>
+						<label for="arena_import">Import</label>
 					</div>
 				</div>
 			</div>
 			<div class="modal-footer">
-				<a class="btn-flat bg-secondary" id="upload_btn">Submit</a>
+				<a class="btn-flat bg-secondary" id="arena_import_btn">Submit</a>
 			</div>
 		</div>
 
@@ -70,31 +116,54 @@
 
 {% block script %}
 <script>
+	const csvUpload = function() {
+		show_loading($('#csv_upload_loading'));
+		var form = document.forms.namedItem('csv_upload_form');
+		var formdata = new FormData(form);
+
+		var upload_req = new XMLHttpRequest();
+		upload_req.open("POST", "{{ url_for('decks_import_csv') }}", true);
+		upload_req.onload = function(oEvent) {
+			$('#csv_upload_loading').empty();
+			if (upload_req.status == 200) {
+				M.Modal.getInstance($('#csv_upload_modal')).close();
+				M.toast({html: "Successfully Uploaded"});
+				get_decks();
+			} else {
+				M.toast({html: "An internal error occurred. Please try again later."});
+			}
+		};
+
+		upload_req.send(formdata);
+	}
+
+	const arenaImport = function() {
+		show_loading($('#arena_import_loading'));
+
+		$.ajax({
+			url: "{{ url_for('decks_import_arena') }}",
+			method: "POST",
+			data: {
+				'name': $('#arena_import_name').val(),
+				'import': $('#arena_import').val()
+			}
+		}).done(function(data) {
+			if (data.error) M.toast({html: data.error});
+			else {
+				M.Modal.getInstance($('#arena_import_modal')).close();
+				M.toast({html: "Successfully Imported"});
+				get_decks();
+			}
+		}).fail(ajax_failed);
+	}
+
 	$(document).ready(function() {
 		get_decks();
 
 		$('#deleted').on('change', get_decks);
 
-		$('#upload_btn').on('click', function() {
-			show_loading($('#upload_loading'));
-			var form = document.forms.namedItem('upload_form');
-			var formdata = new FormData(form);
-
-			var upload_req = new XMLHttpRequest();
-			upload_req.open("POST", "{{ url_for('decks_import') }}", true);
-			upload_req.onload = function(oEvent) {
-				$('#upload_loading').empty();
-				if (upload_req.status == 200) {
-					M.Modal.getInstance($('#upload_modal')).close();
-					M.toast({html: "Successfully Uploaded"});
-					get_decks();
-				} else {
-					M.toast({html: "An internal error occurred. Please try again later."});
-				}
-			};
-
-			upload_req.send(formdata);
-		});
+		$('#csv_upload_btn').on('click', csvUpload);
+		$('#arena_import_btn').on('click', arenaImport);
 	});
 
 	function get_decks() {

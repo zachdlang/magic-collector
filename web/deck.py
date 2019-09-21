@@ -5,7 +5,7 @@ import re
 from flask import session, url_for
 
 # Local imports
-from sitetools.utility import fetch_query
+from sitetools.utility import fetch_query, mutate_query
 
 
 def get_all(deleted):
@@ -120,6 +120,42 @@ def parse_types(cards):
 		new_rows.append(c)
 
 	return new_rows
+
+
+def do_import(name, cards, notes=None):
+	deckid = mutate_query(
+		"""
+		INSERT INTO deck (name, userid, formatid, notes)
+		VALUES (
+			COALESCE(%s, CONCAT('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS'))),
+			%s,
+			(SELECT id FROM format WHERE name = 'Other'),
+			%s
+		) RETURNING id
+		""",
+		(name, session['userid'], notes,),
+		returning=True)['id']
+
+	for c in cards:
+		_import_card(deckid, c)
+
+	qry = """UPDATE deck SET cardartid = (
+				SELECT id FROM card WHERE EXISTS (
+					SELECT 1 FROM deck_card WHERE cardid = card.id AND deckid = deck.id
+				) ORDER BY random() LIMIT 1
+			) WHERE id = %s"""
+	mutate_query(qry, (deckid,))
+
+
+def _import_card(deckid, card):
+	print('Importing deck card {}'.format(card['name']))
+	mutate_query(
+		"""
+		INSERT INTO deck_card (deckid, cardid, quantity, section)
+		VALUES (%s, deck_card_match(%s, %s), %s, %s)
+		""",
+		(deckid, card['name'], session['userid'], card['quantity'], card['section'],)
+	)
 
 
 MANASYMBOL_IMG = {

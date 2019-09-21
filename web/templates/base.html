@@ -58,9 +58,14 @@
 		{% endblock %}
 
 		<script type="text/javascript">
-			$(document).ready(function(){
+			var initMaterializeComponents = function() {
 				$('.sidenav').sidenav();
-			});
+				$('.dropdown-trigger').dropdown({
+					constrainWidth: false
+				});
+			}
+
+			$(document).ready(initMaterializeComponents);
 		</script>
 
 		{% block script %}

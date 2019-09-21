@@ -577,11 +577,12 @@ def decks_cards_delete():
 	return jsonify()
 
 
-@app.route('/decks/import', methods=['POST'])
+@app.route('/decks/import/csv', methods=['POST'])
 @login_required
-def decks_import():
+def decks_import_csv():
 	import csv
 
+	params = params_to_dict(request.form)
 	filename = '/tmp/upload_%s_%s.csv' % (os.urandom(32), session['userid'])
 	request.files['upload'].save(filename)
 	rows = []
@@ -591,31 +592,69 @@ def decks_import():
 			rows.append(row)
 	os.remove(filename)
 
-	deckid = mutate_query(
-		"""
-		INSERT INTO deck (name, userid, formatid)
-		VALUES (
-			concat('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS')),
-			%s,
-			(SELECT id FROM format WHERE name = 'Other')
-		) RETURNING id
-		""",
-		(session['userid'],),
-		returning=True)['id']
+	cards = []
+	for r in rows:
+		card = {
+			'name': r['Name'],
+			'quantity': r['Count'],
+			'section': 'main' if row['Section'] == 'main' else 'sideboard'
+		}
+		cards.append(card)
 
-	for row in rows:
-		print(row)
-		qry = """INSERT INTO deck_card (deckid, cardid, quantity, section)
-				VALUES (%s, deck_card_match(%s, %s), %s, %s)"""
-		qargs = (deckid, row['Name'], session['userid'], row['Count'], row['Section'],)
-		mutate_query(qry, qargs)
+	deck.do_import(params['name'], cards)
 
-	qry = """UPDATE deck SET cardartid = (
-				SELECT id FROM card WHERE EXISTS (
-					SELECT 1 FROM deck_card WHERE cardid = card.id AND deckid = deck.id
-				) ORDER BY random() LIMIT 1
-			) WHERE id = %s"""
-	mutate_query(qry, (deckid,))
+	return jsonify()
+
+
+@app.route('/decks/import/arena', methods=['POST'])
+@login_required
+def decks_import_arena():
+	import re
+
+	params = params_to_dict(request.form)
+	main, sideboard = params['import'].split('\n\n')
+	cards = []
+	notes = ''
+
+	# Flake-8 doesn't like lambdas as functions!
+	def parse_row(row):
+		regex_parsers = [
+			r"^([\d]+)([\w\s',/-]+)\(.+\)\s\d+$",
+			r"^([\d]+)([\w\s',/-]+)\(.+\)$",
+			r"^([\d]+)([\w\s',/-]+)$"
+		]
+		for parser in regex_parsers:
+			match = re.match(parser, row)
+			if match:
+				return match
+
+	def populate_card(match, section):
+		return {
+			'name': match.group(2).strip(),
+			'quantity': match.group(1).strip(),
+			'section': section
+		}
+
+	for row in main.split('\n'):
+		match = parse_row(row)
+		if match:
+			card = populate_card(match, 'main')
+			cards.append(card)
+		else:
+			notes += "Couldn't import: {}\n".format(row)
+
+	for row in sideboard.split('\n'):
+		match = parse_row(row)
+		if match:
+			card = populate_card(match, 'sideboard')
+			cards.append(card)
+		else:
+			notes += "Couldn't import sideboard: {}\n".format(row)
+
+	if notes == '':
+		notes = None
+
+	deck.do_import(params['name'], cards, notes=notes)
 
 	return jsonify()
 
