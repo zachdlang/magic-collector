@@ -49,7 +49,7 @@ def internal_error(e: Exception) -> Response:
 
 
 @app.teardown_appcontext
-def teardown() -> Response:
+def teardown(e: Exception) -> Response:
 	disconnect_database()
 
 
