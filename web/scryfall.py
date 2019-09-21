@@ -1,10 +1,14 @@
 # Standard library imports
 import requests
 import json
-import logging
 
 
-def send_request(endpoint, params=None, data=None, post=False):
+def _send_request(
+	endpoint: str,
+	params: any = None,
+	data: any = None,
+	post: bool = False
+) -> any:
 	func = requests.get
 	if post is True:
 		func = requests.post
@@ -18,9 +22,9 @@ def send_request(endpoint, params=None, data=None, post=False):
 	return resp
 
 
-def search(name):
+def search(name: str) -> list:
 	params = {'q': name, 'unique': 'prints'}
-	resp = send_request('/cards/search', params=params)
+	resp = _send_request('/cards/search', params=params)
 	simple_resp = []
 	if resp.get('code') != 'not_found':
 		for r in resp['data']:
@@ -28,20 +32,20 @@ def search(name):
 	return simple_resp
 
 
-def get_set(code):
+def get_set(code: str) -> dict:
 	endpoint = '/sets/%s' % code if code is not None else '/sets'
-	resp = send_request(endpoint)
+	resp = _send_request(endpoint)
 	return resp
 
 
-def get(code, collectornumber):
-	resp = send_request('/cards/%s/%s' % (code.lower(), collectornumber))
+def get(code: str, collectornumber: str) -> list:
+	resp = _send_request('/cards/%s/%s' % (code.lower(), collectornumber))
 	return simplify(resp)
 
 
-def get_bulk(multiverseids):
+def get_bulk(multiverseids: list) -> list:
 	data = {'identifiers': [{'multiverse_id': x} for x in multiverseids]}
-	resp = send_request('/cards/collection', data=json.dumps(data), post=True)
+	resp = _send_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
 	if resp['not_found']:
 		raise Exception('Not found: %s' % resp['not_found'])
@@ -50,7 +54,7 @@ def get_bulk(multiverseids):
 	return simple_resp
 
 
-def bulk_file_import(filename):
+def bulk_file_import(filename: str) -> list:
 	with open(filename) as f:
 		data = json.loads(f.read())
 	simple_resp = []
@@ -59,7 +63,7 @@ def bulk_file_import(filename):
 	return simple_resp
 
 
-def simplify(resp):
+def simplify(resp: dict) -> dict:
 	simple = {
 		'name': resp['name'],
 		'multiverseid': None,

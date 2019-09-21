@@ -9,7 +9,7 @@ from sitetools.utility import (
 )
 
 
-def get(params):
+def get(params: dict) -> dict:
 	resp = {}
 
 	limit = 20
@@ -63,7 +63,8 @@ def get(params):
 				p.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
 				get_rarity(p.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
 				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
-				p.collectornumber, p.card_setid, CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
+				p.collectornumber, p.card_setid,
+				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
 			FROM user_card uc
 			LEFT JOIN printing p ON (uc.printingid = p.id)
 			LEFT JOIN card c ON (p.cardid = c.id)
@@ -94,24 +95,44 @@ def get(params):
 	return resp
 
 
-def add(printingid, foil, quantity):
-	qry = "SELECT id FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s"
-	qargs = (printingid, foil, session['userid'],)
-	existing = fetch_query(qry, qargs, single_row=True)
+def add(printingid: int, foil: bool, quantity: int) -> None:
+	existing = fetch_query(
+		"SELECT id FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s",
+		(printingid, foil, session['userid'],),
+		single_row=True
+	)
 	if existing:
-		qry = "UPDATE user_card SET quantity = quantity + %s WHERE id = %s"
-		qargs = (quantity, existing['id'],)
+		mutate_query(
+			"UPDATE user_card SET quantity = quantity + %s WHERE id = %s",
+			(quantity, existing['id'],)
+		)
 	else:
-		qry = """INSERT INTO user_card (printingid, userid, foil, quantity) SELECT %s, %s, %s, %s
-				WHERE NOT EXISTS (SELECT 1 FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s)"""
-		qargs = (printingid, session['userid'], foil, quantity, printingid, foil, session['userid'],)
-	mutate_query(qry, qargs)
+		mutate_query(
+			"""
+			INSERT INTO user_card (
+				printingid, userid, foil, quantity
+			) SELECT %s, %s, %s, %s
+			WHERE NOT EXISTS (
+				SELECT 1 FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s
+			)
+			""",
+			(printingid, session['userid'], foil, quantity, printingid, foil, session['userid'],)
+		)
 
 
-def remove(printingid, foil, quantity):
-	qry = "SELECT id, quantity FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s AND quantity >= %s"
-	qargs = (printingid, foil, session['userid'], quantity,)
-	existing = fetch_query(qry, qargs, single_row=True)
+def remove(printingid: int, foil: bool, quantity: int) -> None:
+	existing = fetch_query(
+		"""
+		SELECT
+			id, quantity FROM user_card
+		WHERE printingid = %s
+		AND foil = %s
+		AND userid = %s
+		AND quantity >= %s
+		""",
+		(printingid, foil, session['userid'], quantity,),
+		single_row=True
+	)
 	if existing:
 		if (existing['quantity'] - quantity) <= 0:
 			qry = "DELETE FROM user_card WHERE id = %s"
@@ -124,7 +145,7 @@ def remove(printingid, foil, quantity):
 		raise Exception('Could not find card %s.' % printingid)
 
 
-def import_cards(cards):
+def import_cards(cards: list) -> None:
 	sets = []
 	for c in cards:
 		if c['set'] not in [x['code'] for x in sets]:
@@ -132,13 +153,22 @@ def import_cards(cards):
 
 	for s in sets:
 		# Check if already have a record of this set
-		existing = fetch_query("SELECT 1 FROM card_set WHERE LOWER(code) = LOWER(%s)", (s['code'],))
+		existing = fetch_query(
+			"SELECT 1 FROM card_set WHERE LOWER(code) = LOWER(%s)",
+			(s['code'],)
+		)
 		if not existing:
 			resp = scryfall.get_set(s['code'])
-			qry = """INSERT INTO card_set (name, code, released, tcgplayer_groupid) SELECT %s, %s, %s, %s
-					WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)"""
-			qargs = (resp['name'], s['code'], resp['released_at'], resp.get('tcgplayer_id'), s['code'],)
-			mutate_query(qry, qargs)
+			mutate_query(
+				"""
+				INSERT INTO card_set (
+					name, code, released, tcgplayer_groupid
+				) SELECT
+					%s, %s, %s, %s
+				WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)
+				""",
+				(resp['name'], s['code'], resp['released_at'], resp.get('tcgplayer_id'), s['code'],)
+			)
 
 	# more efficient than attempting inserts
 	resp = fetch_query("SELECT DISTINCT multiverseid FROM printing WHERE multiverseid IS NOT NULL")
@@ -206,7 +236,10 @@ def import_cards(cards):
 			c['set_code'] = c['set']  # Key needed for searching on tcgplayer
 			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
-				mutate_query("UPDATE printing SET tcgplayer_productid = %s WHERE id = %s", (c['productid'], c['id'],))
+				mutate_query(
+					"UPDATE printing SET tcgplayer_productid = %s WHERE id = %s",
+					(c['productid'], c['id'],)
+				)
 				new_cards.append({'id': c['id'], 'productid': c['productid']})
 
 	bulk_lots = ([new_cards[i:i + 250] for i in range(0, len(new_cards), 250)])

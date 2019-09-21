@@ -1,5 +1,5 @@
 
-def make_float(val):
+def make_float(val: any) -> float:
 	try:
 		val = float(val)
 	except TypeError:

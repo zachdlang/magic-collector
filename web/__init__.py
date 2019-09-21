@@ -4,7 +4,7 @@ import os
 # Third party imports
 from flask import (
 	request, session, jsonify, send_from_directory, flash, redirect, url_for,
-	render_template, Flask
+	render_template, Flask, Response
 )
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -44,17 +44,17 @@ from web import asynchro
 
 
 @app.errorhandler(500)
-def internal_error(e):
+def internal_error(e: Exception) -> Response:
 	return handle_exception()
 
 
 @app.teardown_appcontext
-def teardown(error):
+def teardown() -> Response:
 	disconnect_database()
 
 
 @app.route('/ping')
-def ping():
+def ping() -> Response:
 	return jsonify(ping='pong')
 
 
@@ -62,12 +62,12 @@ def ping():
 @app.route('/robots.txt')
 @app.route('/sitemap.xml')
 @app.route('/search.xml')
-def static_from_root():
+def static_from_root() -> Response:
 	return send_from_directory(app.static_folder, request.path[1:])
 
 
 @app.route('/login', methods=['GET', 'POST'])
-def login():
+def login() -> Response:
 	if is_logged_in():
 		return redirect(url_for('home'))
 
@@ -86,21 +86,21 @@ def login():
 
 
 @app.route('/logout', methods=['GET'])
-def logout():
+def logout() -> Response:
 	session.pop('userid', None)
 	return redirect(url_for('login'))
 
 
 @app.route('/', methods=['GET'])
 @login_required
-def home():
+def home() -> Response:
 	params = params_to_dict(request.args)
 	return render_template('collection.html', active='collection', search=params.get('search', ''))
 
 
 @app.route('/get_sets', methods=['GET'])
 @login_required
-def get_sets():
+def get_sets() -> Response:
 	sets = fetch_query("SELECT id, name, code FROM card_set ORDER BY released DESC")
 	for s in sets:
 		if not os.path.exists(asynchro.set_icon_filename(s['code'])):
@@ -112,7 +112,7 @@ def get_sets():
 
 @app.route('/get_collection', methods=['GET'])
 @login_required
-def get_collection():
+def get_collection() -> Response:
 	params = params_to_dict(request.args)
 	resp = collection.get(params)
 	for c in resp['cards']:
@@ -128,7 +128,7 @@ def get_collection():
 
 @app.route('/collection/card', methods=['GET'])
 @login_required
-def collection_card():
+def collection_card() -> Response:
 	params = params_to_dict(request.args)
 	resp = {'card': None}
 
@@ -181,7 +181,7 @@ def collection_card():
 
 @app.route('/collection/card/pricerefresh', methods=['GET'])
 @login_required
-def collection_card_pricerefresh():
+def collection_card_pricerefresh() -> Response:
 	params = params_to_dict(request.args)
 
 	printingid = None
@@ -200,7 +200,7 @@ def collection_card_pricerefresh():
 
 @app.route('/collection/card/pricehistory', methods=['GET'])
 @login_required
-def collection_card_pricehistory():
+def collection_card_pricehistory() -> Response:
 	params = params_to_dict(request.args)
 	resp = {}
 
@@ -256,7 +256,7 @@ def collection_card_pricehistory():
 
 @app.route('/collection/card/add', methods=['POST'])
 @login_required
-def collection_card_add():
+def collection_card_add() -> Response:
 	params = params_to_dict(request.form, bool_keys=['foil'])
 	resp = {}
 
@@ -270,7 +270,7 @@ def collection_card_add():
 
 @app.route('/collection/card/edit', methods=['POST'])
 @login_required
-def collection_card_edit():
+def collection_card_edit() -> Response:
 	params = params_to_dict(request.form, bool_keys=['foil'])
 
 	update_current = True
@@ -322,7 +322,7 @@ def collection_card_edit():
 
 @app.route('/search', methods=['GET'])
 @login_required
-def search():
+def search() -> Response:
 	params = params_to_dict(request.args)
 	results = []
 
@@ -351,7 +351,7 @@ def search():
 
 @app.route('/csv_upload', methods=['POST'])
 @login_required
-def csv_upload():
+def csv_upload() -> Response:
 	import csv
 
 	upload = request.files['upload']
@@ -414,7 +414,7 @@ def csv_upload():
 	return jsonify(new)
 
 
-def complete_import(importid):
+def complete_import(importid: int) -> None:
 	rows = fetch_query(
 		"SELECT * FROM import_row WHERE NOT complete AND importid = %s",
 		(importid,)
@@ -431,7 +431,7 @@ def complete_import(importid):
 @app.route('/update_prices', methods=['GET'])
 @app.route('/update_prices/<int:printingid>', methods=['GET'])
 @check_celery_running
-def update_prices(printingid=None):
+def update_prices(printingid: int = None) -> Response:
 	qry = """SELECT p.id, p.collectornumber, c.name, p.rarity,
 				s.code AS set_code, s.name AS set_name, s.tcgplayer_groupid AS groupid,
 				p.tcgplayer_productid AS productid
@@ -455,14 +455,14 @@ def update_prices(printingid=None):
 
 @app.route('/update_rates', methods=['POST'])
 @check_celery_running
-def update_rates():
+def update_rates() -> Response:
 	asynchro.fetch_rates.delay()
 	return jsonify()
 
 
 @app.route('/refresh', methods=['POST'])
 @login_required
-def refresh():
+def refresh() -> Response:
 	params = params_to_dict(request.form)
 	asynchro.refresh_from_scryfall.delay(params['query'])
 	return jsonify()
@@ -470,20 +470,20 @@ def refresh():
 
 @app.route('/decks', methods=['GET'])
 @login_required
-def decks():
+def decks() -> Response:
 	return render_template('decks.html', active='decks')
 
 
 @app.route('/decks/<int:deckid>', methods=['GET'])
 @login_required
-def decklist(deckid):
+def decklist(deckid: int) -> Response:
 	formats = deck.get_formats()
 	return render_template('decklist.html', deckid=deckid, formats=formats)
 
 
 @app.route('/decks/get/all', methods=['GET'])
 @login_required
-def decks_get_all():
+def decks_get_all() -> Response:
 	params = params_to_dict(request.args, bool_keys=['deleted'])
 	results = deck.get_all(params['deleted'])
 	for r in results:
@@ -502,7 +502,7 @@ def decks_get_all():
 
 @app.route('/decks/get', methods=['GET'])
 @login_required
-def decks_get():
+def decks_get() -> Response:
 	params = params_to_dict(request.args)
 	resp = {}
 	resp['deck'] = deck.get(params['deckid'])
@@ -527,7 +527,7 @@ def decks_get():
 
 @app.route('/decks/save', methods=['POST'])
 @login_required
-def decks_save():
+def decks_save() -> Response:
 	params = params_to_dict(request.form)
 	qry = "UPDATE deck SET name = %s, formatid = %s, notes = %s WHERE id = %s AND userid = %s"
 	qargs = (params['name'], params['formatid'], params['notes'], params['deckid'], session['userid'],)
@@ -537,7 +537,7 @@ def decks_save():
 
 @app.route('/decks/delete', methods=['POST'])
 @login_required
-def decks_delete():
+def decks_delete() -> Response:
 	params = params_to_dict(request.form)
 	mutate_query("UPDATE deck SET deleted = true WHERE id = %s AND userid = %s", (params['deckid'], session['userid'],))
 	return jsonify()
@@ -545,7 +545,7 @@ def decks_delete():
 
 @app.route('/decks/restore', methods=['POST'])
 @login_required
-def decks_restore():
+def decks_restore() -> Response:
 	params = params_to_dict(request.form)
 	mutate_query("UPDATE deck SET deleted = false WHERE id = %s AND userid = %s", (params['deckid'], session['userid'],))
 	return jsonify()
@@ -553,7 +553,7 @@ def decks_restore():
 
 @app.route('/decks/cardart', methods=['POST'])
 @login_required
-def decks_set_cardart():
+def decks_set_cardart() -> Response:
 	params = params_to_dict(request.form)
 	mutate_query(
 		"UPDATE deck SET cardartid = %s WHERE id = %s AND userid = %s",
@@ -564,7 +564,7 @@ def decks_set_cardart():
 
 @app.route('/decks/cards/delete', methods=['POST'])
 @login_required
-def decks_cards_delete():
+def decks_cards_delete() -> Response:
 	params = params_to_dict(request.form)
 	mutate_query(
 		"""
@@ -579,7 +579,7 @@ def decks_cards_delete():
 
 @app.route('/decks/import/csv', methods=['POST'])
 @login_required
-def decks_import_csv():
+def decks_import_csv() -> Response:
 	import csv
 
 	params = params_to_dict(request.form)
@@ -608,7 +608,7 @@ def decks_import_csv():
 
 @app.route('/decks/import/arena', methods=['POST'])
 @login_required
-def decks_import_arena():
+def decks_import_arena() -> Response:
 	import re
 
 	params = params_to_dict(request.form)

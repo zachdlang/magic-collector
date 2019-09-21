@@ -12,36 +12,36 @@ from sitetools.utility import (
 celery = setup_celery(app)
 
 
-def set_icon_filename(code):
+def set_icon_filename(code: str) -> str:
 	return get_static_file('/images/set_icon_{}.svg'.format(code))
 
 
 @celery.task(queue='collector')
-def get_set_icon(code):
+def get_set_icon(code: str) -> None:
 	filename = set_icon_filename(code)
 	if not os.path.exists(filename):
 		url = scryfall.get_set(code)['icon_svg_uri']
 		fetch_image(filename, url)
 
 
-def card_art_filename(cardid):
+def card_art_filename(cardid: int) -> str:
 	return get_static_file('/images/card_art_{}.jpg'.format(cardid))
 
 
 @celery.task(queue='collector')
-def get_card_art(cardid, code, collectornumber):
+def get_card_art(cardid: int, code: str, collectornumber: str) -> None:
 	filename = card_art_filename(cardid)
 	if not os.path.exists(filename):
 		url = scryfall.get(code, collectornumber)['arturl']
 		fetch_image(filename, url)
 
 
-def card_image_filename(cardid):
+def card_image_filename(cardid: int) -> str:
 	return get_static_file('/images/card_image_{}.jpg'.format(cardid))
 
 
 @celery.task(queue='collector')
-def get_card_image(cardid, code, collectornumber):
+def get_card_image(cardid: int, code: str, collectornumber: str) -> None:
 	filename = card_image_filename(cardid)
 	if not os.path.exists(filename):
 		url = scryfall.get(code, collectornumber)['imageurl']
@@ -49,7 +49,7 @@ def get_card_image(cardid, code, collectornumber):
 
 
 @celery.task(queue='collector')
-def fetch_prices(cards, tcgplayer_token):
+def fetch_prices(cards: list, tcgplayer_token: str) -> None:
 	for c in cards:
 		if c['productid'] is None:
 			print('Searching for TCGPlayer ID for {} ({}).'.format(c['name'], c['set_name']))
@@ -89,7 +89,7 @@ def fetch_prices(cards, tcgplayer_token):
 
 
 @celery.task(queue='collector')
-def fetch_rates():
+def fetch_rates() -> None:
 	print('Fetching exchange rates')
 	rates = openexchangerates.get()
 	updates = [{'code': code, 'rate': rate} for code, rate in rates.items()]
@@ -98,6 +98,6 @@ def fetch_rates():
 
 
 @celery.task(queue='collector')
-def refresh_from_scryfall(query):
+def refresh_from_scryfall(query: str) -> None:
 	resp = scryfall.search(query)
 	collection.import_cards(resp)

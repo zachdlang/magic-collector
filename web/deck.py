@@ -8,15 +8,18 @@ from flask import session, url_for
 from sitetools.utility import fetch_query, mutate_query
 
 
-def get_all(deleted):
-	qry = """SELECT
-				d.id, d.name, get_format(d.formatid) AS formatname,
-				d.cardartid, d.cardartid AS cardid
-			FROM deck d
-			WHERE d.deleted = %s AND d.userid = %s
-			ORDER BY d.formatid, d.name"""
-	qargs = (deleted, session['userid'],)
-	decks = fetch_query(qry, qargs)
+def get_all(deleted: bool) -> dict:
+	decks = fetch_query(
+		"""
+		SELECT
+			d.id, d.name, get_format(d.formatid) AS formatname,
+			d.cardartid, d.cardartid AS cardid
+		FROM deck d
+		WHERE d.deleted = %s AND d.userid = %s
+		ORDER BY d.formatid, d.name
+		""",
+		(deleted, session['userid'],)
+	)
 	for d in decks:
 		# Temporary until I can incorporate this into the first query
 		card = fetch_query(
@@ -37,14 +40,19 @@ def get_all(deleted):
 	return decks
 
 
-def get(deckid):
-	qry = """SELECT d.id, d.name, d.formatid, d.deleted,
-				d.cardartid, d.cardartid AS cardid,
-				d.notes
-			FROM deck d
-			WHERE d.userid = %s AND d.id = %s"""
-	qargs = (session['userid'], deckid,)
-	result = fetch_query(qry, qargs, single_row=True)
+def get(deckid: int) -> dict:
+	result = fetch_query(
+		"""
+		SELECT
+			d.id, d.name, d.formatid, d.deleted,
+			d.cardartid, d.cardartid AS cardid,
+			d.notes
+		FROM deck d
+		WHERE d.userid = %s AND d.id = %s
+		""",
+		(session['userid'], deckid,),
+		single_row=True
+	)
 	# Temporary until I can incorporate this into the first query
 	card = fetch_query(
 		"""
@@ -63,7 +71,7 @@ def get(deckid):
 	return result
 
 
-def get_cards(deckid):
+def get_cards(deckid: int) -> tuple:
 	qry = """SELECT dc.id, dc.cardid, dc.quantity, dc.section,
 				c.name,
 				total_printings_owned(d.userid, dc.cardid) AS has_quantity,
@@ -104,12 +112,12 @@ def get_cards(deckid):
 	return main, sideboard
 
 
-def get_formats():
+def get_formats() -> list:
 	formats = fetch_query("SELECT id, name FROM format ORDER BY id")
 	return formats
 
 
-def parse_types(cards):
+def parse_types(cards: list) -> list:
 	prev_type = None
 	new_rows = []
 	for c in cards:
@@ -122,7 +130,7 @@ def parse_types(cards):
 	return new_rows
 
 
-def do_import(name, cards, notes=None):
+def do_import(name: str, cards: list, notes: str = None) -> None:
 	deckid = mutate_query(
 		"""
 		INSERT INTO deck (name, userid, formatid, notes)
@@ -147,7 +155,7 @@ def do_import(name, cards, notes=None):
 	mutate_query(qry, (deckid,))
 
 
-def _import_card(deckid, card):
+def _import_card(deckid: int, card: dict) -> None:
 	print('Importing deck card {}'.format(card['name']))
 	mutate_query(
 		"""

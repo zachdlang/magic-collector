@@ -6,7 +6,7 @@ import json
 from web import config
 
 
-def get():
+def get() -> dict:
 	params = {'app_id': config.OPENEXCHANGERATES_APPID, 'base': 'USD'}
 	resp = requests.get('https://openexchangerates.org/api/latest.json', params=params)
 	resp = json.loads(resp.text)
