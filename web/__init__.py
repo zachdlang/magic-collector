@@ -356,7 +356,10 @@ def csv_upload() -> Response:
 
 	upload = request.files['upload']
 	filename = '/tmp/upload_{}_{}.csv'.format(os.urandom(32), session['userid'])
-	upload.save(filename)
+	try:
+		upload.save(filename)
+	except FileNotFoundError:
+		return jsonify(error='Error uploading file. Please try again.')
 	rows = []
 	scryfall_ids = []
 	with open(filename) as csvfile:
@@ -584,7 +587,10 @@ def decks_import_csv() -> Response:
 
 	params = params_to_dict(request.form)
 	filename = '/tmp/upload_{}_{}.csv'.format(os.urandom(32), session['userid'])
-	request.files['upload'].save(filename)
+	try:
+		request.files['upload'].save(filename)
+	except FileNotFoundError:
+		return jsonify(error='Error uploading file. Please try again.')
 	rows = []
 	with open(filename) as csvfile:
 		importreader = csv.DictReader(csvfile)
