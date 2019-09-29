@@ -358,24 +358,24 @@ def csv_upload() -> Response:
 	filename = '/tmp/upload_{}_{}.csv'.format(os.urandom(32), session['userid'])
 	upload.save(filename)
 	rows = []
-	multiverse_ids = []
+	scryfall_ids = []
 	with open(filename) as csvfile:
 		importreader = csv.DictReader(csvfile)
 		for row in importreader:
 			rows.append({
-				'multiverseid': row['MultiverseID'],
+				'scryfallid': row['Scryfall ID'],
 				'foil': int(row['Foil quantity']) > 0,
 				'quantity': row['Quantity']
 			})
-			multiverse_ids.append(int(row['MultiverseID']))
+			scryfall_ids.append(row['Scryfall ID'])
 	os.remove(filename)
 
 	new = []
-	for multiverseid in multiverse_ids:
-		qry = "SELECT 1 FROM printing WHERE multiverseid = %s::TEXT"
-		qargs = (multiverseid,)
+	for scryfallid in scryfall_ids:
+		qry = "SELECT 1 FROM printing WHERE scryfallid = %s::TEXT"
+		qargs = (scryfallid,)
 		if len(fetch_query(qry, qargs)) == 0:
-			new.append(multiverseid)
+			new.append(scryfallid)
 
 	bulk_lots = ([new[i:i + 75] for i in range(0, len(new), 75)])
 	for lot in bulk_lots:
@@ -394,8 +394,8 @@ def csv_upload() -> Response:
 
 	for row in rows:
 		row['printingid'] = fetch_query(
-			"SELECT id FROM printing WHERE multiverseid = %s::TEXT",
-			(row['multiverseid'],),
+			"SELECT id FROM printing WHERE scryfallid = %s::TEXT",
+			(row['scryfallid'],),
 			single_row=True
 		)['id']
 		# Doing this in loop instead of executemany due to needing RETURNING

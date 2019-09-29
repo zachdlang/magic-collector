@@ -3,6 +3,10 @@ import requests
 import json
 
 
+class ScryfallException(Exception):
+	pass
+
+
 def _send_request(
 	endpoint: str,
 	params: any = None,
@@ -45,12 +49,12 @@ def get(code: str, collectornumber: str) -> list:
 	return simplify(resp)
 
 
-def get_bulk(multiverseids: list) -> list:
-	data = {'identifiers': [{'multiverse_id': x} for x in multiverseids]}
+def get_bulk(scryfall_ids: list) -> list:
+	data = {'identifiers': [{'id': x} for x in scryfall_ids]}
 	resp = _send_request('/cards/collection', data=json.dumps(data), post=True)
 	simple_resp = []
 	if resp['not_found']:
-		raise Exception('Not found: {}'.format(resp['not_found']))
+		raise ScryfallException('Not found: {}'.format(resp['not_found']))
 	for r in resp['data']:
 		simple_resp.append(simplify(r))
 	return simple_resp
@@ -69,6 +73,7 @@ def simplify(resp: dict) -> dict:
 	simple = {
 		'name': resp['name'],
 		'multiverseid': None,
+		'scryfallid': resp['id'],
 		'rarity': resp['rarity'].upper()[0],
 		'set': resp['set'].upper(),
 		'set_name': resp['set_name'],

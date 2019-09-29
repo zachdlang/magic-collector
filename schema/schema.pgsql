@@ -32,9 +32,12 @@ CREATE TABLE IF NOT EXISTS printing (
 	price MONEY,
 	foilprice MONEY,
 	tcgplayer_productid TEXT,
+	scryfallid TEXT UNIQUE,
 	rarity CHARACTER,
 	language TEXT
 )WITH OIDS;
+
+CREATE UNIQUE INDEX printing_scryfallid_idx ON printing(scryfallid);
 
 CREATE TABLE IF NOT EXISTS user_card (
 	id SERIAL PRIMARY KEY,

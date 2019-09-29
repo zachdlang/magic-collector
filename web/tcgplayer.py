@@ -6,6 +6,10 @@ import json
 from web import config
 
 
+class TCGPlayerException(Exception):
+	pass
+
+
 def _send_request(
 	endpoint: str,
 	params: any = None,

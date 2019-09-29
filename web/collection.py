@@ -172,13 +172,13 @@ def import_cards(cards: list) -> None:
 			)
 
 	# more efficient than attempting inserts
-	resp = fetch_query("SELECT DISTINCT multiverseid FROM printing WHERE multiverseid IS NOT NULL")
-	multiverse_ids = [x['multiverseid'] for x in resp]
+	resp = fetch_query("SELECT DISTINCT scryfallid FROM printing WHERE scryfallid IS NOT NULL")
+	scryfall_ids = [x['scryfallid'] for x in resp]
 
 	new_cards = []
 	for c in cards:
-		if c['multiverseid'] in multiverse_ids:
-			print('Existing {}...'.format(c['multiverseid']))
+		if c['scryfallid'] in scryfall_ids:
+			print('Existing {}...'.format(c['scryfallid']))
 			continue
 
 		existing = fetch_query(
@@ -212,10 +212,12 @@ def import_cards(cards: list) -> None:
 		new = mutate_query(
 			"""
 			INSERT INTO printing (
-				cardid, collectornumber, multiverseid, card_setid,
+				cardid, collectornumber, multiverseid, scryfallid,
+				card_setid,
 				rarity, language
 			) SELECT
-				%s, %s, %s, (SELECT id FROM card_set WHERE code = %s),
+				%s, %s, %s, %s,
+				(SELECT id FROM card_set WHERE code = %s),
 				%s, %s
 			WHERE NOT EXISTS (
 				SELECT 1 FROM printing
@@ -225,7 +227,8 @@ def import_cards(cards: list) -> None:
 			) RETURNING id
 			""",
 			(
-				cardid, c['collectornumber'], c['multiverseid'], c['set'],
+				cardid, c['collectornumber'], c['multiverseid'], c['scryfallid'],
+				c['set'],
 				c['rarity'], c['language'],
 				cardid, c['collectornumber'], c['set'],
 			),
