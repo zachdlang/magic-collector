@@ -3,3 +3,5 @@ web/config.py
 web/static/search.xml
 
 tests/__pycache__/*
+
+.venv
