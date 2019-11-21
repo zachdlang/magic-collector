@@ -18,8 +18,7 @@ from web import (
 from sitetools.utility import (
 	is_logged_in, params_to_dict,
 	login_required, check_login, fetch_query,
-	mutate_query, disconnect_database, handle_exception,
-	check_celery_running
+	mutate_query, disconnect_database, handle_exception
 )
 
 if not hasattr(config, 'TESTMODE'):
@@ -433,7 +432,6 @@ def complete_import(importid: int) -> None:
 
 @app.route('/update_prices', methods=['GET'])
 @app.route('/update_prices/<int:printingid>', methods=['GET'])
-@check_celery_running
 def update_prices(printingid: int = None) -> Response:
 	qry = """SELECT p.id, p.collectornumber, c.name, p.rarity,
 				s.code AS set_code, s.name AS set_name, s.tcgplayer_groupid AS groupid,
@@ -457,7 +455,6 @@ def update_prices(printingid: int = None) -> Response:
 
 
 @app.route('/update_rates', methods=['POST'])
-@check_celery_running
 def update_rates() -> Response:
 	asynchro.fetch_rates.delay()
 	return jsonify()
