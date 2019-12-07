@@ -342,11 +342,8 @@ def search() -> Response:
 			(search,)
 		)
 		for r in results:
-			if not os.path.exists(asynchro.set_icon_filename(r['code'])):
-				asynchro.get_set_icon.delay(r['code'])
 			if not os.path.exists(asynchro.card_image_filename(r['id'])):
 				asynchro.get_card_image.delay(r['id'], r['setcode'], r['collectornumber'])
-			r['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(r['code']))
 			r['imageurl'] = url_for('static', filename='images/card_image_{}.jpg'.format(r['id']))
 
 	return jsonify(results=results)
