@@ -188,6 +188,10 @@ main {
 	width: 100%;
 }
 
+.collection-page #search-results .search-art {
+	max-height: 80px;
+}
+
 .collection-page #collection_total .badge {
 	height: 30px;
 	margin-top: 14px;

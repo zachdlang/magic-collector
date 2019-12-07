@@ -330,8 +330,9 @@ def search() -> Response:
 		results = fetch_query(
 			"""
 			SELECT
-				p.id, c.name, s.code, s.name AS setname,
-				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
+				p.id, c.name, s.code, s.name AS setname, s.code AS setcode,
+				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language,
+				p.collectornumber
 			FROM printing p
 			LEFT JOIN card c ON (p.cardid = c.id)
 			LEFT JOIN card_set s ON (p.card_setid = s.id)
@@ -343,7 +344,10 @@ def search() -> Response:
 		for r in results:
 			if not os.path.exists(asynchro.set_icon_filename(r['code'])):
 				asynchro.get_set_icon.delay(r['code'])
+			if not os.path.exists(asynchro.card_image_filename(r['id'])):
+				asynchro.get_card_image.delay(r['id'], r['setcode'], r['collectornumber'])
 			r['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(r['code']))
+			r['imageurl'] = url_for('static', filename='images/card_image_{}.jpg'.format(r['id']))
 
 	return jsonify(results=results)
 
