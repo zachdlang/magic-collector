@@ -2,11 +2,9 @@
 from flask import session, url_for
 
 # Local imports
-from web import scryfall, tcgplayer
-from sitetools.utility import (
-	pagecount, fetch_query, mutate_query,
-	strip_unicode_characters
-)
+from web import scryfall, tcgplayer, functions
+from flasktools import strip_unicode_characters
+from flasktools.db import fetch_query, mutate_query
 
 
 def get(params: dict) -> dict:
@@ -55,7 +53,7 @@ def get(params: dict) -> dict:
 		qry += " AND p.rarity = %s"
 		qargs += (filters['rarity'],)
 	aggregate = fetch_query(qry, qargs, single_row=True)
-	resp['count'] = pagecount(aggregate['count'], limit)
+	resp['count'] = functions.pagecount(aggregate['count'], limit)
 	resp['total'] = aggregate['sum']
 	resp['totalprice'] = aggregate['sumprice']
 

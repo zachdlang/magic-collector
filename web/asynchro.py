@@ -5,9 +5,9 @@ import os
 from web import (
 	app, scryfall, tcgplayer, openexchangerates, collection
 )
-from sitetools.utility import (
-	setup_celery, get_static_file, fetch_image, mutate_query
-)
+from flasktools import get_static_file, fetch_image
+from flasktools.celery import setup_celery
+from flasktools.db import mutate_query
 
 celery = setup_celery(app)
 

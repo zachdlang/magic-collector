@@ -15,11 +15,9 @@ from web import (
 	collection, deck, scryfall, tcgplayer, config,
 	functions
 )
-from sitetools.utility import (
-	is_logged_in, params_to_dict,
-	login_required, check_login, fetch_query,
-	mutate_query, disconnect_database, handle_exception
-)
+from flasktools import handle_exception, params_to_dict
+from flasktools.auth import is_logged_in, check_login, login_required
+from flasktools.db import disconnect_database, fetch_query, mutate_query
 
 if not hasattr(config, 'TESTMODE'):
 	sentry_sdk.init(

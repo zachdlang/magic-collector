@@ -5,7 +5,7 @@ import re
 from flask import session, url_for
 
 # Local imports
-from sitetools.utility import fetch_query, mutate_query
+from flasktools.db import fetch_query, mutate_query
 
 
 def get_all(deleted: bool) -> dict:
