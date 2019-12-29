@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS price_history (
 	created DATE NOT NULL DEFAULT current_date
 )WITH OIDS;
 
+CREATE UNIQUE INDEX price_history_date_idx ON price_history(printingid, created);
+
 CREATE TABLE IF NOT EXISTS deck (
 	id SERIAL PRIMARY KEY,
 	name TEXT,

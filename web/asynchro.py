@@ -50,6 +50,19 @@ def get_card_image(cardid: int, code: str, collectornumber: str) -> None:
 
 @celery.task(queue='collector')
 def fetch_prices(cards: list, tcgplayer_token: str) -> None:
+	# Filter out cards without tcgplayerid to save requests
+	cards = [c for c in cards if c['productid'] is not None]
+	bulk_lots = ([cards[i:i + 250] for i in range(0, len(cards), 250)])
+	for lot in bulk_lots:
+		card_dict = {str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}
+		prices = tcgplayer.get_price(
+			card_dict,
+			token=tcgplayer_token
+		)
+		set_prices(prices)
+	print('Price update completed.')
+
+	# Try to match up cards without TCGPlayer IDs
 	for c in cards:
 		if c['productid'] is None:
 			print('Searching for TCGPlayer ID for {} ({}).'.format(c['name'], c['set_name']))
@@ -60,19 +73,8 @@ def fetch_prices(cards: list, tcgplayer_token: str) -> None:
 					(c['productid'], c['id'],)
 				)
 
-	# Filter out cards without tcgplayerid to save requests
-	cards = [c for c in cards if c['productid'] is not None]
-	bulk_lots = ([cards[i:i + 250] for i in range(0, len(cards), 250)])
-	prices = {}
-	for lot in bulk_lots:
-		card_dict = {str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}
-		prices.update(
-			tcgplayer.get_price(
-				card_dict,
-				token=tcgplayer_token
-			)
-		)
 
+def set_prices(prices):
 	updates = []
 	for cardid, price in prices.items():
 		# Only update if we received have prices
@@ -83,12 +85,13 @@ def fetch_prices(cards: list, tcgplayer_token: str) -> None:
 				'pricetype': price['type'],
 				'id': cardid
 			})
+
+	print('Updating prices for {} cards.'.format(len(updates)))
 	mutate_query(
 		"SELECT set_price(%(id)s, %(price)s::MONEY, %(foilprice)s::MONEY, %(pricetype)s)",
 		updates,
 		executemany=True
 	)
-	print('Updated prices for {} cards.'.format(len(updates)))
 
 
 @celery.task(queue='collector')

@@ -41,10 +41,8 @@ BEGIN
 	UPDATE printing SET price = _price, foilprice = _foilprice WHERE id = _printingid;
 
 	INSERT INTO price_history (printingid, price, foilprice, pricetype)
-		SELECT _printingid, _price, _foilprice, _pricetype
-		WHERE NOT EXISTS (
-			SELECT 1 FROM price_history WHERE printingid = _printingid AND created = current_date
-		);
+		VALUES (_printingid, _price, _foilprice, _pricetype)
+		ON CONFLICT (printingid, created) DO NOTHING;
 
 	RETURN;
 END;
