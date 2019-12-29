@@ -262,7 +262,11 @@ function bind_events() {
 	}
 
 	var search_timer;
-	$('#search').on('keyup', function() {
+	$('#search').on('keyup', function(e) {
+		// Only letters & enter key
+		if (e.which != 13 && (e.which > 90 || e.which < 48)) return;
+		if (adding) add_search();
+
 		current_page = 1;
 		if ($(this).val().length >= 3 || $(this).val().length == 0) {
 			clearTimeout(search_timer);
@@ -288,8 +292,6 @@ function bind_events() {
 		$('#search-results-dismiss').click();
 		adding = false;
 	});
-
-	$('#search').on('keyup', add_search);
 
 	$('#add-row-refresh').on('click', function() {
 		if ($('#search').length > 0) {
