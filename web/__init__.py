@@ -16,7 +16,7 @@ from web import (
 	collection, deck, scryfall, tcgplayer, config,
 	functions
 )
-from flasktools import handle_exception, params_to_dict
+from flasktools import handle_exception, params_to_dict, serve_static_file
 from flasktools.auth import is_logged_in, check_login, login_required
 from flasktools.db import disconnect_database, fetch_query, mutate_query
 
@@ -35,6 +35,7 @@ app = Flask(__name__)
 app.secret_key = config.SECRETKEY
 
 app.jinja_env.globals.update(is_logged_in=is_logged_in)
+app.jinja_env.globals.update(static_file=serve_static_file)
 
 # Import below app initialisation
 from web import asynchro
@@ -91,7 +92,6 @@ def logout() -> Response:
 @app.route('/', methods=['GET'])
 @login_required
 def home() -> Response:
-	params = params_to_dict(request.args)
 	return render_template('collection.html', active='collection')
 
 
@@ -102,7 +102,7 @@ def get_sets() -> Response:
 	for s in sets:
 		if not os.path.exists(asynchro.set_icon_filename(s['code'])):
 			asynchro.get_set_icon.delay(s['code'])
-		s['iconurl'] = url_for('static', filename='images/set_icon_{}.svg'.format(s['code']))
+		s['iconurl'] = serve_static_file('images/set_icon_{}.svg'.format(s['code']))
 
 	return jsonify(sets=sets)
 
@@ -151,7 +151,7 @@ def collection_card() -> Response:
 		)
 
 	if resp['card']:
-		resp['card']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['card']['id']))
+		resp['card']['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(resp['card']['id']))
 		resp['card']['decks'] = fetch_query(
 			"""
 			SELECT
@@ -169,7 +169,7 @@ def collection_card() -> Response:
 			(session['userid'], resp['card']['id'],)
 		)
 		for d in resp['card']['decks']:
-			d['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(d['cardartid']))
+			d['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(d['cardartid']))
 	else:
 		resp['error'] = 'No card selected.'
 
@@ -342,7 +342,7 @@ def search() -> Response:
 		for r in results:
 			if not os.path.exists(asynchro.card_image_filename(r['id'])):
 				asynchro.get_card_image.delay(r['id'], r['setcode'], r['collectornumber'])
-			r['imageurl'] = url_for('static', filename='images/card_image_{}.jpg'.format(r['id']))
+			r['imageurl'] = serve_static_file('images/card_image_{}.jpg'.format(r['id']))
 
 	return jsonify(results=results)
 
@@ -489,7 +489,7 @@ def decks_get_all() -> Response:
 		if r['cardid']:
 			if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
 				asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
-			r['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(r['cardid']))
+			r['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(r['cardid']))
 			del r['code']
 			del r['collectornumber']
 
@@ -513,7 +513,7 @@ def decks_get() -> Response:
 			resp['deck']['code'],
 			resp['deck']['collectornumber']
 		)
-	resp['deck']['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(resp['deck']['cardid']))
+	resp['deck']['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(resp['deck']['cardid']))
 	del resp['deck']['cardid']
 	del resp['deck']['code']
 	del resp['deck']['collectornumber']

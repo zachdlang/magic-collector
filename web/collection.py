@@ -1,9 +1,9 @@
 # Third party imports
-from flask import session, url_for
+from flask import session
 
 # Local imports
 from web import scryfall, tcgplayer, functions
-from flasktools import strip_unicode_characters
+from flasktools import strip_unicode_characters, serve_static_file
 from flasktools.db import fetch_query, mutate_query
 
 
@@ -84,8 +84,8 @@ def get(params: dict) -> dict:
 	qargs += (limit, offset,)
 	resp['cards'] = fetch_query(qry, qargs)
 	for c in resp['cards']:
-		c['imageurl'] = url_for('static', filename='images/card_image_{}.jpg'.format(c['id']))
-		c['arturl'] = url_for('static', filename='images/card_art_{}.jpg'.format(c['id']))
+		c['imageurl'] = serve_static_file('images/card_image_{}.jpg'.format(c['id']))
+		c['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(c['id']))
 
 		# Remove keys unnecessary in response
 		del c['card_setid']

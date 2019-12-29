@@ -8,13 +8,13 @@
 
 		<link rel="search" type="application/opensearchdescription+xml" title="Magic Collector" href="/search.xml" />
 		
-		<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/materialize.min.css') }}"  media="screen,projection"/>
-		<link type="text/css" href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="{{ static_file('css/materialize.min.css') }}"  media="screen,projection"/>
+		<link type="text/css" href="{{ static_file('css/custom.css') }}" rel="stylesheet">
 
-		<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/handlebars.min.js') }}"></script>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/materialize.min.js') }}"></script>
-		<script type="text/javascript" src="{{ url_for('static', filename='js/functions.js') }}"></script>
+		<script type="text/javascript" src="{{ static_file('js/jquery.min.js') }}"></script>
+		<script type="text/javascript" src="{{ static_file('js/handlebars.min.js') }}"></script>
+		<script type="text/javascript" src="{{ static_file('js/materialize.min.js') }}"></script>
+		<script type="text/javascript" src="{{ static_file('js/functions.js') }}"></script>
 
 		{% block handlebars %}
 		<script type="text/javascript">
@@ -109,7 +109,7 @@
 				<div class="container">
 					<div class="valign-wrapper">
 						<a href="https://github.com/zachdlang/magic-collector">
-							<img class="responsive-img footer-logo" src="{{ url_for('static', filename='github.png') }}">
+							<img class="responsive-img footer-logo" src="{{ static_file('github.png') }}">
 						</a>
 						<span class="footer-note">By Zach Lang</span>
 					</div>
