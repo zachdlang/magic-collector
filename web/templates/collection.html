@@ -129,35 +129,35 @@
 {% block content %}
 <div class="collection-page container">
 	<div class="section">
-		<div id="add-row" class="row hide">
+		<div class="row">
 			<div class="col s9 m6">
-				<input type="text" id="add-row-search">
+				<input type="text" id="search">
 			</div>
-			<div class="col s3 m2">
-				<a class="btn bg-secondary" id="add-row-refresh"><i class="material-icons">refresh</i></a>
+			<div id="add-row" class="hide">
+				<div class="col s3 m2">
+					<a class="btn bg-secondary" id="add-row-refresh"><i class="material-icons">refresh</i></a>
+				</div>
+				<div class="col s9 m2 l1">
+					<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
+				</div>
+				<div class="col s3 m2 l2 offset-l1">
+					<a class="btn btn-flat" id="add-row-hide">Back</a>
+				</div>
 			</div>
-			<div class="col s9 m2 l1">
-				<a class="btn bg-secondary modal-trigger" href="#upload_modal"><i class="material-icons">file_upload</i></a>
-			</div>
-			<div class="col s3 m2 l2 offset-l1">
-				<a class="btn btn-flat" id="add-row-hide">Back</a>
+
+			<div id="search-row">
+				<div class="col s3 m2">
+					<a class="btn bg-secondary" id="search-row-button"><i class="material-icons">search</i></a>
+				</div>
+				<div class="col s6 m2 l1 offset-l2">
+					<a class="btn bg-secondary" id="filter-row-button"><i class="material-icons">filter_list</i></a>
+				</div>
+				<div class="col s6 m2 l1">
+					<a class="btn bg-secondary" id="add-row-show"><i class="material-icons">add</i></a>
+				</div>
 			</div>
 		</div>
 
-		<div id="search-row" class="row">
-			<div class="col s9 m6">
-				<input type="text" id="search-row-search" value="{{ search }}">
-			</div>
-			<div class="col s3 m2">
-				<a class="btn bg-secondary" id="search-row-button"><i class="material-icons">search</i></a>
-			</div>
-			<div class="col s6 m2 l1 offset-l2">
-				<a class="btn bg-secondary" id="filter-row-button"><i class="material-icons">filter_list</i></a>
-			</div>
-			<div class="col s6 m2 l1">
-				<a class="btn bg-secondary" id="add-row-show"><i class="material-icons">add</i></a>
-			</div>
-		</div>
 
 		<div id="search-results" class="row hide">
 			<div class="col s12 m6">

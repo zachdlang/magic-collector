@@ -92,7 +92,7 @@ def logout() -> Response:
 @login_required
 def home() -> Response:
 	params = params_to_dict(request.args)
-	return render_template('collection.html', active='collection', search=params.get('search', ''))
+	return render_template('collection.html', active='collection')
 
 
 @app.route('/get_sets', methods=['GET'])

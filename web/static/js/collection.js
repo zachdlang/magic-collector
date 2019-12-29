@@ -1,4 +1,5 @@
 var sets_loaded = false;
+var adding = false;
 
 $(document).ready(function() {
 	get_collection();
@@ -46,7 +47,7 @@ function get_collection() {
 			'page': current_page,
 			'sort': sort,
 			'sort_desc': sort_desc,
-			'filter_search': $('#search-row-search').val(),
+			'filter_search': $('#search').val(),
 			'filter_set': $('#filter_set_value').val(),
 			'filter_rarity': $('#filter_rarity_value').val()
 		}
@@ -146,7 +147,8 @@ function generate_pagination(elem, count) {
 var add_search_req;
 var add_search_timer;
 function add_search() {
-	var query = $('#add-row-search').val()
+	if (!adding) return;
+	var query = $('#search').val()
 	if (query.length >= 3 || query.length == 0) {
 		clearTimeout(add_search_timer);
 		add_search_timer = setTimeout(function() {
@@ -260,7 +262,7 @@ function bind_events() {
 	}
 
 	var search_timer;
-	$('#search-row-search').on('keyup', function() {
+	$('#search').on('keyup', function() {
 		current_page = 1;
 		if ($(this).val().length >= 3 || $(this).val().length == 0) {
 			clearTimeout(search_timer);
@@ -277,19 +279,21 @@ function bind_events() {
 	$('#add-row-show').on('click', function() {
 		$('#add-row').removeClass('hide');
 		$('#search-row').addClass('hide');
+		adding = true;
 	});
 
 	$('#add-row-hide').on('click', function() {
 		$('#add-row').addClass('hide');
 		$('#search-row').removeClass('hide');
 		$('#search-results-dismiss').click();
+		adding = false;
 	});
 
-	$('#add-row-search').on('keyup', add_search);
+	$('#search').on('keyup', add_search);
 
 	$('#add-row-refresh').on('click', function() {
-		if ($('#add-row-search').length > 0) {
-			var query = $('#add-row-search').val();
+		if ($('#search').length > 0) {
+			var query = $('#search').val();
 			$.ajax({
 				url: "/refresh",
 				method: "POST",
@@ -325,7 +329,6 @@ function bind_events() {
 				var success_str = cardname + " (x" + quantity + ")";
 				if (foil === 1) success_str = "Foil " + success_str;
 				M.toast({html: "Added " + success_str + " successfully."});
-				$('#search-row-search').val($('#add-row-search').val());
 				get_collection();
 			}
 		}).fail(ajax_failed);
