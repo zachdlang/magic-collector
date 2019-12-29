@@ -239,7 +239,7 @@ def import_cards(cards: list) -> None:
 			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
 				mutate_query(
-					"UPDATE printing SET tcgplayer_productid = %s WHERE id = %s",
+					"UPDATE printing SET tcgplayer_productid = %s WHERE id = %s AND NOT is_basic_land(cardid)",
 					(c['productid'], c['id'],)
 				)
 				new_cards.append({'id': c['id'], 'productid': c['productid']})
