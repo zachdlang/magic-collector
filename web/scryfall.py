@@ -22,6 +22,7 @@ def _send_request(
 		data=data,
 		headers={'Content-Type': 'application/json'}
 	)
+	response.raise_for_status()
 	resp = json.loads(response.text)
 	return resp
 

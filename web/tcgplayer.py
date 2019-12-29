@@ -26,6 +26,7 @@ def _send_request(
 		data=data,
 		headers=headers
 	)
+	response.raise_for_status()
 	resp = json.loads(response.text)
 	return resp
 
