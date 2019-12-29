@@ -10,6 +10,5 @@ DBUSER = 'postgres'
 DBPASS = 'password'
 
 SENTRY_DSN = 'sentrydsn'
-CELERY_SENTRY_DSN = 'celerysentrydsn'
 
 SECRETKEY = 'secretkey'

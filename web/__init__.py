@@ -9,6 +9,7 @@ from flask import (
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 # Local imports
 from web import (
@@ -22,12 +23,11 @@ from flasktools.db import disconnect_database, fetch_query, mutate_query
 if not hasattr(config, 'TESTMODE'):
 	sentry_sdk.init(
 		dsn=config.SENTRY_DSN,
-		integrations=[FlaskIntegration()]
-	)
-
-	sentry_sdk.init(
-		dsn=config.CELERY_SENTRY_DSN,
-		integrations=[CeleryIntegration()]
+		integrations=[
+			FlaskIntegration(),
+			CeleryIntegration(),
+			RedisIntegration()
+		]
 	)
 
 app = Flask(__name__)
