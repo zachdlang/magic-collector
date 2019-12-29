@@ -46,6 +46,10 @@ main {
 	width: 100%;
 }
 
+.btn.btn-narrow {
+	padding: 0px 5px;
+}
+
 .bg-primary:not(.btn-flat) { background-color: #247BA0; }
 .bg-primary.btn:hover { background-color: #4B93B1; }
 

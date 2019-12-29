@@ -68,7 +68,11 @@
 	<script id="search-template" type="text/x-handlebars-template">
 		{{#each results}}
 		<tr>
-			<td><a class="btn bg-secondary search-results-add" data-printingid="{{id}}"><i class="material-icons">add</i></a></td>
+			<td>
+				<a class="btn btn-narrow bg-secondary search-results-add" data-printingid="{{id}}">
+					<i class="material-icons">add</i>
+				</a>
+			</td>
 			<td>
 				<img class="responsive-img search-art" src="{{ imageurl }}">
 			</td>
@@ -76,7 +80,8 @@
 				{{name}}
 				{{#if language}}({{language}}){{/if}}
 			</td>
-			<td class="blue-grey-text text-lighten-3">{{setname}}</td>
+			<td class="blue-grey-text text-lighten-3 hide-on-med-and-up">{{setcode}}</td>
+			<td class="blue-grey-text text-lighten-3 hide-on-small-only">{{setname}}</td>
 		</tr>
 		{{/each}}
 	</script>
@@ -170,6 +175,10 @@
 					</div>
 					<div class="card-action">
 						<a id="search-results-dismiss">Cancel</a>
+						<label>
+							<input type="checkbox" id="search-results-foil">
+							<span>Foil</span>
+						</label>
 					</div>
 				</div>
 			</div>

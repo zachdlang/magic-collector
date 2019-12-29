@@ -313,7 +313,7 @@ function bind_events() {
 	$('#search-results-list').on('click', '.search-results-add', function() {
 		var cardname = $(this).closest('tr').find('.cardname').text();
 		var printingid = $(this).data().printingid;
-		var foil = false;
+		var foil = $('#search-results-foil').prop('checked');
 		var quantity = 1;
 		$.ajax({
 			url: "/collection/card/add",
@@ -327,7 +327,7 @@ function bind_events() {
 			if (data.error) M.toast({html: data.error});
 			else {
 				var success_str = cardname + " (x" + quantity + ")";
-				if (foil === 1) success_str = "Foil " + success_str;
+				if (foil) success_str = "Foil " + success_str;
 				M.toast({html: "Added " + success_str + " successfully."});
 				get_collection();
 			}
