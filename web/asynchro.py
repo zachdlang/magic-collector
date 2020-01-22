@@ -20,8 +20,11 @@ def set_icon_filename(code: str) -> str:
 def get_set_icon(code: str) -> None:
 	filename = set_icon_filename(code)
 	if not os.path.exists(filename):
-		url = scryfall.get_set(code)['icon_svg_uri']
-		fetch_image(filename, url)
+		try:
+			url = scryfall.get_set(code)['icon_svg_uri']
+			fetch_image(filename, url)
+		except scryfall.NotFound:
+			pass
 
 
 def card_art_filename(cardid: int) -> str:
@@ -44,8 +47,11 @@ def card_image_filename(cardid: int) -> str:
 def get_card_image(cardid: int, code: str, collectornumber: str) -> None:
 	filename = card_image_filename(cardid)
 	if not os.path.exists(filename):
-		url = scryfall.get(code, collectornumber)['imageurl']
-		fetch_image(filename, url)
+		try:
+			url = scryfall.get(code, collectornumber)['imageurl']
+			fetch_image(filename, url)
+		except scryfall.NotFound:
+			pass
 
 
 @celery.task(queue='collector')

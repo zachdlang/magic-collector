@@ -7,6 +7,10 @@ class ScryfallException(Exception):
 	pass
 
 
+class NotFound(ScryfallException):
+	pass
+
+
 def _send_request(
 	endpoint: str,
 	params: any = None,
@@ -22,7 +26,13 @@ def _send_request(
 		data=data,
 		headers={'Content-Type': 'application/json'}
 	)
-	response.raise_for_status()
+	try:
+		response.raise_for_status()
+	except requests.HTTPError as e:
+		if e.response.status_code == 404:
+			raise NotFound from e
+		raise
+
 	resp = json.loads(response.text)
 	return resp
 
