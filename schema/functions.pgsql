@@ -66,6 +66,17 @@ CREATE OR REPLACE FUNCTION collector.get_rarity(_initial TEXT) RETURNS TEXT AS $
 $$ LANGUAGE 'sql';
 
 
+DROP FUNCTION IF EXISTS collector.get_rarity_sort(TEXT);
+CREATE OR REPLACE FUNCTION collector.get_rarity_sort(_initial TEXT) RETURNS INTEGER AS $$
+	SELECT CASE
+	WHEN _initial = 'C' THEN 1
+	WHEN _initial = 'U' THEN 2
+	WHEN _initial = 'R' THEN 3
+	WHEN _initial = 'M' THEN 4
+	END;
+$$ LANGUAGE 'sql';
+
+
 DROP FUNCTION IF EXISTS collector.update_rates(TEXT, NUMERIC);
 CREATE OR REPLACE FUNCTION collector.update_rates(_code TEXT, _exchangerate NUMERIC) RETURNS VOID AS $$
 BEGIN

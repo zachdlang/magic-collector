@@ -123,7 +123,11 @@ def parse_types(cards: list) -> list:
 	for c in cards:
 		if c['cardtype'] != prev_type:
 			prev_type = c['cardtype']
-			count = sum([x['quantity'] for x in cards if x.get('cardtype') == prev_type])
+			count = sum([
+				x['quantity']
+				for x in cards
+				if x.get('cardtype') == prev_type
+			])
 			new_rows.append({'is_type': True, 'label': prev_type, 'count': count})
 		new_rows.append(c)
 
@@ -135,7 +139,10 @@ def do_import(name: str, cards: list, notes: str = None) -> None:
 		"""
 		INSERT INTO deck (name, userid, formatid, notes)
 		VALUES (
-			COALESCE(%s, CONCAT('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS'))),
+			COALESCE(
+				%s,
+				CONCAT('Imported Deck ', to_char(now(), 'YYYY-MM-DD HH12:MI:SS'))
+			),
 			%s,
 			(SELECT id FROM format WHERE name = 'Other'),
 			%s

@@ -128,7 +128,10 @@ def search(card, token=None):
 			if check_this is True:
 				# Check against collector number
 				for ex in r['extendedData']:
-					if ex['name'] == 'Number' and str(ex['value']) == str(card['collectornumber']):
+					if (
+						ex['name'] == 'Number'
+						and str(ex['value']) == str(card['collectornumber'])
+					):
 						products_found.append(r)
 		if len(products_found) == 1:
 			productid = products_found[0]['productId']
@@ -150,7 +153,10 @@ def search(card, token=None):
 			groups_found = []
 			for r in group_results:
 				for p in products_found:
-					if str(r['groupId']) == str(p['groupId']) and r['abbreviation'] == card['set_code']:
+					if (
+						str(r['groupId']) == str(p['groupId'])
+						and r['abbreviation'] == card['set_code']
+					):
 						groups_found.append(p)
 			if len(groups_found) == 1:
 				productid = groups_found[0]['productId']
@@ -194,7 +200,10 @@ def get_price(cards: list, token: str = None) -> dict:
 		'/pricing/product/{}'.format(card_params),
 		headers=headers
 	)
-	prices = {cardid: {'normal': None, 'foil': None, 'type': None} for cardid, productid in cards.items()}
+	prices = {
+		cardid: {'normal': None, 'foil': None, 'type': None}
+		for cardid, productid in cards.items()
+	}
 	for cardid, productid in cards.items():
 		for r in resp['results']:
 			if str(r['productId']) == productid:

@@ -12,7 +12,10 @@ class OpenExchangeRatesException(Exception):
 
 def get() -> dict:
 	params = {'app_id': config.OPENEXCHANGERATES_APPID, 'base': 'USD'}
-	response = requests.get('https://openexchangerates.org/api/latest.json', params=params)
+	response = requests.get(
+		'https://openexchangerates.org/api/latest.json',
+		params=params
+	)
 	response.raise_for_status()
 	response = json.loads(response.text)
 	return response['rates']

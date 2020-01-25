@@ -20,7 +20,7 @@ def get(params: dict) -> dict:
 	cols = {
 		'name': 'c.name',
 		'setname': 'cs.released',
-		'rarity': "CASE p.rarity WHEN 'C' THEN 1 WHEN 'U' THEN 2 WHEN 'R' THEN 3 WHEN 'M' THEN 4 END",
+		'rarity': "get_rarity_sort(p.rarity)",
 		'quantity': 'uc.quantity',
 		'foil': 'uc.foil',
 		'price': 'get_price(uc.id)'
@@ -30,8 +30,9 @@ def get(params: dict) -> dict:
 	sort_desc = descs.get(params.get('sort_desc'), 'ASC')
 
 	# Filters
+	search = f"%{params['filter_search']}%" if params['filter_search'] else None
 	filters = {
-		'search': '%' + params['filter_search'] + '%' if params.get('filter_search') else None,
+		'search': search,
 		'set': params.get('filter_set'),
 		'rarity': params.get('filter_rarity')
 	}
@@ -59,8 +60,12 @@ def get(params: dict) -> dict:
 
 	qry = """SELECT
 				p.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
-				get_rarity(p.rarity) AS rarity, uc.quantity, uc.foil, get_price(uc.id) AS price,
-				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
+				get_rarity(p.rarity) AS rarity, uc.quantity, uc.foil,
+				get_price(uc.id) AS price,
+				COALESCE(
+					(SELECT currencycode FROM app.enduser WHERE id = uc.userid),
+					'USD'
+				) AS currencycode,
 				p.collectornumber, p.card_setid,
 				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
 			FROM user_card uc
@@ -80,7 +85,14 @@ def get(params: dict) -> dict:
 		qry += " AND p.rarity = %s"
 		qargs += (filters['rarity'],)
 
-	qry += " ORDER BY %s %s, cs.code, p.collectornumber LIMIT %%s OFFSET %%s" % (sort, sort_desc)
+	qry += """ ORDER BY
+				%s %s,
+				cs.code,
+				p.collectornumber
+			LIMIT
+				%%s
+			OFFSET %%s
+			""" % (sort, sort_desc)
 	qargs += (limit, offset,)
 	resp['cards'] = fetch_query(qry, qargs)
 	for c in resp['cards']:
@@ -95,7 +107,9 @@ def get(params: dict) -> dict:
 
 def add(printingid: int, foil: bool, quantity: int) -> None:
 	existing = fetch_query(
-		"SELECT id FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s",
+		"""
+		SELECT id FROM user_card WHERE printingid = %s AND foil = %s AND userid = %s
+		""",
 		(printingid, foil, session['userid'],),
 		single_row=True
 	)
@@ -115,7 +129,15 @@ def add(printingid: int, foil: bool, quantity: int) -> None:
 				WHERE printingid = %s AND foil = %s AND userid = %s
 			)
 			""",
-			(printingid, session['userid'], foil, quantity, printingid, foil, session['userid'],)
+			(
+				printingid,
+				session['userid'],
+				foil,
+				quantity,
+				printingid,
+				foil,
+				session['userid'],
+			)
 		)
 
 
@@ -166,11 +188,19 @@ def import_cards(cards: list) -> None:
 					%s, %s, %s, %s
 				WHERE NOT EXISTS (SELECT * FROM card_set WHERE code = %s)
 				""",
-				(resp['name'], s['code'], resp['released_at'], resp.get('tcgplayer_id'), s['code'],)
+				(
+					resp['name'],
+					s['code'],
+					resp['released_at'],
+					resp.get('tcgplayer_id'),
+					s['code'],
+				)
 			)
 
 	# more efficient than attempting inserts
-	resp = fetch_query("SELECT DISTINCT scryfallid FROM printing WHERE scryfallid IS NOT NULL")
+	resp = fetch_query(
+		"SELECT DISTINCT scryfallid FROM printing WHERE scryfallid IS NOT NULL"
+	)
 	scryfall_ids = [x['scryfallid'] for x in resp]
 
 	new_cards = []
@@ -239,7 +269,15 @@ def import_cards(cards: list) -> None:
 			c['productid'] = tcgplayer.search(c)
 			if c['productid'] is not None:
 				mutate_query(
-					"UPDATE printing SET tcgplayer_productid = %s WHERE id = %s AND NOT is_basic_land(cardid)",
+					"""
+					UPDATE
+						printing
+					SET
+						tcgplayer_productid = %s
+					WHERE
+						id = %s AND
+						NOT is_basic_land(cardid)
+					""",
 					(c['productid'], c['id'],)
 				)
 				new_cards.append({'id': c['id'], 'productid': c['productid']})
@@ -247,13 +285,31 @@ def import_cards(cards: list) -> None:
 	bulk_lots = ([new_cards[i:i + 250] for i in range(0, len(new_cards), 250)])
 	prices = {}
 	for lot in bulk_lots:
-		prices.update(tcgplayer.get_price({str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}))
+		prices.update(
+			tcgplayer.get_price({
+				str(c['id']): str(c['productid'])
+				for c in lot
+				if c['productid'] is not None
+			})
+		)
 
 	updates = []
 	for printingid, price in prices.items():
-		updates.append({'price': price['normal'], 'foilprice': price['foil'], 'id': printingid})
+		updates.append({
+			'price': price['normal'],
+			'foilprice': price['foil'],
+			'id': printingid
+		})
 	mutate_query(
-		"UPDATE printing SET price = %(price)s, foilprice = %(foilprice)s WHERE id = %(id)s",
+		"""
+		UPDATE
+			printing
+		SET
+			price = %(price)s,
+			foilprice = %(foilprice)s
+		WHERE
+			id = %(id)s
+		""",
 		updates,
 		executemany=True
 	)

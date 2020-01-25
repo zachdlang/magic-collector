@@ -60,7 +60,11 @@ def fetch_prices(cards: list, tcgplayer_token: str) -> None:
 	cards = [c for c in cards if c['productid'] is not None]
 	bulk_lots = ([cards[i:i + 250] for i in range(0, len(cards), 250)])
 	for lot in bulk_lots:
-		card_dict = {str(c['id']): str(c['productid']) for c in lot if c['productid'] is not None}
+		card_dict = {
+			str(c['id']): str(c['productid'])
+			for c in lot
+			if c['productid'] is not None
+		}
 		prices = tcgplayer.get_price(
 			card_dict,
 			token=tcgplayer_token
@@ -71,7 +75,7 @@ def fetch_prices(cards: list, tcgplayer_token: str) -> None:
 	# Try to match up cards without TCGPlayer IDs
 	for c in cards:
 		if c['productid'] is None:
-			print('Searching for TCGPlayer ID for {} ({}).'.format(c['name'], c['set_name']))
+			print(f"Searching for TCGPlayer ID for {c['name']} ({c['set_name']}).")
 			c['productid'] = tcgplayer.search(c, token=tcgplayer_token)
 			if c['productid'] is not None:
 				mutate_query(
@@ -94,7 +98,13 @@ def set_prices(prices):
 
 	print('Updating prices for {} cards.'.format(len(updates)))
 	mutate_query(
-		"SELECT set_price(%(id)s, %(price)s::MONEY, %(foilprice)s::MONEY, %(pricetype)s)",
+		"""
+		SELECT set_price(
+			%(id)s,
+			%(price)s::MONEY,
+			%(foilprice)s::MONEY,
+			%(pricetype)s)
+		""",
 		updates,
 		executemany=True
 	)
@@ -105,7 +115,11 @@ def fetch_rates() -> None:
 	print('Fetching exchange rates')
 	rates = openexchangerates.get()
 	updates = [{'code': code, 'rate': rate} for code, rate in rates.items()]
-	mutate_query("SELECT update_rates(%(code)s, %(rate)s)", updates, executemany=True)
+	mutate_query(
+		"SELECT update_rates(%(code)s, %(rate)s)",
+		updates,
+		executemany=True
+	)
 	print('Updated exchange rates')
 
 

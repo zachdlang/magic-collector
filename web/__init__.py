@@ -98,7 +98,9 @@ def home() -> Response:
 @app.route('/get_sets', methods=['GET'])
 @login_required
 def get_sets() -> Response:
-	sets = fetch_query("SELECT id, name, code FROM card_set ORDER BY released DESC")
+	sets = fetch_query(
+		"SELECT id, name, code FROM card_set ORDER BY released DESC"
+	)
 	for s in sets:
 		if not os.path.exists(asynchro.set_icon_filename(s['code'])):
 			asynchro.get_set_icon.delay(s['code'])
@@ -135,9 +137,16 @@ def collection_card() -> Response:
 			SELECT
 				p.id, c.name, cs.name AS setname, get_rarity(p.rarity) AS rarity,
 				uc.quantity, uc.foil, get_price(uc.id) AS price, p.tcgplayer_productid,
-				COALESCE((SELECT currencycode FROM app.enduser WHERE id = uc.userid), 'USD') AS currencycode,
+				COALESCE(
+					(SELECT currencycode FROM app.enduser WHERE id = uc.userid),
+					'USD'
+				) AS currencycode,
 				total_printings_owned(uc.userid, p.cardid) AS printingsowned,
-				(SELECT to_char(MAX(created), 'DD/MM/YY') FROM price_history WHERE printingid = p.id) AS price_lastupdated,
+				(
+					SELECT to_char(MAX(created), 'DD/MM/YY')
+					FROM price_history
+					WHERE printingid = p.id
+				) AS price_lastupdated,
 				CASE WHEN p.language != 'en' THEN UPPER(p.language) END AS language
 			FROM user_card uc
 			LEFT JOIN printing p ON (uc.printingid = p.id)
@@ -151,7 +160,8 @@ def collection_card() -> Response:
 		)
 
 	if resp['card']:
-		resp['card']['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(resp['card']['id']))
+		cardid = resp['card']['id']
+		resp['card']['arturl'] = serve_static_file(f"images/card_art_{cardid}.jpg")
 		resp['card']['decks'] = fetch_query(
 			"""
 			SELECT
@@ -166,10 +176,10 @@ def collection_card() -> Response:
 			GROUP BY d.id
 			ORDER BY d.formatid, d.name
 			""",
-			(session['userid'], resp['card']['id'],)
+			(session['userid'], cardid,)
 		)
 		for d in resp['card']['decks']:
-			d['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(d['cardartid']))
+			d['arturl'] = serve_static_file(f"images/card_art_{d['cardartid']}.jpg")
 	else:
 		resp['error'] = 'No card selected.'
 
@@ -289,7 +299,9 @@ def collection_card_edit() -> Response:
 	if existing['foil'] != params['foil']:
 		# Foil has changed, need to check for opposite record
 		opposite = fetch_query(
-			"SELECT * FROM user_card WHERE printingid = %s AND userid = %s AND foil != %s",
+			"""
+			SELECT * FROM user_card WHERE printingid = %s AND userid = %s AND foil != %s
+			""",
 			(existing['printingid'], session['userid'], existing['foil'],),
 			single_row=True
 		)
@@ -299,14 +311,24 @@ def collection_card_edit() -> Response:
 				"UPDATE user_card SET quantity = quantity + %s WHERE id = %s",
 				(params['quantity'], opposite['id'],)
 			)
-			mutate_query("DELETE FROM user_card WHERE id = %s", (params['user_cardid'],))
+			mutate_query(
+				"DELETE FROM user_card WHERE id = %s",
+				(params['user_cardid'],)
+			)
 			update_current = False
 
 	if (update_current):
 		if int(params['quantity']) > 0:
 			mutate_query(
-				"UPDATE user_card SET quantity = %s, foil = %s WHERE id = %s AND userid = %s",
-				(params['quantity'], params['foil'], params['user_cardid'], session['userid'],)
+				"""
+				UPDATE user_card SET quantity = %s, foil = %s WHERE id = %s AND userid = %s
+				""",
+				(
+					params['quantity'],
+					params['foil'],
+					params['user_cardid'],
+					session['userid'],
+				)
 			)
 		else:
 			mutate_query(
@@ -342,7 +364,7 @@ def search() -> Response:
 		for r in results:
 			if not os.path.exists(asynchro.card_image_filename(r['id'])):
 				asynchro.get_card_image.delay(r['id'], r['setcode'], r['collectornumber'])
-			r['imageurl'] = serve_static_file('images/card_image_{}.jpg'.format(r['id']))
+			r['imageurl'] = serve_static_file(f"images/card_image_{r['id']}.jpg")
 
 	return jsonify(results=results)
 
@@ -443,7 +465,9 @@ def update_prices(printingid: int = None) -> Response:
 	if printingid is not None:
 		qry += " AND p.id = %s"
 		qargs += (printingid,)
-	qry += " ORDER BY EXISTS(SELECT 1 FROM user_card WHERE printingid=c.id) DESC, c.name ASC"
+	qry += """ ORDER BY
+		EXISTS(SELECT 1 FROM user_card WHERE printingid=c.id) DESC,
+		c.name ASC"""
 	cards = fetch_query(qry, qargs)
 
 	tcgplayer_token = tcgplayer.login()
@@ -489,7 +513,7 @@ def decks_get_all() -> Response:
 		if r['cardid']:
 			if not os.path.exists(asynchro.card_art_filename(r['cardid'])):
 				asynchro.get_card_art.delay(r['cardid'], r['code'], r['collectornumber'])
-			r['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(r['cardid']))
+			r['arturl'] = serve_static_file(f"images/card_art_{r['cardid']}.jpg")
 			del r['code']
 			del r['collectornumber']
 
@@ -513,7 +537,9 @@ def decks_get() -> Response:
 			resp['deck']['code'],
 			resp['deck']['collectornumber']
 		)
-	resp['deck']['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(resp['deck']['cardid']))
+	resp['deck']['arturl'] = serve_static_file(
+		f"images/card_art_{resp['deck']['cardid']}.jpg"
+	)
 	del resp['deck']['cardid']
 	del resp['deck']['code']
 	del resp['deck']['collectornumber']
@@ -528,9 +554,25 @@ def decks_get() -> Response:
 @login_required
 def decks_save() -> Response:
 	params = params_to_dict(request.form)
-	qry = "UPDATE deck SET name = %s, formatid = %s, notes = %s WHERE id = %s AND userid = %s"
-	qargs = (params['name'], params['formatid'], params['notes'], params['deckid'], session['userid'],)
-	mutate_query(qry, qargs)
+	mutate_query(
+		"""
+		UPDATE
+			deck
+		SET
+			name = %s,
+			formatid = %s,
+			notes = %s
+		WHERE
+			id = %s AND
+			userid = %s""",
+		(
+			params['name'],
+			params['formatid'],
+			params['notes'],
+			params['deckid'],
+			session['userid'],
+		)
+	)
 	return jsonify()
 
 
@@ -538,7 +580,10 @@ def decks_save() -> Response:
 @login_required
 def decks_delete() -> Response:
 	params = params_to_dict(request.form)
-	mutate_query("UPDATE deck SET deleted = true WHERE id = %s AND userid = %s", (params['deckid'], session['userid'],))
+	mutate_query(
+		"UPDATE deck SET deleted = true WHERE id = %s AND userid = %s",
+		(params['deckid'], session['userid'],)
+	)
 	return jsonify()
 
 
@@ -546,7 +591,10 @@ def decks_delete() -> Response:
 @login_required
 def decks_restore() -> Response:
 	params = params_to_dict(request.form)
-	mutate_query("UPDATE deck SET deleted = false WHERE id = %s AND userid = %s", (params['deckid'], session['userid'],))
+	mutate_query(
+		"UPDATE deck SET deleted = false WHERE id = %s AND userid = %s",
+		(params['deckid'], session['userid'],)
+	)
 	return jsonify()
 
 
