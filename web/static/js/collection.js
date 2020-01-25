@@ -262,9 +262,15 @@ function bind_events() {
 	}
 
 	var search_timer;
-	$('#search').on('keyup input', function(e) {
+	$('#search').on('keyup', function(e) {
 		// Only letters & enter key
 		if (e.which != 13 && (e.which > 90 || e.which < 48)) return;
+		search_handler();
+	});
+
+	$('#search').on('input', search_handler);
+
+	function search_handler() {
 		if (adding) add_search();
 
 		current_page = 1;
@@ -274,7 +280,7 @@ function bind_events() {
 				$('#search-row-button').click();
 			}, 250);
 		}
-	});
+	}
 
 	$('#search-row-button').on('click', function() {
 		get_collection();
