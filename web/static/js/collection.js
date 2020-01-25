@@ -262,7 +262,7 @@ function bind_events() {
 	}
 
 	var search_timer;
-	$('#search').on('keyup', function(e) {
+	$('#search').on('keyup input', function(e) {
 		// Only letters & enter key
 		if (e.which != 13 && (e.which > 90 || e.which < 48)) return;
 		if (adding) add_search();
