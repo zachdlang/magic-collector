@@ -454,6 +454,19 @@ def complete_import(importid: int) -> None:
 @app.route('/update_prices', methods=['GET'])
 @app.route('/update_prices/<int:printingid>', methods=['GET'])
 def update_prices(printingid: int = None) -> Response:
+	_update_prices(printingid=printingid)
+
+	return jsonify()
+
+
+@app.route('/update_prices/missing', methods=['GET'])
+def update_missing_prices() -> Response:
+	_update_prices(missing_prices=True)
+
+	return jsonify()
+
+
+def _update_prices(printingid=None, missing_prices=False):
 	qry = """SELECT p.id, p.collectornumber, c.name, p.rarity,
 				s.code AS set_code, s.name AS set_name, s.tcgplayer_groupid AS groupid,
 				p.tcgplayer_productid AS productid
@@ -465,6 +478,8 @@ def update_prices(printingid: int = None) -> Response:
 	if printingid is not None:
 		qry += " AND p.id = %s"
 		qargs += (printingid,)
+	if missing_prices:
+		qry += " AND COALESCE(p.price, p.foilprice) IS NULL"
 	qry += """ ORDER BY
 		EXISTS(SELECT 1 FROM user_card WHERE printingid=c.id) DESC,
 		c.name ASC"""
@@ -473,8 +488,6 @@ def update_prices(printingid: int = None) -> Response:
 	tcgplayer_token = tcgplayer.login()
 
 	asynchro.fetch_prices.delay(cards, tcgplayer_token)
-
-	return jsonify()
 
 
 @app.route('/update_rates', methods=['POST'])
