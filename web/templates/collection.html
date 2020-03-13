@@ -25,7 +25,10 @@
 			<td class="hide-on-small-only">{{rarity}}</td>
 			<td class="quantity">{{quantity}}</td>
 			<td><i class="material-icons">{{#if foil}}check_box{{else}}check_box_outline_blank{{/if}}</i></td>
-			<td>{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}</td>
+			<td>
+				{{#if price}}{{price}} <span class="hide-on-small-only">{{currencycode}}</span>{{/if}}
+				{{#if base_price}}<br><em class="blue-grey-text text-lighten-3">{{base_price}} <span class="hide-on-small-only">USD</span></em>{{/if}}
+			</td>
 			<td><a class="btn bg-tertiary info-card"><i class="material-icons">info_outline</i></a></td>
 		<tr>
 		{{/each}}

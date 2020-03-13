@@ -19,14 +19,20 @@ CREATE OR REPLACE FUNCTION collector.convert_price(_amount MONEY, _userid INTEGE
 $$ LANGUAGE 'sql';
 
 
-DROP FUNCTION IF EXISTS collector.get_price(INTEGER);
-CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MONEY AS $$
+DROP FUNCTION IF EXISTS collector.get_base_price(INTEGER);
+CREATE OR REPLACE FUNCTION collector.get_base_price(_user_cardid INTEGER) RETURNS MONEY AS $$
 	SELECT CASE WHEN foil = true THEN
-		convert_price(foilprice, userid)
+		foilprice
 	ELSE
-		convert_price(price, userid)
+		price
 	END
 	FROM printing, user_card WHERE printingid = printing.id AND user_card.id = _user_cardid;
+$$ LANGUAGE 'sql';
+
+
+DROP FUNCTION IF EXISTS collector.get_price(INTEGER);
+CREATE OR REPLACE FUNCTION collector.get_price(_user_cardid INTEGER) RETURNS MONEY AS $$
+	SELECT convert_price(collector.get_base_price(_user_cardid), userid) FROM user_card WHERE id = _user_cardid;
 $$ LANGUAGE 'sql';
 
 

@@ -62,6 +62,7 @@ def get(params: dict) -> dict:
 				p.id, uc.id AS user_cardid, c.name, cs.name AS setname, cs.code AS setcode,
 				get_rarity(p.rarity) AS rarity, uc.quantity, uc.foil,
 				get_price(uc.id) AS price,
+				get_base_price(uc.id) AS base_price,
 				COALESCE(
 					(SELECT currencycode FROM app.enduser WHERE id = uc.userid),
 					'USD'
