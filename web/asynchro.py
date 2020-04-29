@@ -3,13 +3,33 @@ import os
 
 # Local imports
 from web import (
-	app, scryfall, tcgplayer, openexchangerates, collection
+	app, scryfall, tcgplayer, openexchangerates, collection,
+	config
 )
 from flasktools import get_static_file, fetch_image
 from flasktools.celery import setup_celery
 from flasktools.db import mutate_query
+import rollbar
+from celery.signals import task_failure
 
 celery = setup_celery(app)
+
+
+@task_failure.connect
+def handle_task_failure(**kwargs):
+	if not hasattr(config, 'TESTMODE'):
+		env = 'production' if not hasattr(config, 'TESTMODE') else 'development'
+		rollbar.init(
+			config.ROLLBAR_TOKEN,
+			environment=env
+		)
+
+		def celery_base_data_hook(request, data):
+			data['framework'] = 'celery'
+
+		rollbar.BASE_DATA_HOOK = celery_base_data_hook
+
+		rollbar.report_exc_info(extra_data=kwargs)
 
 
 def set_icon_filename(code: str) -> str:

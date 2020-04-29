@@ -4,12 +4,10 @@ import os
 # Third party imports
 from flask import (
 	request, session, jsonify, send_from_directory, flash, redirect, url_for,
-	render_template, Flask, Response
+	render_template, Flask, Response, got_request_exception
 )
-import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
+import rollbar
+import rollbar.contrib.flask
 
 # Local imports
 from web import (
@@ -20,16 +18,6 @@ from flasktools import handle_exception, params_to_dict, serve_static_file
 from flasktools.auth import is_logged_in, check_login, login_required
 from flasktools.db import disconnect_database, fetch_query, mutate_query
 
-if not hasattr(config, 'TESTMODE'):
-	sentry_sdk.init(
-		dsn=config.SENTRY_DSN,
-		integrations=[
-			FlaskIntegration(),
-			CeleryIntegration(),
-			RedisIntegration()
-		]
-	)
-
 app = Flask(__name__)
 
 app.secret_key = config.SECRETKEY
@@ -37,8 +25,27 @@ app.secret_key = config.SECRETKEY
 app.jinja_env.globals.update(is_logged_in=is_logged_in)
 app.jinja_env.globals.update(static_file=serve_static_file)
 
+
+@app.before_first_request
+def init_rollbar():
+	if not hasattr(config, 'TESTMODE'):
+		env = 'production' if not hasattr(config, 'TESTMODE') else 'development'
+		rollbar.init(
+			config.ROLLBAR_TOKEN,
+			environment=env
+		)
+
+		# send exceptions from `app` to rollbar, using flask's signal system.
+		got_request_exception.connect(rollbar.contrib.flask.report_exception, app)
+
+
 # Import below app initialisation
 from web import asynchro
+
+
+@app.route('/test-failure')
+def failing():
+	return 23 / 0
 
 
 @app.errorhandler(500)

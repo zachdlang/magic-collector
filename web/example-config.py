@@ -9,6 +9,6 @@ DBNAME = 'collector'
 DBUSER = 'postgres'
 DBPASS = 'password'
 
-SENTRY_DSN = 'sentrydsn'
+ROLLBAR_TOKEN = 'rollbartoken'
 
 SECRETKEY = 'secretkey'
