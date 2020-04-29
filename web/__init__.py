@@ -43,11 +43,6 @@ def init_rollbar():
 from web import asynchro
 
 
-@app.route('/test-failure')
-def failing():
-	return 23 / 0
-
-
 @app.errorhandler(500)
 def internal_error(e: Exception) -> Response:
 	return handle_exception()
