@@ -29,7 +29,9 @@ app.jinja_env.globals.update(static_file=serve_static_file)
 @app.before_first_request
 def init_rollbar():
 	if not hasattr(config, 'TESTMODE'):
-		env = 'production' if not hasattr(config, 'TESTMODE') else 'development'
+		env = 'production'
+		if request.remote_addr == '127.0.0.1':
+			env = 'development'
 		rollbar.init(
 			config.ROLLBAR_TOKEN,
 			environment=env
