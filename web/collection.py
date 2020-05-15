@@ -100,6 +100,9 @@ def get(params: dict) -> dict:
 		c['imageurl'] = serve_static_file('images/card_image_{}.jpg'.format(c['id']))
 		c['arturl'] = serve_static_file('images/card_art_{}.jpg'.format(c['id']))
 
+		if c['currencycode'] == 'USD':
+			c['base_price'] = None
+
 		# Remove keys unnecessary in response
 		del c['card_setid']
 
