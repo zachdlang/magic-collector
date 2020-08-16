@@ -6,8 +6,7 @@ from web import (
 	app, scryfall, tcgplayer, openexchangerates, collection,
 	config
 )
-from flasktools import get_static_file, fetch_image
-from flasktools.celery import setup_celery
+from flasktools import get_static_file, fetch_image, setup_celery
 from flasktools.db import mutate_query
 import rollbar
 from celery.signals import task_failure
