@@ -1,3 +1,3 @@
 # magic-collector
 
-[![Build Status](https://travis-ci.com/zendamacf/magic-collector.svg?branch=master)](https://travis-ci.com/zendamacf/magic-collector)
+[![Build Status](https://github.com/zendamacf/magic-collector/workflows/Testing/badge.svg)](https://github.com/zendamacf/magic-collector)
