@@ -68,6 +68,7 @@ CREATE OR REPLACE FUNCTION collector.get_rarity(_initial TEXT) RETURNS TEXT AS $
 	WHEN _initial = 'U' THEN 'Uncommon'
 	WHEN _initial = 'R' THEN 'Rare'
 	WHEN _initial = 'M' THEN 'Mythic'
+	WHEN _initial = 'S' THEN 'Special'
 	END;
 $$ LANGUAGE 'sql';
 
