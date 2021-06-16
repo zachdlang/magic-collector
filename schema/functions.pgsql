@@ -138,3 +138,33 @@ DROP FUNCTION IF EXISTS collector.get_format(INTEGER);
 CREATE OR REPLACE FUNCTION collector.get_format(_formatid INTEGER) RETURNS TEXT AS $$
 	SELECT name FROM format WHERE id = _formatid;
 $$ LANGUAGE 'sql';
+
+
+DROP FUNCTION IF EXISTS collector.log_collection_change();
+CREATE OR REPLACE FUNCTION collector.log_collection_change() RETURNS TRIGGER AS $$
+BEGIN
+	IF TG_OP = 'INSERT' THEN
+		INSERT INTO collection_log (printingid, userid, change, foil) VALUES (NEW.printingid, NEW.userid, NEW.quantity, NEW.foil);
+	ELSIF TG_OP = 'UPDATE' THEN
+		IF NEW.printingid != OLD.printingid OR NEW.userid != OLD.userid THEN
+			-- TODO: Figure out what to do here
+			RAISE EXCEPTION 'Altering printing or user not supported';
+		END IF;
+
+		IF NEW.foil != OLD.foil THEN
+			-- Treat as a delete and an insert
+			INSERT INTO collection_log (printingid, userid, change, foil) VALUES (NEW.printingid, NEW.userid, 0 - OLD.quantity, OLD.foil);
+			INSERT INTO collection_log (printingid, userid, change, foil) VALUES (NEW.printingid, NEW.userid, NEW.quantity, NEW.foil);
+		ELSE
+			INSERT INTO collection_log (printingid, userid, change, foil) VALUES (NEW.printingid, NEW.userid, NEW.quantity - OLD.quantity, NEW.foil);
+		END IF;
+	ELSIF TG_OP = 'DELETE' THEN
+		INSERT INTO collection_log (printingid, userid, change, foil) VALUES (OLD.printingid, OLD.userid, 0 - OLD.quantity, OLD.foil);
+	END IF;
+
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER log_collection_change AFTER INSERT OR UPDATE OR DELETE ON user_card
+FOR EACH ROW EXECUTE PROCEDURE collector.log_collection_change();
